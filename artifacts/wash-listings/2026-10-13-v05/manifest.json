@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-13",
+  "revision": "0.5.0",
+  "products": [
+    {
+      "name": "FoamCannon",
+      "triangles": 1252,
+      "baselineTriangles": 1616,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/FoamCannon.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/FoamCannon.fbx",
+      "sha256": "e7527d108ffc6e0d61f22653e8cab941973fc4848a74dc2c7a4496cf4f7c7d9d",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "PawMitt",
+      "triangles": 1012,
+      "baselineTriangles": 968,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/PawMitt.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/PawMitt.fbx",
+      "sha256": "d9c174249239e3889b28f001fa32dc25ffdffee8d6c2e33b8ac5727de91429ab",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "WateringCan",
+      "triangles": 976,
+      "baselineTriangles": 1160,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/WateringCan.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/WateringCan.fbx",
+      "sha256": "d48275e1d44a9aec298d18b415ab91be23dd4b71505c763c286ee2b2ecd0f824",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "WaterPistol",
+      "triangles": 1008,
+      "baselineTriangles": 2508,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/WaterPistol.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/WaterPistol.fbx",
+      "sha256": "01dd8f32c5b9fc47d79f465d75203e958d4872ac4863421cd64123ee8f22934f",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "Hose",
+      "triangles": 1856,
+      "baselineTriangles": 2560,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/Hose.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/Hose.fbx",
+      "sha256": "826bbe4064c3991dc3e41cc4b9b6b5c35f960fb7160dbfa0d1faf91b194cc438",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "Dryer",
+      "triangles": 1348,
+      "baselineTriangles": 1316,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/Dryer.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/Dryer.fbx",
+      "sha256": "1f649f9bda2b56042e0f6b0feb5696c863e638159f98382b30b7d271e460526c",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "PatternTowel",
+      "triangles": 2240,
+      "baselineTriangles": 1296,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/PatternTowel.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/PatternTowel.fbx",
+      "sha256": "031d8d4271d18f5d5630f20fe0ee6545ea5d4277ce9b5482e26d1304f90402b0",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "HinokiBath",
+      "triangles": 1064,
+      "baselineTriangles": 1188,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/HinokiBath.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/HinokiBath.fbx",
+      "sha256": "76606b69b404e8cb4e08d6ab30fb42bb4a4d8439c428f60f33d3c9e9530cd953",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    },
+    {
+      "name": "PoolBath",
+      "triangles": 2358,
+      "baselineTriangles": 3346,
+      "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/source/generated/0.5.0/PoolBath.blend",
+      "fbx": "Assets/KominkaHillside/Models/WashPremium/PoolBath.fbx",
+      "sha256": "2e2645a1437b34715fafc0a3dd66f765b3e053e51deb657bb90ab010a39c4ab0",
+      "roundtripPassed": true,
+      "hierarchyUnchanged": true
+    }
+  ],
+  "files": [
+    {
+      "file": "01-foam.png",
+      "bytes": 106574,
+      "sha256": "41417cb2278faa5a8237d5f210e3f204cb61a19ffb75bfb1aea4a4f63a2e27ad"
+    },
+    {
+      "file": "02-water.png",
+      "bytes": 94384,
+      "sha256": "bb8579b561f125a9d07a6df3418510f82fb7d7574642e51d61aae285c4e14a92"
+    },
+    {
+      "file": "03-finish.png",
+      "bytes": 98770,
+      "sha256": "322efd42f884aa44b5524170187be43b780ac4b284355558bea19200cbcea9d0"
+    },
+    {
+      "file": "04-station.png",
+      "bytes": 97066,
+      "sha256": "3f1456be41ecb68c7480e61868bf021cd6684853188dd9b97b98d5e9cfc3b552"
+    },
+    {
+      "file": "05-complete.png",
+      "bytes": 169209,
+      "sha256": "1ee27bd795b56bc9209d31bd7eaf605526b9726af9d5dfc9ad2bd5b4e14331c3"
+    },
+    {
+      "file": "evidence/board.png",
+      "bytes": 1384926,
+      "sha256": "de835c2de47706aa558b9108f60c7d061385cd12710568fb7e7667ff252b16a0"
+    },
+    {
+      "file": "evidence/bounds-verified.txt",
+      "bytes": 3158,
+      "sha256": "5ba36ac221fbc09cbfe85d1d329a227afff41de60c0b517c8b2030450452bc5e"
+    },
+    {
+      "file": "evidence/identity-after.txt",
+      "bytes": 76529,
+      "sha256": "5622306ab84f1e01e90a06c5d79428fc886c014f10f225cdbf2b627bba00bc4d"
+    },
+    {
+      "file": "evidence/identity-before.txt",
+      "bytes": 76529,
+      "sha256": "5622306ab84f1e01e90a06c5d79428fc886c014f10f225cdbf2b627bba00bc4d"
+    },
+    {
+      "file": "evidence/integration-verify.txt",
+      "bytes": 2163,
+      "sha256": "5403019508ec664976ae97968cfcc3fb175a1513271c8a06b62681296df9e760"
+    },
+    {
+      "file": "evidence/protection.json",
+      "bytes": 1428,
+      "sha256": "a273b6141986573d1389e0a7c29060f9f9b0bd42cf6a33d1ca0effcd93b2378d"
+    },
+    {
+      "file": "evidence/references.txt",
+      "bytes": 119,
+      "sha256": "ec68efbe8735493d634571f6c4fe832a9026432b872eb36426e430e995fb5d3b"
+    },
+    {
+      "file": "evidence/scene-scope.json",
+      "bytes": 149,
+      "sha256": "1303ec66a13d609f6d8233bc34fa798b7de0414f43012c68f63c6adadfc382ed"
+    },
+    {
+      "file": "evidence/selection-verify.txt",
+      "bytes": 81859,
+      "sha256": "b4ed1e6b17fc8ba349928b00e78e992f13637c7564cd41c807c2a910a67230fb"
+    },
+    {
+      "file": "evidence/station.png",
+      "bytes": 2606934,
+      "sha256": "6ecba7cdfb73c0da4c4812bdc9ee7317cb6e815e86b84cb36a6b7c6de4e33e07"
+    },
+    {
+      "file": "evidence/validation.json",
+      "bytes": 659,
+      "sha256": "54b34ebd0ee1aa13bd56bfd7ad91f642c1ac130065aa52b096164e870dc28fa9"
+    },
+    {
+      "file": "products/Dryer.png",
+      "bytes": 641166,
+      "sha256": "19ad9ee287a5393350a26cbc292cfc77d20f2775137f343e0db259b8b6d63739"
+    },
+    {
+      "file": "products/FoamCannon.png",
+      "bytes": 646813,
+      "sha256": "575a422eb05ae76cd2e13d0c6928fbe0f847c1fbd04d116deb4c2bf82c1f94fa"
+    },
+    {
+      "file": "products/HinokiBath-underside.png",
+      "bytes": 649520,
+      "sha256": "3763472fd4629a7385eb9bfb4973261a22cf42d355d73cdd817e83f7be19b497"
+    },
+    {
+      "file": "products/HinokiBath.png",
+      "bytes": 690134,
+      "sha256": "c865ebe72ac548929fbc98a249ea8242e03e845f63b4a56d92bb1b80290251a7"
+    },
+    {
+      "file": "products/Hose.png",
+      "bytes": 655196,
+      "sha256": "4d2aa173fdc526845992570a21dc89acd06d689949bd1aa918b55a4e08b77826"
+    },
+    {
+      "file": "products/PatternTowel.png",
+      "bytes": 705200,
+      "sha256": "06ba3c9d9a1e0791527e3e763055365d66510fcbb3206bd091d2faf092b2ff33"
+    },
+    {
+      "file": "products/PawMitt-cuff.png",
+      "bytes": 676272,
+      "sha256": "9701a52f277f4ab87b0bac4175c5e514fbbe4b0d5c2b702f754d15ffa58ba60d"
+    },
+    {
+      "file": "products/PawMitt.png",
+      "bytes": 685121,
+      "sha256": "b9f7c7dc91e16bcf6c25f54e905b1aa7c3784a253304efc11d2ed603b80d89cf"
+    },
+    {
+      "file": "products/PoolBath.png",
+      "bytes": 678641,
+      "sha256": "a76257a7dbb838103a2b0980cd87399f90169a9f464fc4cf86e529e2a7763a3f"
+    },
+    {
+      "file": "products/WateringCan.png",
+      "bytes": 666569,
+      "sha256": "930a71f071496ef6b8f159a3729c1433a855ddc89c33dfe32ea9bdc392083217"
+    },
+    {
+      "file": "products/WaterPistol.png",
+      "bytes": 637269,
+      "sha256": "e6210d9e3ef2aaf50345549dde718bc13ca689a89570f01b6faee181cad844a4"
+    },
+    {
+      "file": "README.md",
+      "bytes": 4919,
+      "sha256": "577f05b7e0d10c3ace82ebf8b20e0cf7f34568eca003da9621e952ed0d9d6939"
+    },
+    {
+      "file": "review.md",
+      "bytes": 2116,
+      "sha256": "05472df44f59c6f82e0f76bb74cfc43e0b030e5808bb34d5d5b488f9f795e023"
+    },
+    {
+      "file": "wash-listings-1024.zip",
+      "bytes": 501283,
+      "sha256": "3682b63ffd16e532c273946543d91a36feedb4b2a0a3965e8ad3c38cb4ff9e3b"
+    }
+  ],
+  "unitySnapshots": "evidence",
+  "userAppearanceApproved": false,
+  "vrchatDeviceTested": false
+}

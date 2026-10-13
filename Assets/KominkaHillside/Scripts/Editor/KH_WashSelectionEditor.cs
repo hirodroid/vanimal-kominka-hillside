@@ -41,11 +41,10 @@ public static partial class KH_WashSelectionEditor
     {var go=new GameObject(name,typeof(RectTransform),typeof(Canvas));var rt=go.GetComponent<RectTransform>();rt.sizeDelta=new Vector2(width,height);go.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;return go;}
     // Listing captions (ja): 41 leaves the shared font intact and bakes a temporary image-only font when needed. AI-written, not proofread.
     // IMP-DOG-049 / 044 (2026-10-11): water and station sets and the total follow the three 0.4.0 items (9 items).
-    public static readonly string[] ListingSubtitles={"ふんわり泡と、やさしい手触り。2つの道具でお手入れ。","じょうろ・ホース・水鉄砲。3つの水の道具。","乾かして、拭く。2つの道具で仕上げの時間。","香りのよい檜の台と、水を張ったプール。","泡・水・仕上げ・洗い場。全9アイテムのコレクション。"};
+    public static readonly string[] ListingSubtitles={"ふんわり泡と、やさしい手触り。2つの道具でお手入れ。","じょうろ・水鉄砲・ホース。3つの水の道具。","乾かして、拭く。2つの道具で仕上げの時間。","香りのよい檜の台と、水を張ったプール。","泡・水・仕上げ・洗い場。全9アイテムのコレクション。"};
     public const string PhotoExtras="VAnimal / CARE COLLECTION 古民家の裏山 お手入れの時間 セット _ · 1234567890 ";
-    // The 17-item set of 2026-10-08 and the 6-item set of 2026-10-11 (artifacts/wash-listings/2026-10-11, IMP-DOG-047) stay as they were;
-    // the 9-item set with the 0.4.0 items goes to its own folder.
-    const string ListingDir="artifacts/wash-listings/2026-10-11-040";
+    // Keep earlier captures as history; this refresh photographs the current nine offered prefabs.
+    const string ListingDir="artifacts/wash-listings/2026-10-13-v05";
     [MenuItem(Menu+"41 - Photograph Listings")]
     public static void Photos()
     {
@@ -62,13 +61,13 @@ public static partial class KH_WashSelectionEditor
         {
             p.AddSingleGO(holder);p.camera.orthographic=true;p.camera.orthographicSize=title==null?1.05f:5.12f;p.camera.nearClipPlane=.01f;p.camera.farClipPlane=40;p.camera.transform.position=new Vector3(0,0,-12);p.camera.transform.rotation=Quaternion.identity;p.camera.clearFlags=CameraClearFlags.SolidColor;p.camera.backgroundColor=Paper;
             p.lights[0].intensity=1.15f;p.lights[0].transform.rotation=Quaternion.Euler(35,330,0);p.lights[1].intensity=.7f;p.lights[1].transform.rotation=Quaternion.Euler(340,30,0);p.ambientColor=new Color(.4f,.4f,.4f);
-            int cols=Math.Min(ids.Length<=4?2:ids.Length<=6?3:5,Math.Max(1,ids.Length));
+            int cols=Math.Min(ids.Length<=4?2:3,Math.Max(1,ids.Length));
             for(int j=0;j<ids.Length;j++)
             {
                 var go=UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs+Names[ids[j]]+".prefab"));go.transform.SetParent(holder.transform,false);go.transform.rotation=Quaternion.Euler(20,155,0);
                 var rr=go.GetComponentsInChildren<Renderer>();var b=rr[0].bounds;foreach(var r in rr)b.Encapsulate(r.bounds);
                 if(title==null){float s=1.65f/Mathf.Max(b.size.x,b.size.y,b.size.z);go.transform.localScale=Vector3.one*s;go.transform.position=-b.center*s;}
-                else {int rows=(ids.Length+cols-1)/cols;float cell=ids.Length<=6?3.15f:1.7f;float s=(cell*(ids.Length>6?.70f:.82f))/Mathf.Max(b.size.x,b.size.y,b.size.z);go.transform.localScale=Vector3.one*s;go.transform.position=new Vector3((j%cols-(cols-1)*.5f)*cell,(ids.Length>6?1.6f:1.0f)-(j/cols)*(ids.Length>6?1.35f:cell*.8f)+(rows==1?-.8f:0),0)-b.center*s;}
+                else {int rows=(ids.Length+cols-1)/cols;float cell=ids.Length<=6?3.15f:2.8f;float s=(ids.Length>6?2.0f:cell*.82f)/Mathf.Max(b.size.x,b.size.y,b.size.z);go.transform.localScale=Vector3.one*s;go.transform.position=new Vector3((j%cols-(cols-1)*.5f)*cell,(ids.Length>6?2.05f:1.0f)-(j/cols)*(ids.Length>6?2.05f:cell*.8f)+(rows==1?-.8f:0),0)-b.center*s;}
             }
             if(title!=null)
             {

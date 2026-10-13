@@ -1,0 +1,1171 @@
+2026-10-13T06:31:42.4320039Z
+PASS
+PASS four selectors
+PASS four stations own distinct pickups (28) and visuals (36 / 36: FoamCannon, PawMitt, WateringCan, WaterPistol, Hose, Dryer, PatternTowel, HinokiBath, PoolBath)
+PASS 13 languages / 46 words
+PASS no dropped item instance in the scene (0; dropped = DuckWaterGun FishWaterGun BambooWaterGun FlowerShower RainShower LargeSponge GroomingBrush Cologne StoneBath TileBath FloatingDuck)
+PASS all 20 visual prefabs kept in Assets
+NetworkIDs total=383 typelessNull=0 typedNull=0
+PASS NetworkIDs: no typeless entry without an object (0; after saving, run 48 again to remove them)
+PASS slots and models Hillside
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor gun=KH_FoamCannonGunHold forward=(0.000, 0.000, 1.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor gun=- forward=(0.000, -0.523, 0.853)
+PASS anchors WaterPistol
+PASS collider WaterPistol
+anchor WaterPistol nozzle=WaterPistol_NozzleAnchor grip=WaterPistol_GripAnchor gun=WaterPistol_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Hose
+PASS collider Hose
+anchor Hose nozzle=Hose_NozzleAnchor grip=Hose_GripAnchor gun=Hose_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor gun=- forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS per-item arrays length 20 Hillside (models 20)
+PASS itemCategories Hillside = [0,-1,-1,-1,-1,-1,1,2,2,0,-1,-1,-1,3,-1,-1,-1,1,1,3]
+PASS itemSlots Hillside = [0,-1,-1,-1,-1,-1,2,4,3,1,-1,-1,-1,-1,-1,-1,-1,2,2,-1]
+PASS slotCategories Hillside = [0,0,1,2,2,-1,-1]
+PASS bathDepths Hillside (hinoki 0.038, pool 0.036)
+PASS sprayRanges Hillside (can 1.5 / pistol 4.0 / hose 2.5 m)
+PASS nozzleAnchors.Length == 20 Hillside (actual 20)
+PASS gripAnchors.Length == 20 Hillside (actual 20)
+PASS gunHolds.Length == 20 Hillside (actual 20)
+PASS colliderCenters.Length == 20 Hillside (actual 20)
+PASS colliderSizes.Length == 20 Hillside (actual 20)
+PASS pulseDurations.Length == 20 Hillside (actual 20)
+PASS sprayRanges.Length == 20 Hillside (actual 20)
+PASS itemSprays.Length == 20 Hillside (actual 20)
+PASS itemSounds.Length == 20 Hillside (actual 20)
+PASS three category homes Hillside (Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040))
+category Hillside foam: selectable [FoamCannon, PawMitt] slots [0,1] selected=none (free)
+category Hillside water: selectable [WateringCan, WaterPistol, Hose] slots [2] selected=none (free)
+category Hillside finish: selectable [Dryer, PatternTowel] slots [3,4] selected=none (free)
+category Hillside platform: selectable [HinokiBath, PoolBath] slots [] selected=none (free)
+slot0 Hillside category=foam items=[FoamCannon] pickupable=False orientation=Gun home=Home_Foam
+PASS slot0 home Home_Foam Hillside (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot1 Hillside category=foam items=[PawMitt] pickupable=False orientation=Grip home=Home_Foam
+PASS slot1 home Home_Foam Hillside (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot2 Hillside category=water items=[WateringCan, WaterPistol, Hose] pickupable=False orientation=Grip home=Home_Water
+PASS slot2 home Home_Water Hillside (actual Home_Water at (-1.070, 0.820, -0.040))
+slot3 Hillside category=finish items=[PatternTowel] pickupable=False orientation=Grip home=Home_Finish
+PASS slot3 home Home_Finish Hillside (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot4 Hillside category=finish items=[Dryer] pickupable=False orientation=Grip home=Home_Finish
+PASS slot4 home Home_Finish Hillside (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot5 Hillside category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot5 home TakeoutHome Hillside (actual TakeoutHome at (-0.975, 0.820, -0.040))
+slot6 Hillside category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot6 home TakeoutHome Hillside (actual TakeoutHome at (-0.975, 0.820, -0.040))
+footprint Hillside FoamCannon x -1.286..-1.214 z -0.089..0.107 (station local, collider box at its home)
+footprint Hillside PawMitt x -1.324..-1.199 z -0.136..0.061 (station local, collider box at its home)
+footprint Hillside WateringCan x -1.155..-0.985 z -0.127..0.213 (station local, collider box at its home)
+footprint Hillside WaterPistol x -1.101..-1.039 z -0.125..0.059 (station local, collider box at its home)
+footprint Hillside Hose x -1.103..-1.037 z -0.287..-0.066 (station local, collider box at its home)
+footprint Hillside Dryer x -0.826..-0.744 z -0.106..0.079 (station local, collider box at its home)
+footprint Hillside PatternTowel x -0.950..-0.620 z -0.153..0.073 (station local, collider box at its home)
+PASS tray gap FoamCannon / WateringCan Hillside 5.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / WaterPistol Hillside 11.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Hose Hillside 11.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Dryer Hillside 38.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / PatternTowel Hillside 26.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / WaterPistol Hillside 9.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / Hose Hillside 9.6 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PawMitt Hillside 4.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / Dryer Hillside 15.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PatternTowel Hillside 3.5 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / PawMitt Hillside 37.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / WaterPistol Hillside 21.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / Hose Hillside 21.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / PawMitt Hillside 24.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / WaterPistol Hillside 8.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / Hose Hillside 8.7 cm (>= 1 cm; all three can be out at once)
+shelf Hillside: nearest tray item to the shelf's left edge (x -0.600) 2.0 cm; tray x -1.340..-0.610
+PASS tray items stay left of the shelf Hillside (2.0 cm)
+PASS footprint FoamCannon inside the tray Hillside (x -1.286..-1.214 z -0.089..0.107; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PawMitt inside the tray Hillside (x -1.324..-1.199 z -0.136..0.061; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WateringCan inside the tray Hillside (x -1.155..-0.985 z -0.127..0.213; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WaterPistol inside the tray Hillside (x -1.101..-1.039 z -0.125..0.059; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint Hose hung over the tray's front lip Hillside (x -1.103..-1.037 z -0.287..-0.066; front edge z -0.180)
+PASS footprint Dryer inside the tray Hillside (x -0.826..-0.744 z -0.106..0.079; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PatternTowel inside the tray Hillside (x -0.950..-0.620 z -0.153..0.073; tray x -1.340..-0.610 z -0.180..0.240)
+PASS no FoamCannon vertex inside the tray box Hillside (0 / 1031)
+PASS no PawMitt vertex inside the tray box Hillside (0 / 892)
+PASS no WateringCan vertex inside the tray box Hillside (0 / 927)
+PASS no WaterPistol vertex inside the tray box Hillside (0 / 956)
+PASS no Hose vertex inside the tray box Hillside (0 / 1339)
+hang Hillside Hose: nearest vertex at the tray's height z -0.1850 (front edge -0.180, clearance 0.5 cm); model at (0.000, -0.074, -0.140)
+PASS no Dryer vertex inside the tray box Hillside (0 / 1348)
+PASS no PatternTowel vertex inside the tray box Hillside (0 / 1316)
+PASS model present FoamCannon Hillside
+PASS no model for dropped DuckWaterGun Hillside
+PASS no spray / anchor kept for dropped DuckWaterGun Hillside
+PASS no model for dropped FishWaterGun Hillside
+PASS no spray / anchor kept for dropped FishWaterGun Hillside
+PASS no model for dropped BambooWaterGun Hillside
+PASS no spray / anchor kept for dropped BambooWaterGun Hillside
+PASS no model for dropped FlowerShower Hillside
+PASS no spray / anchor kept for dropped FlowerShower Hillside
+PASS no model for dropped RainShower Hillside
+PASS no spray / anchor kept for dropped RainShower Hillside
+PASS model present WateringCan Hillside
+PASS model present Dryer Hillside
+PASS model present PatternTowel Hillside
+PASS model present PawMitt Hillside
+PASS no model for dropped LargeSponge Hillside
+PASS no spray / anchor kept for dropped LargeSponge Hillside
+PASS no model for dropped GroomingBrush Hillside
+PASS no spray / anchor kept for dropped GroomingBrush Hillside
+PASS no model for dropped Cologne Hillside
+PASS no spray / anchor kept for dropped Cologne Hillside
+PASS model present HinokiBath Hillside
+PASS no model for dropped StoneBath Hillside
+PASS no spray / anchor kept for dropped StoneBath Hillside
+PASS no model for dropped TileBath Hillside
+PASS no spray / anchor kept for dropped TileBath Hillside
+PASS no model for dropped FloatingDuck Hillside
+PASS no spray / anchor kept for dropped FloatingDuck Hillside
+PASS model present WaterPistol Hillside
+PASS model present Hose Hillside
+PASS model present PoolBath Hillside
+PASS no dropped item instance under PremiumTools / WashTable Hillside ()
+PASS saved backing itemCategories Hillside
+PASS saved backing slotCategories Hillside
+PASS saved backing categoryHomes Hillside
+PASS saved backing gunHolds: FoamCannon KH_FoamCannonGunHold, WaterPistol WaterPistol_GunHold, Hose Hose_GunHold, others Grip Hillside
+PASS saved backing sprayRanges Hillside
+PASS saved backing pulseDurations: can tilt -2 (was toggle 0), pistol shot 0.40 s, hose hold -1, every offered item = PulseSeconds Hillside (actual can -2)
+value Hillside selectedFoam=-1 backing=-1
+PASS saved backing selectedFoam == proxy Hillside
+value Hillside selectedWater=-1 backing=-1
+PASS saved backing selectedWater == proxy Hillside
+value Hillside selectedFinish=-1 backing=-1
+PASS saved backing selectedFinish == proxy Hillside
+value Hillside selectedBath=-1 backing=-1
+PASS saved backing selectedBath == proxy Hillside
+value Hillside stale backing selectedTool (the removed 1-selection field; not in the program, unused): present
+PASS freeTableRenderers Hillside = [Mesh] (no slat, no premium model)
+PASS old slats hidden under ImportedPlatform Hillside (0 / 5 enabled)
+PASS dryer wind streaks Hillside (mode Stretch, speed 2.40)
+PASS spray FoamCannon_NozzleAnchor/UseMist collidesWith leaves out floor 22 Hillside (mask 2049)
+PASS spray WateringCan_NozzleAnchor/UseMist collidesWith leaves out floor 22 Hillside (mask 2049)
+PASS spray Dryer_NozzleAnchor/UseMist collidesWith leaves out floor 22 Hillside (mask 2049)
+PASS spray WaterPistol_NozzleAnchor/UseMist collidesWith leaves out floor 22 Hillside (mask 2049)
+PASS spray Hose_NozzleAnchor/UseMist collidesWith leaves out floor 22 Hillside (mask 2049)
+PASS FoamCannon slot orientation Gun Hillside (actual Gun)
+PASS FoamCannon ExactGun = KH_FoamCannonGunHold directly under the model Hillside (actual KH_FoamCannonGunHold under FoamCannon)
+PASS slot1 stays Grip Hillside (actual Grip)
+PASS slot2 (water: can Grip / pistol, hose Gun) rests as Grip while nothing is out Hillside (actual Grip, exactGun null)
+PASS slot3 stays Grip Hillside (actual Grip)
+PASS slot4 stays Grip Hillside (actual Grip)
+PASS slot5 stays Grip Hillside (actual Grip)
+PASS slot6 stays Grip Hillside (actual Grip)
+hold FoamCannon Hillside orientation=Gun sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg local=(0.000, -0.012, -0.035) nozzleInHold=(0.182, 0.000, 0.103)
+PASS Exact Gun +X = spray direction Hillside (measured 0.00 deg)
+PASS Exact Gun +Z = gun top, no roll Hillside (measured 0.00 deg)
+PASS hold point at handle centre (0.000, -0.012, -0.035) Hillside (measured (0.000, -0.012, -0.035) scale (1.000, 1.000, 1.000))
+PASS nozzle ahead of the hand along the aim Hillside (measured 0.182 m)
+PASS 0.4.0 WaterPistol instance of its prefab Hillside
+PASS 0.4.0 Hose instance of its prefab Hillside
+PASS 0.4.0 PoolBath instance of its prefab Hillside
+PASS Hose hung at (0.000, -0.074, -0.140) in slot2 Hillside (actual (0.000, -0.074, -0.140))
+PASS WaterPistol stands on its grip in slot2 Hillside (lowest point 0.0 mm from the slot's rest height)
+PASS PoolBath under Lift/WashTable at the origin, scale 1 Hillside
+PASS mount depth HinokiBath Hillside measured 0.0380 m = bathDepths 0.038
+PASS mount depth PoolBath Hillside measured 0.0360 m = bathDepths 0.036
+PASS WaterPistol gunHolds = WaterPistol_GunHold under the model Hillside (actual WaterPistol_GunHold)
+hold WaterPistol Hillside sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.010, -0.052) nozzleInHold=(0.152, 0.000, 0.079) lowestInHold=(0.052, 0.000, -0.065)
+PASS WaterPistol Exact Gun +X = spray direction Hillside (measured 0.00 deg)
+PASS WaterPistol Exact Gun +Z = model up, no roll Hillside (measured 0.00 deg)
+PASS WaterPistol nozzle ahead of the hand along the aim Hillside (measured 0.152 m)
+PASS Hose gunHolds = Hose_GunHold under the model Hillside (actual Hose_GunHold)
+hold Hose Hillside sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.029, -0.058) nozzleInHold=(0.173, 0.000, 0.079) lowestInHold=(0.058, 0.000, -0.364)
+PASS Hose Exact Gun +X = spray direction Hillside (measured 0.00 deg)
+PASS Hose Exact Gun +Z = model up, no roll Hillside (measured 0.00 deg)
+PASS Hose nozzle ahead of the hand along the aim Hillside (measured 0.173 m)
+PASS WaterPistol spray Hillside: under its nozzle, one burst of 10, speed 8.0..8.5, life 0.55 s, gravity 0.50, max 24, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS WaterPistol shot = one burst of 10 drops, maxParticles 24 >= two overlapping shots (20; life 0.55 s > cadence 0.40 s) Hillside
+PASS sound WaterPistol WaterJet Hillside
+PASS Hose spray Hillside: under its nozzle, loop 110/s, speed 6.0..7.0, life 0.40 s, gravity 0.60, max 48, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS Hose stream alive <= 48 particles Hillside
+PASS sound Hose WaterJet Hillside
+PASS transparent queues Hillside: PremiumWash_Water 2990 / PremiumWash_Window 2990 < WashMist 3000 / KH_WashParticle_Spray 3000 < wet shell 3010 (the sort itself: Play)
+PASS min lift: selector.call = Hillside/Call (actual KH_WashStations/Hillside/Call; run 50)
+PASS min lift: bathMinLifts.Length == 20 Hillside (actual 20)
+min lift Hillside (station 3): bathMinLifts [0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000]
+PASS min lift: 0 for every item that is not an offered platform Hillside
+  Hillside HinokiBath: lowest point y -0.0380, highest ground under its 1.29 x 0.69 m footprint y -0.0100 at (-0.65, -1.54) of 405 samples (station local, lift 0) , seat (WashTable) y 0.0000 -> ground above the seat -0.0100 m -> minLift 0.000 m
+PASS min lift HinokiBath Hillside 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift HinokiBath Hillside within 0..0.9 m
+  Hillside PoolBath: lowest point y -0.0360, highest ground under its 1.30 x 0.70 m footprint y -0.0100 at (-0.65, -1.55) of 448 samples (station local, lift 0) , seat (WashTable) y 0.0000 -> ground above the seat -0.0100 m -> minLift 0.000 m
+PASS min lift PoolBath Hillside 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift PoolBath Hillside within 0..0.9 m
+PASS saved backing bathMinLifts Hillside
+PASS saved backing call = Hillside/Call (UdonBehaviour)
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot0
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot1
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot2
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot3
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot4
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot5
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Hillside_Slot6
+PASS localized board (words 598 / 598, wordCount 46)
+PASS board catalog: order [0,9,6,17,18,7,8,13,19], groups = selector itemCategories, itemWords = ItemWords
+PASS board rows reference only listed photos, hidden rows none Hillside ()
+PASS ItemWords: one distinct name word per listed item, inside the 46 words
+PASS board out colour RGBA(0.930, 0.870, 0.700, 1.000)
+PASS saved backing board order / wordCount
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 5 set photos + 9 item photos (dropped items' photos unreferenced)
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models KH_WashStation
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor gun=KH_FoamCannonGunHold forward=(0.000, 0.000, 1.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor gun=- forward=(0.000, -0.523, 0.853)
+PASS anchors WaterPistol
+PASS collider WaterPistol
+anchor WaterPistol nozzle=WaterPistol_NozzleAnchor grip=WaterPistol_GripAnchor gun=WaterPistol_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Hose
+PASS collider Hose
+anchor Hose nozzle=Hose_NozzleAnchor grip=Hose_GripAnchor gun=Hose_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor gun=- forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS per-item arrays length 20 KH_WashStation (models 20)
+PASS itemCategories KH_WashStation = [0,-1,-1,-1,-1,-1,1,2,2,0,-1,-1,-1,3,-1,-1,-1,1,1,3]
+PASS itemSlots KH_WashStation = [0,-1,-1,-1,-1,-1,2,4,3,1,-1,-1,-1,-1,-1,-1,-1,2,2,-1]
+PASS slotCategories KH_WashStation = [0,0,1,2,2,-1,-1]
+PASS bathDepths KH_WashStation (hinoki 0.038, pool 0.036)
+PASS sprayRanges KH_WashStation (can 1.5 / pistol 4.0 / hose 2.5 m)
+PASS nozzleAnchors.Length == 20 KH_WashStation (actual 20)
+PASS gripAnchors.Length == 20 KH_WashStation (actual 20)
+PASS gunHolds.Length == 20 KH_WashStation (actual 20)
+PASS colliderCenters.Length == 20 KH_WashStation (actual 20)
+PASS colliderSizes.Length == 20 KH_WashStation (actual 20)
+PASS pulseDurations.Length == 20 KH_WashStation (actual 20)
+PASS sprayRanges.Length == 20 KH_WashStation (actual 20)
+PASS itemSprays.Length == 20 KH_WashStation (actual 20)
+PASS itemSounds.Length == 20 KH_WashStation (actual 20)
+PASS three category homes KH_WashStation (Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040))
+category KH_WashStation foam: selectable [FoamCannon, PawMitt] slots [0,1] selected=none (free)
+category KH_WashStation water: selectable [WateringCan, WaterPistol, Hose] slots [2] selected=none (free)
+category KH_WashStation finish: selectable [Dryer, PatternTowel] slots [3,4] selected=none (free)
+category KH_WashStation platform: selectable [HinokiBath, PoolBath] slots [] selected=none (free)
+slot0 KH_WashStation category=foam items=[FoamCannon] pickupable=False orientation=Gun home=Home_Foam
+PASS slot0 home Home_Foam KH_WashStation (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot1 KH_WashStation category=foam items=[PawMitt] pickupable=False orientation=Grip home=Home_Foam
+PASS slot1 home Home_Foam KH_WashStation (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot2 KH_WashStation category=water items=[WateringCan, WaterPistol, Hose] pickupable=False orientation=Grip home=Home_Water
+PASS slot2 home Home_Water KH_WashStation (actual Home_Water at (-1.070, 0.820, -0.040))
+slot3 KH_WashStation category=finish items=[PatternTowel] pickupable=False orientation=Grip home=Home_Finish
+PASS slot3 home Home_Finish KH_WashStation (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot4 KH_WashStation category=finish items=[Dryer] pickupable=False orientation=Grip home=Home_Finish
+PASS slot4 home Home_Finish KH_WashStation (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot5 KH_WashStation category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot5 home TakeoutHome KH_WashStation (actual TakeoutHome at (-0.975, 0.820, -0.040))
+slot6 KH_WashStation category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot6 home TakeoutHome KH_WashStation (actual TakeoutHome at (-0.975, 0.820, -0.040))
+footprint KH_WashStation FoamCannon x -1.286..-1.214 z -0.089..0.107 (station local, collider box at its home)
+footprint KH_WashStation PawMitt x -1.324..-1.199 z -0.136..0.061 (station local, collider box at its home)
+footprint KH_WashStation WateringCan x -1.155..-0.985 z -0.127..0.213 (station local, collider box at its home)
+footprint KH_WashStation WaterPistol x -1.101..-1.039 z -0.125..0.059 (station local, collider box at its home)
+footprint KH_WashStation Hose x -1.103..-1.037 z -0.287..-0.066 (station local, collider box at its home)
+footprint KH_WashStation Dryer x -0.826..-0.744 z -0.106..0.079 (station local, collider box at its home)
+footprint KH_WashStation PatternTowel x -0.950..-0.620 z -0.152..0.073 (station local, collider box at its home)
+PASS tray gap FoamCannon / WateringCan KH_WashStation 5.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / WaterPistol KH_WashStation 11.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Hose KH_WashStation 11.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Dryer KH_WashStation 38.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / PatternTowel KH_WashStation 26.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / WaterPistol KH_WashStation 9.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / Hose KH_WashStation 9.6 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PawMitt KH_WashStation 4.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / Dryer KH_WashStation 15.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PatternTowel KH_WashStation 3.5 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / PawMitt KH_WashStation 37.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / WaterPistol KH_WashStation 21.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / Hose KH_WashStation 21.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / PawMitt KH_WashStation 24.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / WaterPistol KH_WashStation 8.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / Hose KH_WashStation 8.7 cm (>= 1 cm; all three can be out at once)
+shelf KH_WashStation: nearest tray item to the shelf's left edge (x -0.600) 2.0 cm; tray x -1.340..-0.610
+PASS tray items stay left of the shelf KH_WashStation (2.0 cm)
+PASS footprint FoamCannon inside the tray KH_WashStation (x -1.286..-1.214 z -0.089..0.107; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PawMitt inside the tray KH_WashStation (x -1.324..-1.199 z -0.136..0.061; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WateringCan inside the tray KH_WashStation (x -1.155..-0.985 z -0.127..0.213; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WaterPistol inside the tray KH_WashStation (x -1.101..-1.039 z -0.125..0.059; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint Hose hung over the tray's front lip KH_WashStation (x -1.103..-1.037 z -0.287..-0.066; front edge z -0.180)
+PASS footprint Dryer inside the tray KH_WashStation (x -0.826..-0.744 z -0.106..0.079; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PatternTowel inside the tray KH_WashStation (x -0.950..-0.620 z -0.152..0.073; tray x -1.340..-0.610 z -0.180..0.240)
+PASS no FoamCannon vertex inside the tray box KH_WashStation (0 / 1031)
+PASS no PawMitt vertex inside the tray box KH_WashStation (0 / 892)
+PASS no WateringCan vertex inside the tray box KH_WashStation (0 / 927)
+PASS no WaterPistol vertex inside the tray box KH_WashStation (0 / 956)
+PASS no Hose vertex inside the tray box KH_WashStation (0 / 1339)
+hang KH_WashStation Hose: nearest vertex at the tray's height z -0.1850 (front edge -0.180, clearance 0.5 cm); model at (0.000, -0.074, -0.140)
+PASS no Dryer vertex inside the tray box KH_WashStation (0 / 1348)
+PASS no PatternTowel vertex inside the tray box KH_WashStation (0 / 1316)
+PASS model present FoamCannon KH_WashStation
+PASS no model for dropped DuckWaterGun KH_WashStation
+PASS no spray / anchor kept for dropped DuckWaterGun KH_WashStation
+PASS no model for dropped FishWaterGun KH_WashStation
+PASS no spray / anchor kept for dropped FishWaterGun KH_WashStation
+PASS no model for dropped BambooWaterGun KH_WashStation
+PASS no spray / anchor kept for dropped BambooWaterGun KH_WashStation
+PASS no model for dropped FlowerShower KH_WashStation
+PASS no spray / anchor kept for dropped FlowerShower KH_WashStation
+PASS no model for dropped RainShower KH_WashStation
+PASS no spray / anchor kept for dropped RainShower KH_WashStation
+PASS model present WateringCan KH_WashStation
+PASS model present Dryer KH_WashStation
+PASS model present PatternTowel KH_WashStation
+PASS model present PawMitt KH_WashStation
+PASS no model for dropped LargeSponge KH_WashStation
+PASS no spray / anchor kept for dropped LargeSponge KH_WashStation
+PASS no model for dropped GroomingBrush KH_WashStation
+PASS no spray / anchor kept for dropped GroomingBrush KH_WashStation
+PASS no model for dropped Cologne KH_WashStation
+PASS no spray / anchor kept for dropped Cologne KH_WashStation
+PASS model present HinokiBath KH_WashStation
+PASS no model for dropped StoneBath KH_WashStation
+PASS no spray / anchor kept for dropped StoneBath KH_WashStation
+PASS no model for dropped TileBath KH_WashStation
+PASS no spray / anchor kept for dropped TileBath KH_WashStation
+PASS no model for dropped FloatingDuck KH_WashStation
+PASS no spray / anchor kept for dropped FloatingDuck KH_WashStation
+PASS model present WaterPistol KH_WashStation
+PASS model present Hose KH_WashStation
+PASS model present PoolBath KH_WashStation
+PASS no dropped item instance under PremiumTools / WashTable KH_WashStation ()
+PASS saved backing itemCategories KH_WashStation
+PASS saved backing slotCategories KH_WashStation
+PASS saved backing categoryHomes KH_WashStation
+PASS saved backing gunHolds: FoamCannon KH_FoamCannonGunHold, WaterPistol WaterPistol_GunHold, Hose Hose_GunHold, others Grip KH_WashStation
+PASS saved backing sprayRanges KH_WashStation
+PASS saved backing pulseDurations: can tilt -2 (was toggle 0), pistol shot 0.40 s, hose hold -1, every offered item = PulseSeconds KH_WashStation (actual can -2)
+value KH_WashStation selectedFoam=-1 backing=-1
+PASS saved backing selectedFoam == proxy KH_WashStation
+value KH_WashStation selectedWater=-1 backing=-1
+PASS saved backing selectedWater == proxy KH_WashStation
+value KH_WashStation selectedFinish=-1 backing=-1
+PASS saved backing selectedFinish == proxy KH_WashStation
+value KH_WashStation selectedBath=-1 backing=-1
+PASS saved backing selectedBath == proxy KH_WashStation
+value KH_WashStation stale backing selectedTool (the removed 1-selection field; not in the program, unused): present
+PASS freeTableRenderers KH_WashStation = [Mesh] (no slat, no premium model)
+PASS old slats hidden under ImportedPlatform KH_WashStation (0 / 5 enabled)
+PASS dryer wind streaks KH_WashStation (mode Stretch, speed 2.40)
+PASS spray FoamCannon_NozzleAnchor/UseMist collidesWith leaves out floor 22 KH_WashStation (mask 2049)
+PASS spray WateringCan_NozzleAnchor/UseMist collidesWith leaves out floor 22 KH_WashStation (mask 2049)
+PASS spray Dryer_NozzleAnchor/UseMist collidesWith leaves out floor 22 KH_WashStation (mask 2049)
+PASS spray WaterPistol_NozzleAnchor/UseMist collidesWith leaves out floor 22 KH_WashStation (mask 2049)
+PASS spray Hose_NozzleAnchor/UseMist collidesWith leaves out floor 22 KH_WashStation (mask 2049)
+PASS FoamCannon slot orientation Gun KH_WashStation (actual Gun)
+PASS FoamCannon ExactGun = KH_FoamCannonGunHold directly under the model KH_WashStation (actual KH_FoamCannonGunHold under FoamCannon)
+PASS slot1 stays Grip KH_WashStation (actual Grip)
+PASS slot2 (water: can Grip / pistol, hose Gun) rests as Grip while nothing is out KH_WashStation (actual Grip, exactGun null)
+PASS slot3 stays Grip KH_WashStation (actual Grip)
+PASS slot4 stays Grip KH_WashStation (actual Grip)
+PASS slot5 stays Grip KH_WashStation (actual Grip)
+PASS slot6 stays Grip KH_WashStation (actual Grip)
+hold FoamCannon KH_WashStation orientation=Gun sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg local=(0.000, -0.012, -0.035) nozzleInHold=(0.182, 0.000, 0.103)
+PASS Exact Gun +X = spray direction KH_WashStation (measured 0.00 deg)
+PASS Exact Gun +Z = gun top, no roll KH_WashStation (measured 0.00 deg)
+PASS hold point at handle centre (0.000, -0.012, -0.035) KH_WashStation (measured (0.000, -0.012, -0.035) scale (1.000, 1.000, 1.000))
+PASS nozzle ahead of the hand along the aim KH_WashStation (measured 0.182 m)
+PASS 0.4.0 WaterPistol instance of its prefab KH_WashStation
+PASS 0.4.0 Hose instance of its prefab KH_WashStation
+PASS 0.4.0 PoolBath instance of its prefab KH_WashStation
+PASS Hose hung at (0.000, -0.074, -0.140) in slot2 KH_WashStation (actual (0.000, -0.074, -0.140))
+PASS WaterPistol stands on its grip in slot2 KH_WashStation (lowest point 0.0 mm from the slot's rest height)
+PASS PoolBath under Lift/WashTable at the origin, scale 1 KH_WashStation
+PASS mount depth HinokiBath KH_WashStation measured 0.0380 m = bathDepths 0.038
+PASS mount depth PoolBath KH_WashStation measured 0.0360 m = bathDepths 0.036
+PASS WaterPistol gunHolds = WaterPistol_GunHold under the model KH_WashStation (actual WaterPistol_GunHold)
+hold WaterPistol KH_WashStation sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.010, -0.052) nozzleInHold=(0.152, 0.000, 0.079) lowestInHold=(0.052, 0.000, -0.065)
+PASS WaterPistol Exact Gun +X = spray direction KH_WashStation (measured 0.00 deg)
+PASS WaterPistol Exact Gun +Z = model up, no roll KH_WashStation (measured 0.00 deg)
+PASS WaterPistol nozzle ahead of the hand along the aim KH_WashStation (measured 0.152 m)
+PASS Hose gunHolds = Hose_GunHold under the model KH_WashStation (actual Hose_GunHold)
+hold Hose KH_WashStation sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.029, -0.058) nozzleInHold=(0.173, 0.000, 0.079) lowestInHold=(0.058, 0.000, -0.364)
+PASS Hose Exact Gun +X = spray direction KH_WashStation (measured 0.00 deg)
+PASS Hose Exact Gun +Z = model up, no roll KH_WashStation (measured 0.00 deg)
+PASS Hose nozzle ahead of the hand along the aim KH_WashStation (measured 0.173 m)
+PASS WaterPistol spray KH_WashStation: under its nozzle, one burst of 10, speed 8.0..8.5, life 0.55 s, gravity 0.50, max 24, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS WaterPistol shot = one burst of 10 drops, maxParticles 24 >= two overlapping shots (20; life 0.55 s > cadence 0.40 s) KH_WashStation
+PASS sound WaterPistol WaterJet KH_WashStation
+PASS Hose spray KH_WashStation: under its nozzle, loop 110/s, speed 6.0..7.0, life 0.40 s, gravity 0.60, max 48, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS Hose stream alive <= 48 particles KH_WashStation
+PASS sound Hose WaterJet KH_WashStation
+PASS transparent queues KH_WashStation: PremiumWash_Water 2990 / PremiumWash_Window 2990 < WashMist 3000 / KH_WashParticle_Spray 3000 < wet shell 3010 (the sort itself: Play)
+PASS min lift: selector.call = KH_WashStation/Call (actual KH_WashStation/Call; run 50)
+PASS min lift: bathMinLifts.Length == 20 KH_WashStation (actual 20)
+min lift KH_WashStation (station 0): bathMinLifts [0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000]
+PASS min lift: 0 for every item that is not an offered platform KH_WashStation
+  KH_WashStation HinokiBath: lowest point y -0.0655, highest ground under its 1.29 x 0.69 m footprint y -0.0382 at (0.64, -1.55) of 405 samples (station local, lift 0) , seat (WashTable) y -0.0275 -> ground above the seat -0.0106 m -> minLift 0.000 m
+PASS min lift HinokiBath KH_WashStation 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift HinokiBath KH_WashStation within 0..0.9 m
+  KH_WashStation PoolBath: lowest point y -0.0635, highest ground under its 1.30 x 0.70 m footprint y -0.0375 at (0.65, -1.55) of 448 samples (station local, lift 0) , seat (WashTable) y -0.0275 -> ground above the seat -0.0100 m -> minLift 0.000 m
+PASS min lift PoolBath KH_WashStation 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift PoolBath KH_WashStation within 0..0.9 m
+PASS saved backing bathMinLifts KH_WashStation
+PASS saved backing call = KH_WashStation/Call (UdonBehaviour)
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot0
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot1
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot2
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot3
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot4
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot5
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_KH_WashStation_Slot6
+PASS localized board (words 598 / 598, wordCount 46)
+PASS board catalog: order [0,9,6,17,18,7,8,13,19], groups = selector itemCategories, itemWords = ItemWords
+PASS board rows reference only listed photos, hidden rows none KH_WashStation ()
+PASS ItemWords: one distinct name word per listed item, inside the 46 words
+PASS board out colour RGBA(0.930, 0.870, 0.700, 1.000)
+PASS saved backing board order / wordCount
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 5 set photos + 9 item photos (dropped items' photos unreferenced)
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models River
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor gun=KH_FoamCannonGunHold forward=(0.000, 0.000, 1.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor gun=- forward=(0.000, -0.523, 0.853)
+PASS anchors WaterPistol
+PASS collider WaterPistol
+anchor WaterPistol nozzle=WaterPistol_NozzleAnchor grip=WaterPistol_GripAnchor gun=WaterPistol_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Hose
+PASS collider Hose
+anchor Hose nozzle=Hose_NozzleAnchor grip=Hose_GripAnchor gun=Hose_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor gun=- forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS per-item arrays length 20 River (models 20)
+PASS itemCategories River = [0,-1,-1,-1,-1,-1,1,2,2,0,-1,-1,-1,3,-1,-1,-1,1,1,3]
+PASS itemSlots River = [0,-1,-1,-1,-1,-1,2,4,3,1,-1,-1,-1,-1,-1,-1,-1,2,2,-1]
+PASS slotCategories River = [0,0,1,2,2,-1,-1]
+PASS bathDepths River (hinoki 0.038, pool 0.036)
+PASS sprayRanges River (can 1.5 / pistol 4.0 / hose 2.5 m)
+PASS nozzleAnchors.Length == 20 River (actual 20)
+PASS gripAnchors.Length == 20 River (actual 20)
+PASS gunHolds.Length == 20 River (actual 20)
+PASS colliderCenters.Length == 20 River (actual 20)
+PASS colliderSizes.Length == 20 River (actual 20)
+PASS pulseDurations.Length == 20 River (actual 20)
+PASS sprayRanges.Length == 20 River (actual 20)
+PASS itemSprays.Length == 20 River (actual 20)
+PASS itemSounds.Length == 20 River (actual 20)
+PASS three category homes River (Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040))
+category River foam: selectable [FoamCannon, PawMitt] slots [0,1] selected=none (free)
+category River water: selectable [WateringCan, WaterPistol, Hose] slots [2] selected=none (free)
+category River finish: selectable [Dryer, PatternTowel] slots [3,4] selected=none (free)
+category River platform: selectable [HinokiBath, PoolBath] slots [] selected=none (free)
+slot0 River category=foam items=[FoamCannon] pickupable=False orientation=Gun home=Home_Foam
+PASS slot0 home Home_Foam River (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot1 River category=foam items=[PawMitt] pickupable=False orientation=Grip home=Home_Foam
+PASS slot1 home Home_Foam River (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot2 River category=water items=[WateringCan, WaterPistol, Hose] pickupable=False orientation=Grip home=Home_Water
+PASS slot2 home Home_Water River (actual Home_Water at (-1.070, 0.820, -0.040))
+slot3 River category=finish items=[PatternTowel] pickupable=False orientation=Grip home=Home_Finish
+PASS slot3 home Home_Finish River (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot4 River category=finish items=[Dryer] pickupable=False orientation=Grip home=Home_Finish
+PASS slot4 home Home_Finish River (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot5 River category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot5 home TakeoutHome River (actual TakeoutHome at (-0.975, 0.820, -0.040))
+slot6 River category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot6 home TakeoutHome River (actual TakeoutHome at (-0.975, 0.820, -0.040))
+footprint River FoamCannon x -1.286..-1.214 z -0.089..0.106 (station local, collider box at its home)
+footprint River PawMitt x -1.324..-1.199 z -0.136..0.061 (station local, collider box at its home)
+footprint River WateringCan x -1.155..-0.985 z -0.127..0.213 (station local, collider box at its home)
+footprint River WaterPistol x -1.101..-1.039 z -0.125..0.059 (station local, collider box at its home)
+footprint River Hose x -1.103..-1.037 z -0.287..-0.066 (station local, collider box at its home)
+footprint River Dryer x -0.826..-0.744 z -0.106..0.079 (station local, collider box at its home)
+footprint River PatternTowel x -0.950..-0.620 z -0.153..0.073 (station local, collider box at its home)
+PASS tray gap FoamCannon / WateringCan River 5.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / WaterPistol River 11.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Hose River 11.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Dryer River 38.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / PatternTowel River 26.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / WaterPistol River 9.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / Hose River 9.6 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PawMitt River 4.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / Dryer River 15.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PatternTowel River 3.5 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / PawMitt River 37.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / WaterPistol River 21.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / Hose River 21.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / PawMitt River 24.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / WaterPistol River 8.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / Hose River 8.7 cm (>= 1 cm; all three can be out at once)
+shelf River: nearest tray item to the shelf's left edge (x -0.600) 2.0 cm; tray x -1.340..-0.610
+PASS tray items stay left of the shelf River (2.0 cm)
+PASS footprint FoamCannon inside the tray River (x -1.286..-1.214 z -0.089..0.106; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PawMitt inside the tray River (x -1.324..-1.199 z -0.136..0.061; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WateringCan inside the tray River (x -1.155..-0.985 z -0.127..0.213; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WaterPistol inside the tray River (x -1.101..-1.039 z -0.125..0.059; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint Hose hung over the tray's front lip River (x -1.103..-1.037 z -0.287..-0.066; front edge z -0.180)
+PASS footprint Dryer inside the tray River (x -0.826..-0.744 z -0.106..0.079; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PatternTowel inside the tray River (x -0.950..-0.620 z -0.153..0.073; tray x -1.340..-0.610 z -0.180..0.240)
+PASS no FoamCannon vertex inside the tray box River (0 / 1031)
+PASS no PawMitt vertex inside the tray box River (0 / 892)
+PASS no WateringCan vertex inside the tray box River (0 / 927)
+PASS no WaterPistol vertex inside the tray box River (0 / 956)
+PASS no Hose vertex inside the tray box River (0 / 1339)
+hang River Hose: nearest vertex at the tray's height z -0.1850 (front edge -0.180, clearance 0.5 cm); model at (0.000, -0.074, -0.140)
+PASS no Dryer vertex inside the tray box River (0 / 1348)
+PASS no PatternTowel vertex inside the tray box River (0 / 1316)
+PASS model present FoamCannon River
+PASS no model for dropped DuckWaterGun River
+PASS no spray / anchor kept for dropped DuckWaterGun River
+PASS no model for dropped FishWaterGun River
+PASS no spray / anchor kept for dropped FishWaterGun River
+PASS no model for dropped BambooWaterGun River
+PASS no spray / anchor kept for dropped BambooWaterGun River
+PASS no model for dropped FlowerShower River
+PASS no spray / anchor kept for dropped FlowerShower River
+PASS no model for dropped RainShower River
+PASS no spray / anchor kept for dropped RainShower River
+PASS model present WateringCan River
+PASS model present Dryer River
+PASS model present PatternTowel River
+PASS model present PawMitt River
+PASS no model for dropped LargeSponge River
+PASS no spray / anchor kept for dropped LargeSponge River
+PASS no model for dropped GroomingBrush River
+PASS no spray / anchor kept for dropped GroomingBrush River
+PASS no model for dropped Cologne River
+PASS no spray / anchor kept for dropped Cologne River
+PASS model present HinokiBath River
+PASS no model for dropped StoneBath River
+PASS no spray / anchor kept for dropped StoneBath River
+PASS no model for dropped TileBath River
+PASS no spray / anchor kept for dropped TileBath River
+PASS no model for dropped FloatingDuck River
+PASS no spray / anchor kept for dropped FloatingDuck River
+PASS model present WaterPistol River
+PASS model present Hose River
+PASS model present PoolBath River
+PASS no dropped item instance under PremiumTools / WashTable River ()
+PASS saved backing itemCategories River
+PASS saved backing slotCategories River
+PASS saved backing categoryHomes River
+PASS saved backing gunHolds: FoamCannon KH_FoamCannonGunHold, WaterPistol WaterPistol_GunHold, Hose Hose_GunHold, others Grip River
+PASS saved backing sprayRanges River
+PASS saved backing pulseDurations: can tilt -2 (was toggle 0), pistol shot 0.40 s, hose hold -1, every offered item = PulseSeconds River (actual can -2)
+value River selectedFoam=-1 backing=-1
+PASS saved backing selectedFoam == proxy River
+value River selectedWater=-1 backing=-1
+PASS saved backing selectedWater == proxy River
+value River selectedFinish=-1 backing=-1
+PASS saved backing selectedFinish == proxy River
+value River selectedBath=-1 backing=-1
+PASS saved backing selectedBath == proxy River
+value River stale backing selectedTool (the removed 1-selection field; not in the program, unused): present
+PASS freeTableRenderers River = [Mesh] (no slat, no premium model)
+PASS old slats hidden under ImportedPlatform River (0 / 5 enabled)
+PASS dryer wind streaks River (mode Stretch, speed 2.40)
+PASS spray FoamCannon_NozzleAnchor/UseMist collidesWith leaves out floor 22 River (mask 2049)
+PASS spray WateringCan_NozzleAnchor/UseMist collidesWith leaves out floor 22 River (mask 2049)
+PASS spray Dryer_NozzleAnchor/UseMist collidesWith leaves out floor 22 River (mask 2049)
+PASS spray WaterPistol_NozzleAnchor/UseMist collidesWith leaves out floor 22 River (mask 2049)
+PASS spray Hose_NozzleAnchor/UseMist collidesWith leaves out floor 22 River (mask 2049)
+PASS FoamCannon slot orientation Gun River (actual Gun)
+PASS FoamCannon ExactGun = KH_FoamCannonGunHold directly under the model River (actual KH_FoamCannonGunHold under FoamCannon)
+PASS slot1 stays Grip River (actual Grip)
+PASS slot2 (water: can Grip / pistol, hose Gun) rests as Grip while nothing is out River (actual Grip, exactGun null)
+PASS slot3 stays Grip River (actual Grip)
+PASS slot4 stays Grip River (actual Grip)
+PASS slot5 stays Grip River (actual Grip)
+PASS slot6 stays Grip River (actual Grip)
+hold FoamCannon River orientation=Gun sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg local=(0.000, -0.012, -0.035) nozzleInHold=(0.182, 0.000, 0.103)
+PASS Exact Gun +X = spray direction River (measured 0.00 deg)
+PASS Exact Gun +Z = gun top, no roll River (measured 0.00 deg)
+PASS hold point at handle centre (0.000, -0.012, -0.035) River (measured (0.000, -0.012, -0.035) scale (1.000, 1.000, 1.000))
+PASS nozzle ahead of the hand along the aim River (measured 0.182 m)
+PASS 0.4.0 WaterPistol instance of its prefab River
+PASS 0.4.0 Hose instance of its prefab River
+PASS 0.4.0 PoolBath instance of its prefab River
+PASS Hose hung at (0.000, -0.074, -0.140) in slot2 River (actual (0.000, -0.074, -0.140))
+PASS WaterPistol stands on its grip in slot2 River (lowest point 0.0 mm from the slot's rest height)
+PASS PoolBath under Lift/WashTable at the origin, scale 1 River
+PASS mount depth HinokiBath River measured 0.0380 m = bathDepths 0.038
+PASS mount depth PoolBath River measured 0.0360 m = bathDepths 0.036
+PASS WaterPistol gunHolds = WaterPistol_GunHold under the model River (actual WaterPistol_GunHold)
+hold WaterPistol River sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.010, -0.052) nozzleInHold=(0.152, 0.000, 0.079) lowestInHold=(0.052, 0.000, -0.065)
+PASS WaterPistol Exact Gun +X = spray direction River (measured 0.00 deg)
+PASS WaterPistol Exact Gun +Z = model up, no roll River (measured 0.00 deg)
+PASS WaterPistol nozzle ahead of the hand along the aim River (measured 0.152 m)
+PASS Hose gunHolds = Hose_GunHold under the model River (actual Hose_GunHold)
+hold Hose River sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.029, -0.058) nozzleInHold=(0.173, 0.000, 0.079) lowestInHold=(0.058, 0.000, -0.364)
+PASS Hose Exact Gun +X = spray direction River (measured 0.00 deg)
+PASS Hose Exact Gun +Z = model up, no roll River (measured 0.00 deg)
+PASS Hose nozzle ahead of the hand along the aim River (measured 0.173 m)
+PASS WaterPistol spray River: under its nozzle, one burst of 10, speed 8.0..8.5, life 0.55 s, gravity 0.50, max 24, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS WaterPistol shot = one burst of 10 drops, maxParticles 24 >= two overlapping shots (20; life 0.55 s > cadence 0.40 s) River
+PASS sound WaterPistol WaterJet River
+PASS Hose spray River: under its nozzle, loop 110/s, speed 6.0..7.0, life 0.40 s, gravity 0.60, max 48, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS Hose stream alive <= 48 particles River
+PASS sound Hose WaterJet River
+PASS transparent queues River: PremiumWash_Water 2990 / PremiumWash_Window 2990 < WashMist 3000 / KH_WashParticle_Spray 3000 < wet shell 3010 (the sort itself: Play)
+PASS min lift: selector.call = River/Call (actual KH_WashStations/River/Call; run 50)
+PASS min lift: bathMinLifts.Length == 20 River (actual 20)
+min lift River (station 1): bathMinLifts [0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000]
+PASS min lift: 0 for every item that is not an offered platform River
+  River HinokiBath: lowest point y -0.0473, highest ground under its 1.29 x 0.69 m footprint y -0.0686 at (-0.65, -0.85) of 405 samples (station local, lift 0) , seat (WashTable) y -0.0093 -> ground above the seat -0.0594 m -> minLift 0.000 m
+PASS min lift HinokiBath River 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift HinokiBath River within 0..0.9 m
+  River PoolBath: lowest point y -0.0453, highest ground under its 1.30 x 0.70 m footprint y -0.0682 at (-0.65, -0.85) of 448 samples (station local, lift 0) , seat (WashTable) y -0.0093 -> ground above the seat -0.0589 m -> minLift 0.000 m
+PASS min lift PoolBath River 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift PoolBath River within 0..0.9 m
+PASS saved backing bathMinLifts River
+PASS saved backing call = River/Call (UdonBehaviour)
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot0
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot1
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot2
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot3
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot4
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot5
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_River_Slot6
+PASS localized board (words 598 / 598, wordCount 46)
+PASS board catalog: order [0,9,6,17,18,7,8,13,19], groups = selector itemCategories, itemWords = ItemWords
+PASS board rows reference only listed photos, hidden rows none River ()
+PASS ItemWords: one distinct name word per listed item, inside the 46 words
+PASS board out colour RGBA(0.930, 0.870, 0.700, 1.000)
+PASS saved backing board order / wordCount
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 5 set photos + 9 item photos (dropped items' photos unreferenced)
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models Upper
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor gun=KH_FoamCannonGunHold forward=(0.000, 0.000, 1.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor gun=- forward=(0.000, -0.523, 0.853)
+PASS anchors WaterPistol
+PASS collider WaterPistol
+anchor WaterPistol nozzle=WaterPistol_NozzleAnchor grip=WaterPistol_GripAnchor gun=WaterPistol_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Hose
+PASS collider Hose
+anchor Hose nozzle=Hose_NozzleAnchor grip=Hose_GripAnchor gun=Hose_GunHold forward=(0.000, 0.000, 1.000)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor gun=- forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor gun=- forward=(0.000, -1.000, 0.000)
+PASS per-item arrays length 20 Upper (models 20)
+PASS itemCategories Upper = [0,-1,-1,-1,-1,-1,1,2,2,0,-1,-1,-1,3,-1,-1,-1,1,1,3]
+PASS itemSlots Upper = [0,-1,-1,-1,-1,-1,2,4,3,1,-1,-1,-1,-1,-1,-1,-1,2,2,-1]
+PASS slotCategories Upper = [0,0,1,2,2,-1,-1]
+PASS bathDepths Upper (hinoki 0.038, pool 0.036)
+PASS sprayRanges Upper (can 1.5 / pistol 4.0 / hose 2.5 m)
+PASS nozzleAnchors.Length == 20 Upper (actual 20)
+PASS gripAnchors.Length == 20 Upper (actual 20)
+PASS gunHolds.Length == 20 Upper (actual 20)
+PASS colliderCenters.Length == 20 Upper (actual 20)
+PASS colliderSizes.Length == 20 Upper (actual 20)
+PASS pulseDurations.Length == 20 Upper (actual 20)
+PASS sprayRanges.Length == 20 Upper (actual 20)
+PASS itemSprays.Length == 20 Upper (actual 20)
+PASS itemSounds.Length == 20 Upper (actual 20)
+PASS three category homes Upper (Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040))
+category Upper foam: selectable [FoamCannon, PawMitt] slots [0,1] selected=none (free)
+category Upper water: selectable [WateringCan, WaterPistol, Hose] slots [2] selected=none (free)
+category Upper finish: selectable [Dryer, PatternTowel] slots [3,4] selected=none (free)
+category Upper platform: selectable [HinokiBath, PoolBath] slots [] selected=none (free)
+slot0 Upper category=foam items=[FoamCannon] pickupable=False orientation=Gun home=Home_Foam
+PASS slot0 home Home_Foam Upper (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot1 Upper category=foam items=[PawMitt] pickupable=False orientation=Grip home=Home_Foam
+PASS slot1 home Home_Foam Upper (actual Home_Foam at (-1.250, 0.820, -0.040))
+slot2 Upper category=water items=[WateringCan, WaterPistol, Hose] pickupable=False orientation=Grip home=Home_Water
+PASS slot2 home Home_Water Upper (actual Home_Water at (-1.070, 0.820, -0.040))
+slot3 Upper category=finish items=[PatternTowel] pickupable=False orientation=Grip home=Home_Finish
+PASS slot3 home Home_Finish Upper (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot4 Upper category=finish items=[Dryer] pickupable=False orientation=Grip home=Home_Finish
+PASS slot4 home Home_Finish Upper (actual Home_Finish at (-0.785, 0.820, -0.040))
+slot5 Upper category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot5 home TakeoutHome Upper (actual TakeoutHome at (-0.975, 0.820, -0.040))
+slot6 Upper category=none items=[] pickupable=False orientation=Grip home=TakeoutHome
+PASS slot6 home TakeoutHome Upper (actual TakeoutHome at (-0.975, 0.820, -0.040))
+footprint Upper FoamCannon x -1.286..-1.214 z -0.089..0.107 (station local, collider box at its home)
+footprint Upper PawMitt x -1.324..-1.199 z -0.136..0.061 (station local, collider box at its home)
+footprint Upper WateringCan x -1.155..-0.985 z -0.127..0.213 (station local, collider box at its home)
+footprint Upper WaterPistol x -1.101..-1.039 z -0.125..0.059 (station local, collider box at its home)
+footprint Upper Hose x -1.103..-1.037 z -0.287..-0.066 (station local, collider box at its home)
+footprint Upper Dryer x -0.826..-0.744 z -0.106..0.079 (station local, collider box at its home)
+footprint Upper PatternTowel x -0.950..-0.620 z -0.153..0.073 (station local, collider box at its home)
+PASS tray gap FoamCannon / WateringCan Upper 5.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / WaterPistol Upper 11.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Hose Upper 11.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / Dryer Upper 38.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap FoamCannon / PatternTowel Upper 26.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / WaterPistol Upper 9.8 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PawMitt / Hose Upper 9.6 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PawMitt Upper 4.4 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / Dryer Upper 15.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap WateringCan / PatternTowel Upper 3.5 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / PawMitt Upper 37.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / WaterPistol Upper 21.3 cm (>= 1 cm; all three can be out at once)
+PASS tray gap Dryer / Hose Upper 21.1 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / PawMitt Upper 24.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / WaterPistol Upper 8.9 cm (>= 1 cm; all three can be out at once)
+PASS tray gap PatternTowel / Hose Upper 8.7 cm (>= 1 cm; all three can be out at once)
+shelf Upper: nearest tray item to the shelf's left edge (x -0.600) 2.0 cm; tray x -1.340..-0.610
+PASS tray items stay left of the shelf Upper (2.0 cm)
+PASS footprint FoamCannon inside the tray Upper (x -1.286..-1.214 z -0.089..0.107; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PawMitt inside the tray Upper (x -1.324..-1.199 z -0.136..0.061; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WateringCan inside the tray Upper (x -1.155..-0.985 z -0.127..0.213; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint WaterPistol inside the tray Upper (x -1.101..-1.039 z -0.125..0.059; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint Hose hung over the tray's front lip Upper (x -1.103..-1.037 z -0.287..-0.066; front edge z -0.180)
+PASS footprint Dryer inside the tray Upper (x -0.826..-0.744 z -0.106..0.079; tray x -1.340..-0.610 z -0.180..0.240)
+PASS footprint PatternTowel inside the tray Upper (x -0.950..-0.620 z -0.153..0.073; tray x -1.340..-0.610 z -0.180..0.240)
+PASS no FoamCannon vertex inside the tray box Upper (0 / 1031)
+PASS no PawMitt vertex inside the tray box Upper (0 / 892)
+PASS no WateringCan vertex inside the tray box Upper (0 / 927)
+PASS no WaterPistol vertex inside the tray box Upper (0 / 956)
+PASS no Hose vertex inside the tray box Upper (0 / 1339)
+hang Upper Hose: nearest vertex at the tray's height z -0.1850 (front edge -0.180, clearance 0.5 cm); model at (0.000, -0.074, -0.140)
+PASS no Dryer vertex inside the tray box Upper (0 / 1348)
+PASS no PatternTowel vertex inside the tray box Upper (0 / 1316)
+PASS model present FoamCannon Upper
+PASS no model for dropped DuckWaterGun Upper
+PASS no spray / anchor kept for dropped DuckWaterGun Upper
+PASS no model for dropped FishWaterGun Upper
+PASS no spray / anchor kept for dropped FishWaterGun Upper
+PASS no model for dropped BambooWaterGun Upper
+PASS no spray / anchor kept for dropped BambooWaterGun Upper
+PASS no model for dropped FlowerShower Upper
+PASS no spray / anchor kept for dropped FlowerShower Upper
+PASS no model for dropped RainShower Upper
+PASS no spray / anchor kept for dropped RainShower Upper
+PASS model present WateringCan Upper
+PASS model present Dryer Upper
+PASS model present PatternTowel Upper
+PASS model present PawMitt Upper
+PASS no model for dropped LargeSponge Upper
+PASS no spray / anchor kept for dropped LargeSponge Upper
+PASS no model for dropped GroomingBrush Upper
+PASS no spray / anchor kept for dropped GroomingBrush Upper
+PASS no model for dropped Cologne Upper
+PASS no spray / anchor kept for dropped Cologne Upper
+PASS model present HinokiBath Upper
+PASS no model for dropped StoneBath Upper
+PASS no spray / anchor kept for dropped StoneBath Upper
+PASS no model for dropped TileBath Upper
+PASS no spray / anchor kept for dropped TileBath Upper
+PASS no model for dropped FloatingDuck Upper
+PASS no spray / anchor kept for dropped FloatingDuck Upper
+PASS model present WaterPistol Upper
+PASS model present Hose Upper
+PASS model present PoolBath Upper
+PASS no dropped item instance under PremiumTools / WashTable Upper ()
+PASS saved backing itemCategories Upper
+PASS saved backing slotCategories Upper
+PASS saved backing categoryHomes Upper
+PASS saved backing gunHolds: FoamCannon KH_FoamCannonGunHold, WaterPistol WaterPistol_GunHold, Hose Hose_GunHold, others Grip Upper
+PASS saved backing sprayRanges Upper
+PASS saved backing pulseDurations: can tilt -2 (was toggle 0), pistol shot 0.40 s, hose hold -1, every offered item = PulseSeconds Upper (actual can -2)
+value Upper selectedFoam=-1 backing=-1
+PASS saved backing selectedFoam == proxy Upper
+value Upper selectedWater=-1 backing=-1
+PASS saved backing selectedWater == proxy Upper
+value Upper selectedFinish=-1 backing=-1
+PASS saved backing selectedFinish == proxy Upper
+value Upper selectedBath=-1 backing=-1
+PASS saved backing selectedBath == proxy Upper
+value Upper stale backing selectedTool (the removed 1-selection field; not in the program, unused): present
+PASS freeTableRenderers Upper = [Mesh] (no slat, no premium model)
+PASS old slats hidden under ImportedPlatform Upper (0 / 5 enabled)
+PASS dryer wind streaks Upper (mode Stretch, speed 2.40)
+PASS spray FoamCannon_NozzleAnchor/UseMist collidesWith leaves out floor 22 Upper (mask 2049)
+PASS spray WateringCan_NozzleAnchor/UseMist collidesWith leaves out floor 22 Upper (mask 2049)
+PASS spray Dryer_NozzleAnchor/UseMist collidesWith leaves out floor 22 Upper (mask 2049)
+PASS spray WaterPistol_NozzleAnchor/UseMist collidesWith leaves out floor 22 Upper (mask 2049)
+PASS spray Hose_NozzleAnchor/UseMist collidesWith leaves out floor 22 Upper (mask 2049)
+PASS FoamCannon slot orientation Gun Upper (actual Gun)
+PASS FoamCannon ExactGun = KH_FoamCannonGunHold directly under the model Upper (actual KH_FoamCannonGunHold under FoamCannon)
+PASS slot1 stays Grip Upper (actual Grip)
+PASS slot2 (water: can Grip / pistol, hose Gun) rests as Grip while nothing is out Upper (actual Grip, exactGun null)
+PASS slot3 stays Grip Upper (actual Grip)
+PASS slot4 stays Grip Upper (actual Grip)
+PASS slot5 stays Grip Upper (actual Grip)
+PASS slot6 stays Grip Upper (actual Grip)
+hold FoamCannon Upper orientation=Gun sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg local=(0.000, -0.012, -0.035) nozzleInHold=(0.182, 0.000, 0.103)
+PASS Exact Gun +X = spray direction Upper (measured 0.00 deg)
+PASS Exact Gun +Z = gun top, no roll Upper (measured 0.00 deg)
+PASS hold point at handle centre (0.000, -0.012, -0.035) Upper (measured (0.000, -0.012, -0.035) scale (1.000, 1.000, 1.000))
+PASS nozzle ahead of the hand along the aim Upper (measured 0.182 m)
+PASS 0.4.0 WaterPistol instance of its prefab Upper
+PASS 0.4.0 Hose instance of its prefab Upper
+PASS 0.4.0 PoolBath instance of its prefab Upper
+PASS Hose hung at (0.000, -0.074, -0.140) in slot2 Upper (actual (0.000, -0.074, -0.140))
+PASS WaterPistol stands on its grip in slot2 Upper (lowest point 0.0 mm from the slot's rest height)
+PASS PoolBath under Lift/WashTable at the origin, scale 1 Upper
+PASS mount depth HinokiBath Upper measured 0.0380 m = bathDepths 0.038
+PASS mount depth PoolBath Upper measured 0.0360 m = bathDepths 0.036
+PASS WaterPistol gunHolds = WaterPistol_GunHold under the model Upper (actual WaterPistol_GunHold)
+hold WaterPistol Upper sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.010, -0.052) nozzleInHold=(0.152, 0.000, 0.079) lowestInHold=(0.052, 0.000, -0.065)
+PASS WaterPistol Exact Gun +X = spray direction Upper (measured 0.00 deg)
+PASS WaterPistol Exact Gun +Z = model up, no roll Upper (measured 0.00 deg)
+PASS WaterPistol nozzle ahead of the hand along the aim Upper (measured 0.152 m)
+PASS Hose gunHolds = Hose_GunHold under the model Upper (actual Hose_GunHold)
+hold Hose Upper sprayInHold=(1.000, 0.000, 0.000) modelUpInHold=(0.000, 0.000, 1.000) aimErr=0.00deg upErr=0.00deg holdInModel=(0.000, 0.029, -0.058) nozzleInHold=(0.173, 0.000, 0.079) lowestInHold=(0.058, 0.000, -0.364)
+PASS Hose Exact Gun +X = spray direction Upper (measured 0.00 deg)
+PASS Hose Exact Gun +Z = model up, no roll Upper (measured 0.00 deg)
+PASS Hose nozzle ahead of the hand along the aim Upper (measured 0.173 m)
+PASS WaterPistol spray Upper: under its nozzle, one burst of 10, speed 8.0..8.5, life 0.55 s, gravity 0.50, max 24, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS WaterPistol shot = one burst of 10 drops, maxParticles 24 >= two overlapping shots (20; life 0.55 s > cadence 0.40 s) Upper
+PASS sound WaterPistol WaterJet Upper
+PASS Hose spray Upper: under its nozzle, loop 110/s, speed 6.0..7.0, life 0.40 s, gravity 0.60, max 48, world collision mask 2049, dog triggers 150, material KH_WashParticle_Spray queue 3000
+PASS Hose stream alive <= 48 particles Upper
+PASS sound Hose WaterJet Upper
+PASS transparent queues Upper: PremiumWash_Water 2990 / PremiumWash_Window 2990 < WashMist 3000 / KH_WashParticle_Spray 3000 < wet shell 3010 (the sort itself: Play)
+PASS min lift: selector.call = Upper/Call (actual KH_WashStations/Upper/Call; run 50)
+PASS min lift: bathMinLifts.Length == 20 Upper (actual 20)
+min lift Upper (station 2): bathMinLifts [0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000]
+PASS min lift: 0 for every item that is not an offered platform Upper
+  Upper HinokiBath: lowest point y -0.0380, highest ground under its 1.29 x 0.69 m footprint y -0.0100 at (-0.65, -1.55) of 405 samples (station local, lift 0) , seat (WashTable) y 0.0000 -> ground above the seat -0.0100 m -> minLift 0.000 m
+PASS min lift HinokiBath Upper 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift HinokiBath Upper within 0..0.9 m
+  Upper PoolBath: lowest point y -0.0360, highest ground under its 1.30 x 0.70 m footprint y -0.0100 at (-0.65, -1.55) of 448 samples (station local, lift 0) , seat (WashTable) y 0.0000 -> ground above the seat -0.0100 m -> minLift 0.000 m
+PASS min lift PoolBath Upper 0.000 m = fresh measure 0.000 m (1 mm; resting on the ground: 0)
+PASS min lift PoolBath Upper within 0..0.9 m
+PASS saved backing bathMinLifts Upper
+PASS saved backing call = Upper/Call (UdonBehaviour)
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot0
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot1
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot2
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot3
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot4
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot5
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS nozzle reference alive Premium_Upper_Slot6
+PASS localized board (words 598 / 598, wordCount 46)
+PASS board catalog: order [0,9,6,17,18,7,8,13,19], groups = selector itemCategories, itemWords = ItemWords
+PASS board rows reference only listed photos, hidden rows none Upper ()
+PASS ItemWords: one distinct name word per listed item, inside the 46 words
+PASS board out colour RGBA(0.930, 0.870, 0.700, 1.000)
+PASS saved backing board order / wordCount
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 5 set photos + 9 item photos (dropped items' photos unreferenced)
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS dryer delta wetness only (C# shared body)
+PASS apply FoamCannon alone
+PASS one enabled pickup / nozzle FoamCannon
+PASS hold FoamCannon Gun KH_FoamCannonGunHold on slot0 (actual Gun)
+PASS slot0 spray / input / reach for FoamCannon (pulse 0, range 1.5 m)
+PASS apply PawMitt alone
+PASS one enabled pickup / nozzle PawMitt
+PASS hold PawMitt Grip on slot1 (actual Grip)
+PASS slot1 spray / input / reach for PawMitt (pulse 0, range 1.5 m)
+PASS apply WateringCan alone
+PASS one enabled pickup / nozzle WateringCan
+PASS hold WateringCan Grip on slot2 (actual Grip)
+PASS slot2 spray / input / reach for WateringCan (pulse -2, range 1.5 m)
+PASS apply WaterPistol alone
+PASS one enabled pickup / nozzle WaterPistol
+PASS hold WaterPistol Gun WaterPistol_GunHold on slot2 (actual Gun)
+PASS slot2 spray / input / reach for WaterPistol (pulse 0.4, range 4 m)
+PASS apply Hose alone
+PASS one enabled pickup / nozzle Hose
+PASS hold Hose Gun Hose_GunHold on slot2 (actual Gun)
+PASS slot2 spray / input / reach for Hose (pulse -1, range 2.5 m)
+PASS apply Dryer alone
+PASS one enabled pickup / nozzle Dryer
+PASS hold Dryer Grip on slot4 (actual Grip)
+PASS slot4 spray / input / reach for Dryer (pulse 0, range 0.8 m)
+PASS apply PatternTowel alone
+PASS one enabled pickup / nozzle PatternTowel
+PASS hold PatternTowel Grip on slot3 (actual Grip)
+PASS slot3 spray / input / reach for PatternTowel (pulse 0, range 1.5 m)
+PASS apply HinokiBath alone
+PASS apply PoolBath alone
+PASS decide FoamCannon -> 0 (actual 0, foam=0 water=-1 finish=-1 bath=-1 rev=1)
+PASS decide WateringCan -> 0 (actual 0, foam=0 water=6 finish=-1 bath=-1 rev=2)
+PASS decide Dryer -> 0 (actual 0, foam=0 water=6 finish=7 bath=-1 rev=3)
+PASS Q1 foam + water + finish out at once: pickups [0,2,4] (want 0,2,4)
+PASS each out slot carries its item's nozzle / spray
+PASS hold per item: FoamCannon Gun / WateringCan Grip (actual Gun / Grip)
+PASS water swap -> WaterPistol: slot2 Gun, pulse 0.4, range 4 m, foam / finish stay (foam=0 water=17 finish=7 bath=-1 rev=4)
+PASS water swap -> Hose: slot2 Gun, pulse -1, range 2.5 m, foam / finish stay (foam=0 water=18 finish=7 bath=-1 rev=5)
+PASS water swap -> WateringCan: slot2 Grip, pulse -2, range 1.5 m, foam / finish stay (foam=0 water=6 finish=7 bath=-1 rev=6)
+PASS WateringCan on slot2 Hillside: tilt to pour (pulse -2 = KH_WashTool.PulseTilt), Grip, its own nozzle
+PASS WateringCan Use press does not toggle Hillside (after Use down: spray False, Use held True (Edit mode = not VR: the Desktop lean); after Use up: held False)
+PASS WateringCan tilt thresholds (KH_WashTool, plan 2026-10-11 §3.2, provisional): pours from 30 deg, stops below 24 deg, full flow at 60 deg; flow 0.35 / 0.68 / 1.00 x the item's rate at 30 / 45 / 60 deg; Desktop / Touch leans the model to 60 deg in 0.3 s while Use is held
+PASS WateringCan upright measures 0.00 deg (its rose points -31.5 deg from the horizon at rest, so the spout's own pitch is not the measure) Hillside
+PASS WateringCan VR measure = the pickup's lean toward the spout Hillside (lean deg -> measured: 24 -> 24.00; 30 -> 30.00; 45 -> 45.00; 60 -> 60.00; 120 -> 120.00; 45 deg sideways -> 0.00)
+PASS WateringCan Desktop lean 60 deg about the grip Hillside: spout turned 60.00 deg, pitch -31.5 -> -88.5 deg, rose 22.5 cm lower, grip moved 0.00 mm
+PASS WateringCan model upright again exactly after RestModel Hillside (max |dq| 0, position same)
+can tilt Hillside spoutInSlot=(0.000, -0.523, 0.853) gripInSlot=(0.000, 0.202, -0.029) modelLocal=(0.000, 0.067, 0.000) axisWorld=(-0.749, 0.000, 0.662)
+PASS foam swap to PawMitt leaves water / finish (foam=9 water=6 finish=7 bath=-1 rev=7)
+PASS held water: water request -> 1 (actual 1)
+PASS Q3 held water: platform -> Hinoki accepted and shown, free table hidden (code 0, foam=9 water=6 finish=7 bath=13 rev=8)
+PASS held water: platform -> PoolBath shown, hinoki hidden, support mount 0.036 (foam=9 water=6 finish=7 bath=19 rev=9)
+PASS held water: foam -> FoamCannon accepted (foam=0 water=6 finish=7 bath=13 rev=11)
+PASS stale revision -> 2 (actual 2)
+PASS Q2 reset with water held -> 3, water stays, others and platform back to free (foam=-1 water=6 finish=-1 bath=-1 rev=12)
+PASS held FoamCannon kept while foam -> PawMitt waits; platform applied meanwhile
+PASS put down -> PawMitt replaces it
+PASS reset with nothing held -> 0 (actual 0)
+PASS FoamCannon Gun hold survives the category cycle
+logic Hillside (Edit mode, proxy, _Decide/_Apply shared with runtime): foam=-1 water=-1 finish=-1 bath=-1 rev=15
+PASS min lift logic KH_WashStation: HinokiBath selected -> call.minLift 0.000 = 0.000
+PASS min lift logic KH_WashStation: HinokiBath stand target no dog 0.000 / held lift 0 0.000 / lift 0.1 0.100 / lift 0.9 0.900 (= max(lift, 0.000))
+PASS min lift logic KH_WashStation: PoolBath selected -> call.minLift 0.000 = 0.000
+PASS min lift logic KH_WashStation: PoolBath stand target no dog 0.000 / held lift 0 0.000 / lift 0.1 0.100 / lift 0.9 0.900 (= max(lift, 0.000))
+PASS min lift logic KH_WashStation: free table selected -> call.minLift 0.000 = 0.000
+PASS min lift logic KH_WashStation: free table stand target no dog 0.000 / held lift 0 0.000 / lift 0.1 0.100 / lift 0.9 0.900 (= max(lift, 0.000))
+min lift logic KH_WashStation (Edit mode, proxy, _Apply / _LiftTarget shared with runtime; the per-frame inline copy in KH_WashStationCall.Update and the dog's ride down to _LiftRest: Play)
+PASS Editor overflow for fully baked labels=0
+CLIENT_CHECK missing=977; fallback labels require device layout verification; run 51 for font policy
+PASS shared font on status text
+CLIENT_CHECK all-word fallback characters=278 銃鉄砲乾拭檜魚竹케어컬렉션도구꺼내기외관적용본으로중같은종류의를먼저려놓세요왼쪽받침에서가져다시하이척대공유됨지금모두사능거품물놀마무리전체분부드러운과발양장갑살씻겨뿌개는한번누르면나오고멈춰호스동안총라바람말늬수건닦아해편백욕조풀꿔높존처럼절든템씩함께낼있꽃샤워레인큰펀그루밍브향돌타일식치우선택음진을른뒤완료들되릴护工应观恢复默认请类从侧托盘试此清享沫玩喷枪绵密，爪套温柔浇壶按住时续每射发风机干纹巾擦收将换桧浴盆或池仍照调节鸭鱼朵洒淋海梳香瓷砖饰已选择页后才能護觀預請從噴槍綿溫澆壺喉續發筒紋抹將節鴨製灑磚裝擇頁цэУМШфБФЩАГЗęźąśżćń
+NOT_TESTED: real two-client ownership, late join with three tools out, Quest sound/rendering, three tools used at once on Quest/Android (load), pickup hand alignment in VRChat (FoamCannon / WaterPistol / Hose: Gun rule from the official doc, PCVR left/right + Desktop unchecked; the hose's hanging tube against the arm; other tools: Grip with the FBX GripAnchor, BUG-DOG-010 follow-up), dryer streak look (Play), the hose hold-to-spray and the pistol one-shot input (KH_WashTool, harness premium-input candidate), the watering can tilt-to-pour in VRChat (VR: the hand tilt under the Grip hold and its 30 / 24 / 60 deg feel; Desktop / Touch: the model lean and the stream; 44 runs the bodies in Edit mode only; other players do not see a Desktop holder's lean, only the stream), the pistol shot reaching the others (a 0.4 s on/off of the Manual spray state may merge), water / window sort against the spray and foam particles (Play), the hose hung over the tray lip (look), the stand resting at minLift (IMP-DOG-044: the pool clear of the main station's slope, the dog stepping up onto it and riding down to it, the ▲ presses below it doing nothing visible)

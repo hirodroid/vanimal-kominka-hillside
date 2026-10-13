@@ -151,7 +151,8 @@ public static partial class KH_WashPremiumEditor
             foreach(var rr in p.GetComponentsInChildren<Renderer>(true))if(rr.sharedMaterials.Length!=1 || rr.sharedMaterial!=AssetDatabase.LoadAssetAtPath<Material>(Root+"PremiumWash_"+(Fixture(n)?"Fixture":"Tools")+".mat"))throw new Exception("Material mismatch "+n);
             log.AppendLine(n+" tris="+tri);
         }
-        if(triangles!=19604)throw new Exception("Triangle drift "+triangles);
+        // 0.5.0: six offered models redesigned; the other twelve remain at 0.3.0 (lab validation/0.5.0).
+        if(triangles!=19952)throw new Exception("0.5.0 base-model triangle drift "+triangles+" (want 19952)");
         VerifyAddons(log);   // IMP-DOG-049 / 044: the 0.4.0 prefabs (two materials each: per-child map, KH_WashPremiumEditor.Addons.cs)
         foreach(var g in new[]{"Tools","Fixture"})foreach(var channel in new[]{"BaseColor","Normal","MetallicSmoothness"})
         {var ti=(TextureImporter)AssetImporter.GetAtPath(Root+"Premium"+g+"_"+channel+".png");var ps=ti.GetPlatformTextureSettings("Android");if(!ps.overridden||ps.maxTextureSize!=1024||ps.format!=TextureImporterFormat.ASTC_6x6||ti.isReadable||ti.sRGBTexture!=(channel=="BaseColor"))throw new Exception("Texture import "+g+channel);}

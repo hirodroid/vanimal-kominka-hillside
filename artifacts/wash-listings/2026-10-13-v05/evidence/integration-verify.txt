@@ -1,0 +1,46 @@
+2026-10-13T06:31:43.0204221Z
+FoamCannon tris=1252
+DuckWaterGun tris=1356
+FishWaterGun tris=1348
+BambooWaterGun tris=1364
+FlowerShower tris=1388
+RainShower tris=764
+WateringCan tris=976
+Dryer tris=1348
+PatternTowel tris=2240
+PawMitt tris=1012
+LargeSponge tris=620
+GroomingBrush tris=1344
+Cologne tris=524
+HinokiBath tris=1064
+StoneBath tris=1512
+TileBath tris=540
+FloatingDuck tris=1000
+TelescopicSupport tris=300
+WaterPistol tris=1008 WaterPistol_Mesh=PremiumWash_Tools WaterPistol_Window=PremiumWash_Window
+Hose tris=1856 Hose_Mesh=PremiumWash_Tools Hose_Tube=PremiumWash_Addons
+PoolBath tris=2358 PoolBath_Floor=PremiumWash_Addons PoolBath_Rim=PremiumWash_Addons PoolBath_Wall=PremiumWash_Addons PoolBath_Water=PremiumWash_Water
+material PremiumWash_Window queue=2990 colour=RGBA(0.740, 0.880, 0.900, 0.450)
+material PremiumWash_Water queue=2990 colour=RGBA(0.620, 0.800, 0.840, 0.380)
+PASS 3 0.4.0 models / 5222 tris / per-child materials (Tools, Addons, Window, Water) / 3 Addons texture imports / 2 Fade materials at queue 2990
+station=0 pose=0 weight=0 mountGap=0
+station=0 pose=1 weight=24.99999 mountGap=0
+station=0 pose=2 weight=50.00001 mountGap=0
+station=0 pose=3 weight=74.99999 mountGap=0
+station=0 pose=4 weight=100 mountGap=0
+station=1 pose=0 weight=0 mountGap=0
+station=1 pose=1 weight=25.00004 mountGap=0
+station=1 pose=2 weight=49.99998 mountGap=0
+station=1 pose=3 weight=75.00002 mountGap=0
+station=1 pose=4 weight=99.99996 mountGap=0
+station=2 pose=0 weight=0 mountGap=0
+station=2 pose=1 weight=24.99983 mountGap=0
+station=2 pose=2 weight=50.00008 mountGap=0
+station=2 pose=3 weight=74.99992 mountGap=0
+station=2 pose=4 weight=100 mountGap=0
+station=3 pose=0 weight=0 mountGap=0
+station=3 pose=1 weight=25.00004 mountGap=0
+station=3 pose=2 weight=50.00008 mountGap=0
+station=3 pose=3 weight=74.99992 mountGap=0
+station=3 pose=4 weight=99.99996 mountGap=0
+PASS 18 models / 19604 tris / 2 materials / 6 texture imports / 4 support backing refs / 20 lift poses / center+size independence / existing runtime preservation (Temp/WashPremium/runtime-before*.txt) / gallery 9 offered items; Edit-mode only

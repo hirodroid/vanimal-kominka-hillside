@@ -1,0 +1,28 @@
+{
+  "revision": "0.5.0",
+  "modelCount": 9,
+  "triangles": 13114,
+  "baselineTriangles": 15958,
+  "allRoundtripsPassed": true,
+  "maxPositionErrorMeters": 4.470348358154297e-8,
+  "maxUVError": 0,
+  "maxNormalAngleDegrees": 0.005924479596468288,
+  "csharpErrors": 0,
+  "selection": "PASS",
+  "integration": "PASS",
+  "savedSceneReloaded": true,
+  "referenceIdentity": "PASS 9 prefabs / 36 scene models",
+  "pickupBounds": "PASS 28 proxy/backing entries",
+  "captureWaterSlotJsonUnchanged": true,
+  "sceneDirtyAtFinish": false,
+  "playRun": false,
+  "deviceTested": false,
+  "independentReviewRoles": [
+    "U",
+    "D",
+    "M",
+    "X",
+    "P",
+    "V"
+  ]
+}

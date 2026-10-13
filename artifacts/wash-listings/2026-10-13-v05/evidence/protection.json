@@ -1,0 +1,19 @@
+{
+    "baselineFiles":  120,
+    "changed":  [
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\Scenes\\VRCDefaultWorldScene.unity",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\Dryer.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\FoamCannon.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\HinokiBath.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\Hose.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\PatternTowel.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\PawMitt.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\PoolBath.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\WateringCan.fbx",
+                    "C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Models\\WashPremium\\WaterPistol.fbx"
+                ],
+    "unexpected":  [
+
+                   ],
+    "passed":  true
+}

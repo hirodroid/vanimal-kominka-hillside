@@ -1,0 +1,502 @@
+prefab|FoamCannon|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|FoamCannon/FoamCannon|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|FoamCannon/FoamCannon/FoamCannon_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|FoamCannon/FoamCannon/FoamCannon_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=82076e060096dd544a4d63fe9c6ab09d:7242623423734458460
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|FoamCannon/FoamCannon/FoamCannon_NozzleAnchor|(0.000000, -0.147000, 0.091000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|FoamCannon/FoamCannon/FoamCannon_RestAnchor|(0.000000, 0.000000, -0.078000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PawMitt|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PawMitt/PawMitt|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PawMitt/PawMitt/PawMitt_ContactAnchor|(0.000000, -0.023000, -0.010000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PawMitt/PawMitt/PawMitt_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PawMitt/PawMitt/PawMitt_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=af2abdaebe8439843970f42f4f384712:5039875235597025301
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|PawMitt/PawMitt/PawMitt_RestAnchor|(0.000000, 0.000000, -0.012000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|WateringCan|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|WateringCan/WateringCan|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WateringCan/WateringCan/WateringCan_GripAnchor|(0.000000, 0.029000, 0.135000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WateringCan/WateringCan/WateringCan_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=2bb9f512b5cf87e4d81a92190fc89ee4:-8162413994522820856
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|WateringCan/WateringCan/WateringCan_NozzleAnchor|(0.000000, -0.245000, 0.110000)|(0.872550, 0.000000, 0.000000, 0.488525)|(1.000000, 1.000000, 1.000000)
+prefab|WateringCan/WateringCan/WateringCan_RestAnchor|(0.000000, 0.000000, -0.067000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol/WaterPistol_GripAnchor|(0.000000, 0.052000, 0.010000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol/WaterPistol_GunHold|(0.000000, 0.052000, 0.010000)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol/WaterPistol_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:1330822382043724967
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|WaterPistol/WaterPistol/WaterPistol_NozzleAnchor|(0.000000, -0.100000, 0.089000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol/WaterPistol_RestAnchor|(0.000000, 0.000000, -0.055000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|WaterPistol/WaterPistol/WaterPistol_Window|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:-4562858515966530682
+materials=fead2f1ccf27bc94bb830cdb2a79423c:2100000
+prefab|Hose|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose/Hose_GripAnchor|(0.000000, 0.058080, 0.028800)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose/Hose_GunHold|(0.000000, 0.058080, 0.028800)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose/Hose_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:4826814958012987818
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|Hose/Hose/Hose_NozzleAnchor|(0.000000, -0.115200, 0.108000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose/Hose_RestAnchor|(0.000000, 0.000000, -0.334893)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|Hose/Hose/Hose_Tube|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:5019305891513487880
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+prefab|Dryer|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|Dryer/Dryer|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Dryer/Dryer/Dryer_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Dryer/Dryer/Dryer_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=fb7cde771ecfd33478d80394d5abaa3b:-7078249929545416710
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|Dryer/Dryer/Dryer_NozzleAnchor|(0.000000, -0.122000, 0.082000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|Dryer/Dryer/Dryer_RestAnchor|(0.000000, 0.000000, -0.079000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PatternTowel|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PatternTowel/PatternTowel|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PatternTowel/PatternTowel/PatternTowel_ContactAnchor|(0.000000, 0.000000, -0.035000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PatternTowel/PatternTowel/PatternTowel_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PatternTowel/PatternTowel/PatternTowel_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=59acc95d48cacf34c90a3cb7c0876021:-7628795813582094203
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+prefab|PatternTowel/PatternTowel/PatternTowel_RestAnchor|(0.000000, 0.000000, -0.040460)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|HinokiBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|HinokiBath/HinokiBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|HinokiBath/HinokiBath/HinokiBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|HinokiBath/HinokiBath/HinokiBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|HinokiBath/HinokiBath/HinokiBath_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=a474c0e6da1c9674e82e1dc06174c2f3:7034908500238900896
+materials=d989d44118ede8342b5c3ceeb5b0ceeb:2100000
+prefab|HinokiBath/HinokiBath/HinokiBath_SupportMount|(0.000000, 0.000000, -0.038000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath/PoolBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath/PoolBath/PoolBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath/PoolBath/PoolBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath/PoolBath/PoolBath_Floor|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-861513409445577967
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+prefab|PoolBath/PoolBath/PoolBath_Rim|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3327365535705286055
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+prefab|PoolBath/PoolBath/PoolBath_SupportMount|(0.000000, 0.000000, -0.036000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+prefab|PoolBath/PoolBath/PoolBath_Wall|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3081614495465676922
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+prefab|PoolBath/PoolBath/PoolBath_Water|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-5194518431041928406
+materials=fd2f1d10b2412924aab602628d6dec67:2100000
+prefab|PoolBath/PoolBath/PoolBath_WaterSurfaceAnchor|(0.000000, 0.000000, 0.090000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon|(0.000000, 0.078001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon/FoamCannon_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon/FoamCannon_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=82076e060096dd544a4d63fe9c6ab09d:7242623423734458460
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor|(0.000000, -0.147000, 0.091000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/FoamCannon/FoamCannon_RestAnchor|(0.000000, 0.000000, -0.078000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot0/FoamCannon/KH_FoamCannonGunHold|(0.000000, -0.012000, -0.035000)|(0.500000, 0.500000, 0.500000, -0.500000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7419012971372222183-760147325|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6531010079403214631-760147325|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-202906247-0
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt|(0.000000, 0.011999, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt/PawMitt|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt/PawMitt/PawMitt_ContactAnchor|(0.000000, -0.023000, -0.010000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt/PawMitt/PawMitt_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt/PawMitt/PawMitt_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=af2abdaebe8439843970f42f4f384712:5039875235597025301
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot1/PawMitt/PawMitt/PawMitt_RestAnchor|(0.000000, 0.000000, -0.012000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7435562173068353425-1751529272|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1688249424039226262-1751529272|NULL
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan|(0.000000, 0.067000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan/WateringCan_GripAnchor|(0.000000, 0.029000, 0.135000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan/WateringCan_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=2bb9f512b5cf87e4d81a92190fc89ee4:-8162413994522820856
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor|(0.000000, -0.245000, 0.110000)|(0.872550, 0.000000, 0.000000, 0.488525)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WateringCan/WateringCan/WateringCan_RestAnchor|(0.000000, 0.000000, -0.067000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6289029364478997231-443705074|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-306256646139039604-443705074|NULL
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol|(0.000000, 0.055001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_GripAnchor|(0.000000, 0.052000, 0.010000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_GunHold|(0.000000, 0.052000, 0.010000)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:1330822382043724967
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor|(0.000000, -0.100000, 0.089000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_RestAnchor|(0.000000, 0.000000, -0.055000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/WaterPistol/WaterPistol/WaterPistol_Window|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:-4562858515966530682
+materials=fead2f1ccf27bc94bb830cdb2a79423c:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3700799800080078383-1579410294|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-693627516449827069-1579410294|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7232473975847371481-1579410294
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose|(0.000000, -0.074000, -0.140000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_GripAnchor|(0.000000, 0.058080, 0.028800)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_GunHold|(0.000000, 0.058080, 0.028800)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:4826814958012987818
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_NozzleAnchor|(0.000000, -0.115200, 0.108000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_RestAnchor|(0.000000, 0.000000, -0.334893)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot2/Hose/Hose/Hose_Tube|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:5019305891513487880
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3320766837930733681-972801489|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8337371414530951200-972801489|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-5203039481176729899-972801489
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer|(0.000000, 0.079001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer/Dryer_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer/Dryer_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=fb7cde771ecfd33478d80394d5abaa3b:-7078249929545416710
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer/Dryer_NozzleAnchor|(0.000000, -0.122000, 0.082000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer/Dryer_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot4/Dryer/Dryer/Dryer_RestAnchor|(0.000000, 0.000000, -0.079000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6944451513350699314-758547648|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8503849402659336315-758547648|NULL
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel|(0.000000, 0.040461, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel/PatternTowel|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel/PatternTowel/PatternTowel_ContactAnchor|(0.000000, 0.000000, -0.035000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel/PatternTowel/PatternTowel_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel/PatternTowel/PatternTowel_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=59acc95d48cacf34c90a3cb7c0876021:-7628795813582094203
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Hillside|KH_WashStations/Hillside/PremiumTools/Premium_Hillside_Slot3/PatternTowel/PatternTowel/PatternTowel_RestAnchor|(0.000000, 0.000000, -0.040460)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-2001599912488416675-644459735|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-454621312931536519-644459735|NULL
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath/HinokiBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=a474c0e6da1c9674e82e1dc06174c2f3:7034908500238900896
+materials=d989d44118ede8342b5c3ceeb5b0ceeb:2100000
+Hillside|KH_WashStations/Hillside/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_SupportMount|(0.000000, 0.000000, -0.038000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_Floor|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-861513409445577967
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_Rim|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3327365535705286055
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_SupportMount|(0.000000, 0.000000, -0.036000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_Wall|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3081614495465676922
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_Water|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-5194518431041928406
+materials=fd2f1d10b2412924aab602628d6dec67:2100000
+Hillside|KH_WashStations/Hillside/Lift/WashTable/PoolBath/PoolBath/PoolBath_WaterSurfaceAnchor|(0.000000, 0.000000, 0.090000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon|(0.000000, 0.078000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon/FoamCannon_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon/FoamCannon_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=82076e060096dd544a4d63fe9c6ab09d:7242623423734458460
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor|(0.000000, -0.147000, 0.091000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/FoamCannon/FoamCannon_RestAnchor|(0.000000, 0.000000, -0.078000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot0/FoamCannon/KH_FoamCannonGunHold|(0.000000, -0.012000, -0.035000)|(0.500000, 0.500000, 0.500000, -0.500000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7419012971372222183-1974272798|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6531010079403214631-1974272798|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1568229698-0
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt|(0.000000, 0.012000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt/PawMitt|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt/PawMitt/PawMitt_ContactAnchor|(0.000000, -0.023000, -0.010000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt/PawMitt/PawMitt_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt/PawMitt/PawMitt_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=af2abdaebe8439843970f42f4f384712:5039875235597025301
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot1/PawMitt/PawMitt/PawMitt_RestAnchor|(0.000000, 0.000000, -0.012000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7435562173068353425-1230630215|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1688249424039226262-1230630215|NULL
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan|(0.000000, 0.067000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan/WateringCan_GripAnchor|(0.000000, 0.029000, 0.135000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan/WateringCan_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=2bb9f512b5cf87e4d81a92190fc89ee4:-8162413994522820856
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor|(0.000000, -0.245000, 0.110000)|(0.872550, 0.000000, 0.000000, 0.488525)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WateringCan/WateringCan/WateringCan_RestAnchor|(0.000000, 0.000000, -0.067000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6289029364478997231-905699731|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-306256646139039604-905699731|NULL
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol|(0.000000, 0.055000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_GripAnchor|(0.000000, 0.052000, 0.010000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_GunHold|(0.000000, 0.052000, 0.010000)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:1330822382043724967
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor|(0.000000, -0.100000, 0.089000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_RestAnchor|(0.000000, 0.000000, -0.055000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/WaterPistol/WaterPistol/WaterPistol_Window|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:-4562858515966530682
+materials=fead2f1ccf27bc94bb830cdb2a79423c:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3700799800080078383-1720685039|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-693627516449827069-1720685039|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7232473975847371481-1720685039
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose|(0.000000, -0.074000, -0.140000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_GripAnchor|(0.000000, 0.058080, 0.028800)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_GunHold|(0.000000, 0.058080, 0.028800)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:4826814958012987818
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_NozzleAnchor|(0.000000, -0.115200, 0.108000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_RestAnchor|(0.000000, 0.000000, -0.334893)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot2/Hose/Hose/Hose_Tube|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:5019305891513487880
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3320766837930733681-1034779245|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8337371414530951200-1034779245|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-5203039481176729899-1034779245
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer|(0.000000, 0.079000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer/Dryer_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer/Dryer_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=fb7cde771ecfd33478d80394d5abaa3b:-7078249929545416710
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer/Dryer_NozzleAnchor|(0.000000, -0.122000, 0.082000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer/Dryer_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot4/Dryer/Dryer/Dryer_RestAnchor|(0.000000, 0.000000, -0.079000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6944451513350699314-1242508478|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8503849402659336315-1242508478|NULL
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel|(0.000000, 0.040460, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel/PatternTowel|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel/PatternTowel/PatternTowel_ContactAnchor|(0.000000, 0.000000, -0.035000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel/PatternTowel/PatternTowel_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel/PatternTowel/PatternTowel_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=59acc95d48cacf34c90a3cb7c0876021:-7628795813582094203
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+KH_WashStation|KH_WashStation/PremiumTools/Premium_KH_WashStation_Slot3/PatternTowel/PatternTowel/PatternTowel_RestAnchor|(0.000000, 0.000000, -0.040460)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-2001599912488416675-139321643|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-454621312931536519-139321643|NULL
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath/HinokiBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=a474c0e6da1c9674e82e1dc06174c2f3:7034908500238900896
+materials=d989d44118ede8342b5c3ceeb5b0ceeb:2100000
+KH_WashStation|KH_WashStation/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_SupportMount|(0.000000, 0.000000, -0.038000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_Floor|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-861513409445577967
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_Rim|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3327365535705286055
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_SupportMount|(0.000000, 0.000000, -0.036000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_Wall|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3081614495465676922
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_Water|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-5194518431041928406
+materials=fd2f1d10b2412924aab602628d6dec67:2100000
+KH_WashStation|KH_WashStation/Lift/WashTable/PoolBath/PoolBath/PoolBath_WaterSurfaceAnchor|(0.000000, 0.000000, 0.090000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon|(0.000000, 0.078000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon/FoamCannon_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon/FoamCannon_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=82076e060096dd544a4d63fe9c6ab09d:7242623423734458460
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor|(0.000000, -0.147000, 0.091000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/FoamCannon/FoamCannon_RestAnchor|(0.000000, 0.000000, -0.078000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot0/FoamCannon/KH_FoamCannonGunHold|(0.000000, -0.012000, -0.035000)|(0.500000, 0.500000, 0.500000, -0.500000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7419012971372222183-899125005|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6531010079403214631-899125005|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1222707880-0
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt|(0.000000, 0.012000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt/PawMitt|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt/PawMitt/PawMitt_ContactAnchor|(0.000000, -0.023000, -0.010000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt/PawMitt/PawMitt_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt/PawMitt/PawMitt_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=af2abdaebe8439843970f42f4f384712:5039875235597025301
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot1/PawMitt/PawMitt/PawMitt_RestAnchor|(0.000000, 0.000000, -0.012000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7435562173068353425-1522842081|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1688249424039226262-1522842081|NULL
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan|(0.000000, 0.067001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan/WateringCan_GripAnchor|(0.000000, 0.029000, 0.135000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan/WateringCan_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=2bb9f512b5cf87e4d81a92190fc89ee4:-8162413994522820856
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor|(0.000000, -0.245000, 0.110000)|(0.872550, 0.000000, 0.000000, 0.488525)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WateringCan/WateringCan/WateringCan_RestAnchor|(0.000000, 0.000000, -0.067000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6289029364478997231-519301422|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-306256646139039604-519301422|NULL
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol|(0.000000, 0.055000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_GripAnchor|(0.000000, 0.052000, 0.010000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_GunHold|(0.000000, 0.052000, 0.010000)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:1330822382043724967
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor|(0.000000, -0.100000, 0.089000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_RestAnchor|(0.000000, 0.000000, -0.055000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/WaterPistol/WaterPistol/WaterPistol_Window|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:-4562858515966530682
+materials=fead2f1ccf27bc94bb830cdb2a79423c:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3700799800080078383-923759221|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-693627516449827069-923759221|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7232473975847371481-923759221
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose|(0.000000, -0.074000, -0.140000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_GripAnchor|(0.000000, 0.058080, 0.028800)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_GunHold|(0.000000, 0.058080, 0.028800)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:4826814958012987818
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_NozzleAnchor|(0.000000, -0.115200, 0.108000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_RestAnchor|(0.000000, 0.000000, -0.334893)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot2/Hose/Hose/Hose_Tube|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:5019305891513487880
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3320766837930733681-2077496754|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8337371414530951200-2077496754|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-5203039481176729899-2077496754
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer|(0.000000, 0.079000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer/Dryer_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer/Dryer_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=fb7cde771ecfd33478d80394d5abaa3b:-7078249929545416710
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer/Dryer_NozzleAnchor|(0.000000, -0.122000, 0.082000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer/Dryer_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot4/Dryer/Dryer/Dryer_RestAnchor|(0.000000, 0.000000, -0.079000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6944451513350699314-1127100788|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8503849402659336315-1127100788|NULL
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel|(0.000000, 0.040460, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel/PatternTowel|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel/PatternTowel/PatternTowel_ContactAnchor|(0.000000, 0.000000, -0.035000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel/PatternTowel/PatternTowel_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel/PatternTowel/PatternTowel_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=59acc95d48cacf34c90a3cb7c0876021:-7628795813582094203
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+River|KH_WashStations/River/PremiumTools/Premium_River_Slot3/PatternTowel/PatternTowel/PatternTowel_RestAnchor|(0.000000, 0.000000, -0.040460)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-2001599912488416675-424741225|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-454621312931536519-424741225|NULL
+River|KH_WashStations/River/Lift/WashTable/HinokiBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/HinokiBath/HinokiBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=a474c0e6da1c9674e82e1dc06174c2f3:7034908500238900896
+materials=d989d44118ede8342b5c3ceeb5b0ceeb:2100000
+River|KH_WashStations/River/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_SupportMount|(0.000000, 0.000000, -0.038000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_Floor|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-861513409445577967
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_Rim|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3327365535705286055
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_SupportMount|(0.000000, 0.000000, -0.036000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_Wall|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3081614495465676922
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_Water|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-5194518431041928406
+materials=fd2f1d10b2412924aab602628d6dec67:2100000
+River|KH_WashStations/River/Lift/WashTable/PoolBath/PoolBath/PoolBath_WaterSurfaceAnchor|(0.000000, 0.000000, 0.090000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon|(0.000000, 0.077999, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon/FoamCannon_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon/FoamCannon_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=82076e060096dd544a4d63fe9c6ab09d:7242623423734458460
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor|(0.000000, -0.147000, 0.091000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon/FoamCannon_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/FoamCannon/FoamCannon_RestAnchor|(0.000000, 0.000000, -0.078000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot0/FoamCannon/KH_FoamCannonGunHold|(0.000000, -0.012000, -0.035000)|(0.500000, 0.500000, 0.500000, -0.500000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7419012971372222183-716334917|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6531010079403214631-716334917|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-157702323-0
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt|(0.000000, 0.012001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt/PawMitt|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt/PawMitt/PawMitt_ContactAnchor|(0.000000, -0.023000, -0.010000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt/PawMitt/PawMitt_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt/PawMitt/PawMitt_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=af2abdaebe8439843970f42f4f384712:5039875235597025301
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot1/PawMitt/PawMitt/PawMitt_RestAnchor|(0.000000, 0.000000, -0.012000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7435562173068353425-1353850476|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-1688249424039226262-1353850476|NULL
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan|(0.000000, 0.067002, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan/WateringCan_GripAnchor|(0.000000, 0.029000, 0.135000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan/WateringCan_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=2bb9f512b5cf87e4d81a92190fc89ee4:-8162413994522820856
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor|(0.000000, -0.245000, 0.110000)|(0.872550, 0.000000, 0.000000, 0.488525)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan/WateringCan_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WateringCan/WateringCan/WateringCan_RestAnchor|(0.000000, 0.000000, -0.067000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6289029364478997231-1367882242|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-306256646139039604-1367882242|NULL
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol|(0.000000, 0.055001, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_GripAnchor|(0.000000, 0.052000, 0.010000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_GunHold|(0.000000, 0.052000, 0.010000)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:1330822382043724967
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor|(0.000000, -0.100000, 0.089000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_RestAnchor|(0.000000, 0.000000, -0.055000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/WaterPistol/WaterPistol/WaterPistol_Window|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=58918df0601936543a49582624b9ae27:-4562858515966530682
+materials=fead2f1ccf27bc94bb830cdb2a79423c:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3700799800080078383-149134814|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-693627516449827069-149134814|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-7232473975847371481-149134814
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose|(0.000000, -0.074000, -0.140000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_GripAnchor|(0.000000, 0.058080, 0.028800)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_GunHold|(0.000000, 0.058080, 0.028800)|(0.000000, 0.000000, -0.707107, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:4826814958012987818
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_NozzleAnchor|(0.000000, -0.115200, 0.108000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_RestAnchor|(0.000000, 0.000000, -0.334893)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot2/Hose/Hose/Hose_Tube|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=83cac4940a36b274b8ead98bd187fda6:5019305891513487880
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-3320766837930733681-661487442|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8337371414530951200-661487442|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-5203039481176729899-661487442
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer|(0.000000, 0.079003, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer/Dryer_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer/Dryer_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=fb7cde771ecfd33478d80394d5abaa3b:-7078249929545416710
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer/Dryer_NozzleAnchor|(0.000000, -0.122000, 0.082000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer/Dryer_NozzleAnchor/UseMist|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot4/Dryer/Dryer/Dryer_RestAnchor|(0.000000, 0.000000, -0.079000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-6944451513350699314-1572539812|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-8503849402659336315-1572539812|NULL
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel|(0.000000, 0.040463, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel/PatternTowel|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel/PatternTowel/PatternTowel_ContactAnchor|(0.000000, 0.000000, -0.035000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel/PatternTowel/PatternTowel_GripAnchor|(0.000000, 0.000000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel/PatternTowel/PatternTowel_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=59acc95d48cacf34c90a3cb7c0876021:-7628795813582094203
+materials=c59f9eb94a5249640acd90915afcdb39:2100000
+Upper|KH_WashStations/Upper/PremiumTools/Premium_Upper_Slot3/PatternTowel/PatternTowel/PatternTowel_RestAnchor|(0.000000, 0.000000, -0.040460)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+anchors=GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-2001599912488416675-1159448711|GlobalObjectId_V1-2-8f52114b56a3d1545893b009b4470586-454621312931536519-1159448711|NULL
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath/HinokiBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_Mesh|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=a474c0e6da1c9674e82e1dc06174c2f3:7034908500238900896
+materials=d989d44118ede8342b5c3ceeb5b0ceeb:2100000
+Upper|KH_WashStations/Upper/Lift/WashTable/HinokiBath/HinokiBath/HinokiBath_SupportMount|(0.000000, 0.000000, -0.038000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath|(0.000000, 0.000000, 0.000000)|(-0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_DogStandAnchor|(0.000000, 0.000000, 0.030000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_EntryAnchor|(0.000000, -0.350000, 0.000000)|(0.707107, 0.000000, 0.000000, 0.707107)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_Floor|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-861513409445577967
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_Rim|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3327365535705286055
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_SupportMount|(0.000000, 0.000000, -0.036000)|(0.000000, 1.000000, 0.000000, 0.000000)|(1.000000, 1.000000, 1.000000)
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_Wall|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-3081614495465676922
+materials=f50e18444fd1d5d4780b0828e76ce57d:2100000
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_Water|(0.000000, 0.000000, 0.000000)|(0.000000, 0.000000, 0.000000, 1.000000)|(1.000000, 1.000000, 1.000000)
+mesh=7cda0335025084145ae33bf65ab744c9:-5194518431041928406
+materials=fd2f1d10b2412924aab602628d6dec67:2100000
+Upper|KH_WashStations/Upper/Lift/WashTable/PoolBath/PoolBath/PoolBath_WaterSurfaceAnchor|(0.000000, 0.000000, 0.090000)|(0.000000, 0.000000, 1.000000, 0.000000)|(1.000000, 1.000000, 1.000000)

@@ -21,7 +21,7 @@ public static partial class KH_WashPremiumEditor
 {
     public static readonly string[] AddonNames={"WaterPistol","Hose","PoolBath"};
     public const int AddonQueue=2990;
-    public const int AddonTriangles=2508+2560+3346;   // lab build-v04.json: WaterPistol 2252+256, Hose 2084+476, PoolBath 444+1568+1280+54
+    public const int AddonTriangles=1008+1856+2358;   // lab validation/0.5.0/*-build.json: WaterPistol + Hose + PoolBath
     static readonly string[] AddonChannels={"BaseColor","Normal","MetallicSmoothness"};
     /// <summary>The material a 0.4.0 child renderer must carry, by its object name (null = unexpected renderer).</summary>
     public static string AddonMaterialFor(string child)
@@ -147,7 +147,7 @@ public static partial class KH_WashPremiumEditor
             }
             triangles+=tri;log.AppendLine(n+" tris="+tri+" "+string.Join(" ",mats));
         }
-        if(triangles!=AddonTriangles)throw new Exception("0.4.0 triangle drift "+triangles+" (want "+AddonTriangles+")");
+        if(triangles!=AddonTriangles)throw new Exception("0.5.0 add-on triangle drift "+triangles+" (want "+AddonTriangles+")");
         foreach(var channel in AddonChannels)
         {var ti=(TextureImporter)AssetImporter.GetAtPath(Root+"PremiumAddons_"+channel+".png");var ps=ti.GetPlatformTextureSettings("Android");if(!ps.overridden||ps.maxTextureSize!=1024||ps.format!=TextureImporterFormat.ASTC_6x6||ti.isReadable||ti.sRGBTexture!=(channel=="BaseColor")||ti.maxTextureSize!=1024)throw new Exception("Texture import Addons"+channel);}
         foreach(var q in new[]{"PremiumWash_Window","PremiumWash_Water"})

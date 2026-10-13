@@ -1,0 +1,1073 @@
+{
+  "runId": "wash-listings-2026-10-13",
+  "capturedAtUtc": "2026-10-13T05:50:56.9119776Z",
+  "unityVersion": "2022.3.22f1",
+  "generator": "Tools/KominkaHillside/WashPremium/41 - Photograph Listings",
+  "scope": "9 current visual prefabs, 9 item photos and 5 listing/set photos; isolated PreviewRenderUtility; no scene save or Play",
+  "conditions": {
+    "camera": "orthographic",
+    "background": [
+      247,
+      244,
+      236,
+      255
+    ],
+    "rotationDegrees": [
+      20,
+      155,
+      0
+    ],
+    "lighting": "PreviewRenderUtility; key 1.15, fill 0.7, ambient 0.4",
+    "listingLayout": "2 columns for category sets; 3x3 for nine-item complete set",
+    "prices": false,
+    "dogModels": false,
+    "retouched": false
+  },
+  "offeredIds": [
+    0,
+    9,
+    6,
+    17,
+    18,
+    7,
+    8,
+    13,
+    19
+  ],
+  "outputs": [
+    {
+      "path": "artifacts/wash-listings/2026-10-13/01-foam.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "9db0211abf2ba3d8ff690e66053d002d475a61c99816f15db8babe893d8f7bd2",
+      "bytes": 110092,
+      "runtimeCopy": "Assets/KominkaHillside/Data/WashPremium/Photos/Set0.png"
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-13/02-water.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "860ec702754de6d49abdfe5d950f034dd42e1d9936c7efcccc91a9e2a09af3ba",
+      "bytes": 99106,
+      "runtimeCopy": "Assets/KominkaHillside/Data/WashPremium/Photos/Set1.png"
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-13/03-finish.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "5b68bb8040870fb5e4e89ad2dc5a0c98bca5f0379d6e56e5bf3f37d900980454",
+      "bytes": 98836,
+      "runtimeCopy": "Assets/KominkaHillside/Data/WashPremium/Photos/Set2.png"
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-13/04-station.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "478be0c626330e2dd0062378b236571377b11816c22cdf61f28d11d51a5906d9",
+      "bytes": 97853,
+      "runtimeCopy": "Assets/KominkaHillside/Data/WashPremium/Photos/Set3.png"
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-13/05-complete.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "366c6a6dea888be12566977c2f7029eb969b43ce2aa42c287d783cba4c2eed7d",
+      "bytes": 175933,
+      "runtimeCopy": "Assets/KominkaHillside/Data/WashPremium/Photos/Set4.png"
+    }
+  ],
+  "singles": [
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item0.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "b9c816cac2e3e5ab58acf6105331d63e84352e204d2bef0898a305e1f24a7b10",
+      "bytes": 72118
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item9.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "feee93d33c9cb8ea8639714df182a87844c59d83de4e59657dc90f2fcc1d8a64",
+      "bytes": 55315
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item6.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "babbdd9bd8d3e55c7ff3d55571c735d53bc50c9bfe454f693c327f057d554604",
+      "bytes": 39102
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item17.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "a656b0722d9fd02a50179fc910e41adbcd8adfee7293854084da9a1992c41715",
+      "bytes": 50434
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item18.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "de2cf14bfa9af1c5f74b91428157ba9ef265baa904598c04a549ba2ea459f911",
+      "bytes": 28761
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item7.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "8e08cda7d12d100aa66b94850aa556543d936497e3f5266b7dde7f954d36a0ec",
+      "bytes": 56689
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item8.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "45a719c6592d8eca394e6d813ce7506711cfe83963cfa050e12f5e1862386621",
+      "bytes": 49211
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item13.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "bfc5e44b31960859ed9d9ad118239003a1fa951651b85a7c5850a274e571e575",
+      "bytes": 53730
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/Photos/Item19.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "b9bf30da8269b9134cef42918be3aad187447661a0b4454f83db4a33a7016f1f",
+      "bytes": 59419
+    }
+  ],
+  "inputHashes": [
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/BambooWaterGun.fbx",
+      "sha256": "7d7722f2dcc7fc8e79368fde0555279ddcdebb3bfd2838b6979d17a2df237db2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/BambooWaterGun.fbx.meta",
+      "sha256": "ba14a97f593fe5028c403d0a2079ef5569cfd685e2311981f672951411168ee3"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Cologne.fbx",
+      "sha256": "61e95663f734b917f55dc6c13e10339941625aa4a997d6da31659f28e4f2f973"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Cologne.fbx.meta",
+      "sha256": "13245df56c8c0a63bfe0524c5775505b857cf3c371ff9d7bc3d2347b0b710f21"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Dryer.fbx",
+      "sha256": "302284f5be61f88894d6584c73601c553a4e82569a5956ed7d6756bfcbcbfd72"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Dryer.fbx.meta",
+      "sha256": "5d570f7fe032446739d960ecaa36785fdb2985087e7c1d07af15af687b85073b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/DuckWaterGun.fbx",
+      "sha256": "2571b2ee3e6dade1c15d82d20fd9d7a1cf4edb4b704bf6c6c5d55e6b0d95b0b8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/DuckWaterGun.fbx.meta",
+      "sha256": "94f987c40844ea33a1f024efe101900c19679b6a6fdd76b0af770999b2c34c0c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FishWaterGun.fbx",
+      "sha256": "df9c6ec6e8d8f713805d5085fb04b3076c9fac131b41c7c752a549aa69650295"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FishWaterGun.fbx.meta",
+      "sha256": "0936d5ccb7369f8eb1b21c8ac4c7c873640005b0d1062f48b0263dd2f350d83d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FloatingDuck.fbx",
+      "sha256": "1db13ea1e58ac15392d43666a9e9184d29eeaa62f7d0bfb152d158df55f4db6e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FloatingDuck.fbx.meta",
+      "sha256": "dabb59e03c3659568a19a67ae363cc86ec3af234d1a9ba5320240af38f1e7414"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FlowerShower.fbx",
+      "sha256": "b4de7f025d2f628c5d2c69d095c19f7d8b419a8fe7585940bccd90260821ab51"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FlowerShower.fbx.meta",
+      "sha256": "75e186e31fd43f8e50ff957bd654f59a1ffefb4aabcbe2f93b5720b92bace275"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FoamCannon.fbx",
+      "sha256": "fbf229587a2411e6fa99fd99d9de456b5afed722393a90da50bf67a52a4f0de4"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/FoamCannon.fbx.meta",
+      "sha256": "0f1bedb61f87d2bf222aecbd6f0fb356e5bbfc7281dcab8ffce3bb6fef82d621"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/GroomingBrush.fbx",
+      "sha256": "30b04f9a54b86949dcd943f4d6a43f8900b41a0aae0ea5e6371455cfe4fb8ed9"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/GroomingBrush.fbx.meta",
+      "sha256": "ae4ea2f76d36a723f2ecd6929b2f44865763b131533d49693014b9616b911c36"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/HinokiBath.fbx",
+      "sha256": "3125651f5b3f07bfa0d9ef25ee49a49d8addbe92b20695a703db887ef93c2b3f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/HinokiBath.fbx.meta",
+      "sha256": "6d4d904a4f2f979a49e81b811d75b173ea8003eb0ed0ee6fb7e394a1b3b06f6f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Hose.fbx",
+      "sha256": "7fc280b372f8b00aed44a0d0fab132c4ba29569830905cc593a2e2d3b9368b64"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/Hose.fbx.meta",
+      "sha256": "b23083f99759086b03c4777bef113064bc56bc53be2e4792c237e0af00b44afb"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/LargeSponge.fbx",
+      "sha256": "c2095f5247a3aff049b75a87d210f74b64524a2e1d2d60947c556c5cfc794f7b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/LargeSponge.fbx.meta",
+      "sha256": "ceb5010e60182fafedaad52d69fa8ccc512a5272144a3395c25c865943f59534"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/origin-0.4.0.json",
+      "sha256": "17375bc365808dabe6597babc27b318dfda0ae5366258e15808e7937ef04cf97"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/origin-0.4.0.json.meta",
+      "sha256": "0d960c744c5d7d0ac8204f5d110b791d18140867894f8533a4d5d385d7f99d77"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/origin.json",
+      "sha256": "f0675cf96b30d8959ab7a3890f17ac19fc4478a02d9b5599947e5c511681e19f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/origin.json.meta",
+      "sha256": "467883a0ce9c670e1795e675b9d4fe1bce09b454ac763b98d44c2c22032a7c37"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PatternTowel.fbx",
+      "sha256": "0de4f4f61d7a41b3d182285c20fc851740845c66bc27cd306d6a9ff8d832038b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PatternTowel.fbx.meta",
+      "sha256": "0b6b6bc00e9cd09cfaab7131a40bfab345861a70b6a20d465bf8b4000a1dc994"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PawMitt.fbx",
+      "sha256": "a99498a09750fa04dac4515b1f27472193ccbdf0c3a62f3a5051f3406687dd15"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PawMitt.fbx.meta",
+      "sha256": "04e2e84ed780f911c24fce8ab397393e660619f311d586f6269173b168e5f521"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PoolBath.fbx",
+      "sha256": "80f19436be0d18729e5dbab8488297cbd6c4a37bc5ae8b2d6635c4a8a94fbcf3"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PoolBath.fbx.meta",
+      "sha256": "9e4b8e0e493c6d4c646d1dbe352e78c0ca2cb77a1a5724b62ccbe80996950b63"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_BaseColor.png",
+      "sha256": "09a944badae07bf9c352412fa6c21dd39c9e0ce6130b2db4fb64145d285e158e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_BaseColor.png.meta",
+      "sha256": "4128fefb4982c1401e8b6b534095c8be5c8cfc3196e0139ef0461f69e79a5bce"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_MetallicSmoothness.png",
+      "sha256": "837446465eb8e5b9bbd0d5794b1f6aa2dc1a6b5f7b8c91ccccada8448978e94a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_MetallicSmoothness.png.meta",
+      "sha256": "14ae69b836ac23fd41af5021543212f6e555edd164aae41e376c0dcee4f00335"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_Normal.png",
+      "sha256": "b04b8d03d25ad394924bc45f23e4509a7c9e245fc6e8c2a21154f6adc91e11b0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_Normal.png.meta",
+      "sha256": "a62f9404d5a0cd890049e4eec4fdb84665a7bb08613920a03768f161e80b8876"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_BaseColor.png",
+      "sha256": "4c1d4b23b5a8c81e52aba101f3f19004b9c8436393d13965c87a6cc2391d88cb"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_BaseColor.png.meta",
+      "sha256": "70b557a7b97aff604cdb5c65aa702f0baceb2ffdb06d33be41e17cfb99cba9f7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_MetallicSmoothness.png",
+      "sha256": "3a5e8a938ce345f325e9f491002b4e9f5742110a35e275e27e09b3b9aa7ea073"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_MetallicSmoothness.png.meta",
+      "sha256": "8d3310716526ad714cd0b0988225b6de5c2fb0b2734d6c591652e6adb762ef4e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_Normal.png",
+      "sha256": "e44d293d33b2e7651d7098559b2e0a0b9b3495c10fded0a55b3a4e0628664dbc"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumFixture_Normal.png.meta",
+      "sha256": "b0447c11720107fe2134d0f930e7124771138cc3af025cb2cd9089cc4ef14f3f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_BaseColor.png",
+      "sha256": "41f1f414f8cb324e86c60d6a544ffb0e01b4665125023e324b3ab23750b0bdf4"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_BaseColor.png.meta",
+      "sha256": "1eab5b89d26aaf392e7eb7fa70294fe63d0650d1da53bf9149a5431fa0dc8694"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_MetallicSmoothness.png",
+      "sha256": "ee17689290e019805485faf5ee623866b045a28ede420f04c97430df262fc531"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_MetallicSmoothness.png.meta",
+      "sha256": "f3a5185dbf7a39a6850eda29e0b35334e15a23684f859736d1d05e5779353e44"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_Normal.png",
+      "sha256": "dd34f49a1eb165f4f1e656c31ee4ed02af38f91ca8d8e500750693131921ea5f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumTools_Normal.png.meta",
+      "sha256": "07369e75df25ab2c8909ee1a1b2348644aa6e8759c25df70e7827789d8cba3b8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Addons.mat",
+      "sha256": "7806712911faa7e6952141a33cb65f39743197388301988ddbccd1df3ee48c7a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Addons.mat.meta",
+      "sha256": "71df083bfb1312dffa2aa3e2af4b02196ad17b30aaeb09615e886176e6195e63"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Fixture.mat",
+      "sha256": "461499927070e4f13a9a9c6897ea32a78afd744cc92d4420653d84307adcff67"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Fixture.mat.meta",
+      "sha256": "b895f31815971800f5b1d72c64a682c5e277a66627b336d340676c74fe2b0e8d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Tools.mat",
+      "sha256": "a0f5f0360c6e7dcf3fc41dcec3b647ead4845c18071832588f86b83b750907b7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Tools.mat.meta",
+      "sha256": "c3faff33881beefecf17b9ff754501d0f6bab65e1aa8be398c6fb919fd6d5d56"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Water.mat",
+      "sha256": "c65805bbffac84692a4279675cb1c94edcd26bb353980ff417752418ff81e186"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Water.mat.meta",
+      "sha256": "47c52e3c47599dbeb5c1b04d259d17365cc1f9aa55117877c534669011704ca1"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Window.mat",
+      "sha256": "9c2f5e9a8ca32d79f05fa12993e9fc3747692cbb8bbc1655ebf8857b342afbfa"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/PremiumWash_Window.mat.meta",
+      "sha256": "a93deb88a7aa28ff65254c2b2e7b9066a003e0fb6e79cb9e9dc143f309157d0b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/RainShower.fbx",
+      "sha256": "88ddd44b7ab4e1fdf52d6a7f90c94d3294d3708596ac4068d35f23ad5c9ba1b2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/RainShower.fbx.meta",
+      "sha256": "78b653b658b2879721e1b130ca35c455d574ffeda71309bffdd3eede86c0c687"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/StoneBath.fbx",
+      "sha256": "82568a07c06d0e7b1023dfa04481e3db562b0de068683e6adaf3813ba58524b1"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/StoneBath.fbx.meta",
+      "sha256": "6b3403d8b0626a6099454ce8322d29d24b1e41b90ac0b80272338ec5abec91f2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/TelescopicSupport.fbx",
+      "sha256": "d7c13d36945ad3407c5725e3ebc348ff085c6f316a98e460f8a33495f598946f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/TelescopicSupport.fbx.meta",
+      "sha256": "4cff5d589a4f027fa24a882060e4b9fded9668b636a72f2d67e53f7d46384d14"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/TileBath.fbx",
+      "sha256": "316d2d57ae7615aff2fe4dc02264911e61aa4d062d62195d084164cd8eadc057"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/TileBath.fbx.meta",
+      "sha256": "0869486b82e93675969448c74fac3de916497d46f2e9a78816cb40797c1af580"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/WateringCan.fbx",
+      "sha256": "5b9a211acddd7ad7ecce684f747055da5c0649b513b8ded77c030506ef4a806a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/WateringCan.fbx.meta",
+      "sha256": "ceca5a51fcb53be66042084f9a1dda908aa4f4c85ce7cedc9edc347d94add248"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/WaterPistol.fbx",
+      "sha256": "4fee4101ce76889d3e798e93280fea0a945321dd0ad615c1382157a7ba6724db"
+    },
+    {
+      "path": "Assets/KominkaHillside/Models/WashPremium/WaterPistol.fbx.meta",
+      "sha256": "6b3078d8212f3643e6d68f5426e6e4a8d4288820c5c565fc7d94eb751d05a673"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/BambooWaterGun.prefab",
+      "sha256": "7302d1521f94aa24d9815995e9bcd655c99c32a1b4ab598b8037ce400bff399b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/BambooWaterGun.prefab.meta",
+      "sha256": "f775e2669ea84419bd4ea056036719f1c63b0ba0fa7ac5903f913ff90b3bcf71"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Cologne.prefab",
+      "sha256": "55389b4681e1e548bc43cdc43560c002549ecdbf69625a9d4b51261ae702267e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Cologne.prefab.meta",
+      "sha256": "12f1905008fd5bfbfb3b5defe94dd35a8175e11f24a8dd2666b7959d2483a655"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Dryer.prefab",
+      "sha256": "b1a29487fbd61109d5b767f904ec1e336257d7ed4d1b3c037dbd0ad86d9398c9"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Dryer.prefab.meta",
+      "sha256": "c69ff35d4c0fe03a48a1210347b0ee7b42d74b37adce864002d6092e55cfd2d3"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/DuckWaterGun.prefab",
+      "sha256": "999dda12f20edd2f7b97d3368f6e4f386c0506ab2a9ec2f2bea3ffc9802c76d8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/DuckWaterGun.prefab.meta",
+      "sha256": "8e6849efe22900cbe781bc39d6a44be99aa0858e287fd292e2e199aa324158b5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FishWaterGun.prefab",
+      "sha256": "51dcd010f47c52b3c4954cd96a15326a2c642781c189cfe6ba12c8b42734d895"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FishWaterGun.prefab.meta",
+      "sha256": "da00528fe346e9d17885d6016be400cf9d8e3998e695e673d17bed6d64d21e15"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FloatingDuck.prefab",
+      "sha256": "41aa88166b644b3e90382869fb9111ceacb68fd8fbeaf3481da245c5ceec5c41"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FloatingDuck.prefab.meta",
+      "sha256": "c26012831864cb184b788e919a3d218406af8add10503026560013d224257fcb"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FlowerShower.prefab",
+      "sha256": "efa4ff3d98e7520f305347f0c737d315b3d9ff7e5bf8cc3547714b32b349a414"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FlowerShower.prefab.meta",
+      "sha256": "2feb71b322c584efa4edf441c244080b29bcd95c6af25c0cc63f85081d3887c4"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FoamCannon.prefab",
+      "sha256": "580396ee2a18d78628c741b6fac42cd5edd7cf9d0dc8f6ae174501d45c60fb82"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FoamCannon.prefab.meta",
+      "sha256": "605c83b0873d465fe1f6006692c56c5a2618661965f643990bbdcdea98084648"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/GroomingBrush.prefab",
+      "sha256": "9da3ba34c2bdf8d0b88afe02e0bd7b74588f9c3d708755852c02048dbbecbb37"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/GroomingBrush.prefab.meta",
+      "sha256": "3015a6df4c497c1664134c4a6579aa337e4b5f8fbe6e797a3a3aef43b559157c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/HinokiBath.prefab",
+      "sha256": "f9f1906936b687d135cac5c0ca5a722bc33200aa898917b9192ada8794556793"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/HinokiBath.prefab.meta",
+      "sha256": "f553ea35b12055c1e1a14d3102c98f61aef324a75261f709796d8300963df717"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Hose.prefab",
+      "sha256": "55fbcc12aac7ae6302c3ea8dd2f714eac734c4e11e9f61a7684a65bb01c1b4d5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Hose.prefab.meta",
+      "sha256": "6983a83d01f7beae0b04205c059b27d12058e7462ac87302aab014d37b73e083"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/LargeSponge.prefab",
+      "sha256": "4f66a42dd968f37763d8df608aca58df679b5ba18c9a46e1efeb0544c7972f12"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/LargeSponge.prefab.meta",
+      "sha256": "6fedde312955db421287b75a28f4ec5cfc90b3aa83153d90ea3f78a6e479e505"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PatternTowel.prefab",
+      "sha256": "1f909477c0f0f694be5445b89315abc70a375f41838a3eb25ede601886d97f18"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PatternTowel.prefab.meta",
+      "sha256": "cab7cb7a9a55b295059727cc161d9e2d1e4daa614231f2e1e82849d133b7ab95"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PawMitt.prefab",
+      "sha256": "23eea8f888601846fa627a720ce7bbf844e3b45fa8cf2f603856becb57c9f207"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PawMitt.prefab.meta",
+      "sha256": "6d502f92021487fa2b1d3815e91b8213c95af6574f3b762808b9afe8fc0ed49a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PoolBath.prefab",
+      "sha256": "a7fd0b7c7408b5c141bf8f35a43e0e6973971a119b188325115992589e83ff00"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PoolBath.prefab.meta",
+      "sha256": "6dc2c1036bcebb08580cde70b90edb9d4e318b89f81248ef4167bc316d862dd5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PremiumWashPreview.prefab",
+      "sha256": "d8ad9e102cd1f454af01035ccfba712024db5928375213cc4b8365684a3254ba"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PremiumWashPreview.prefab.meta",
+      "sha256": "9c977cb904bc32d878a66e17d8b2404831d82a073401a07f9323aa8723ee24d8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/RainShower.prefab",
+      "sha256": "5e6a2df7bbe06f261a801ad8c6db316a563e6fae90ef69659f7cdcb9f348b78c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/RainShower.prefab.meta",
+      "sha256": "d8d2edb0abf89888b171aa8fa11c0760f937d7597f7a9b533dad8e54e3f536dd"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/StoneBath.prefab",
+      "sha256": "9a96cf87c46e62af5b676a13f7e6bf2b3a5316520a8ab275570c0e74dfd211c9"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/StoneBath.prefab.meta",
+      "sha256": "aaa104f8abea05c5a899c06825a19df73f78541d17f8add7bcfe53660cf29c5d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TelescopicSupport.prefab",
+      "sha256": "9516a92b80185ed204f207e4e0376a9de070d0b6b3a4e9b1defc46e5a8e5f9e7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TelescopicSupport.prefab.meta",
+      "sha256": "499f05d181224511b4f03fd33f4617562c93b75b5e94535352ecc9f9886f049a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TileBath.prefab",
+      "sha256": "c9435629fe0e4279c1ad219a63076c166a494d35c7d6f697ebe9640ba1d0def1"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TileBath.prefab.meta",
+      "sha256": "6229390f9b8e4744fc895d1a8812779922e9f93c7f12b29463af7e94683d4c91"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WateringCan.prefab",
+      "sha256": "1fa55ef89651b5cb99e5e01a32d04cd91cb9aeb332e35fd7d7f0b6568a1911e0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WateringCan.prefab.meta",
+      "sha256": "c77b93069087e2eb6551972ae2bc3351ca512d85fd9c55681224cb07d502e3a7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WaterPistol.prefab",
+      "sha256": "8e42436e2f44559ad83b71482356522f82cc4cc6d2927cb99a177b149aa59d58"
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WaterPistol.prefab.meta",
+      "sha256": "0d77fdd4d0f485ed1cfd6c12c648f4ba7075c2aa74ebddabf460503fe5c38b14"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Build.cs",
+      "sha256": "30079ac1d0ca1bef2dfbd61ef867f1315c0dedecc98fa239273c49ac3b55c4f6"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Category.cs",
+      "sha256": "4ef8542404f4d25bc6ab059a2306ca4fa3bb81e57dda0f6938b1c95a1427a973"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.cs",
+      "sha256": "e748840e01ce2f7005be6ca4a37a440a2b572e7d9b6888c7ca715ceac79d1bcd"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Font.cs",
+      "sha256": "a894364da8702765dc479c369c234203d7bd69e9824cdb1b7fbc235a2bd6908d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.MinLift.cs",
+      "sha256": "6dc3155127732888ba7fa1919579222f9e12ec4f606433d70d15a85a15bc88ba"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Refine.cs",
+      "sha256": "0f9851d977970b462b0dcb5312b4df99b952d18134aaa3b92c37dd74c5ddfc29"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Verify.cs",
+      "sha256": "96e09af609b956ad8eb3a62c5799b34e4ec8bab9eb63859bb6236c780d527c8e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Water.cs",
+      "sha256": "65a479a2386f5154b94be5f30dd45759c50b1eedc5c9bc4e21a3740c6e84019e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/WashPremium/words.json",
+      "sha256": "2b3942a1daef12cafb825fdd53f392e9c356aa3fda18feee4f0967a472f353a2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset",
+      "sha256": "feb6d6b136bdbaaef23a7ac3a2f411ab6ab26547579afee29ec495789fa3f5f0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Font/Noto_Serif_JP/static/NotoSerifJP-Regular.ttf",
+      "sha256": "5a04846a0e23acefae825f2f459205036a166f5a63462019ce3492d07bd20e92"
+    },
+    {
+      "path": "ProjectSettings/ProjectVersion.txt",
+      "sha256": "0599d0a5e5f574ce3aaf02f6f98a477bd75b97ddd6a1cf9a9466c603c3d7b6ca"
+    }
+  ],
+  "inputScope": "Conservative snapshot: entire model/prefab directories including unoffered historical items; not a minimal dependency cache key.",
+  "protection": [
+    {
+      "path": "Assets/Scenes/VRCDefaultWorldScene.unity",
+      "sha256": "a82bd85d9683701dae6990441109bfbe81ee4be3a3164172a60d2d540b51b5f3",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset",
+      "sha256": "feb6d6b136bdbaaef23a7ac3a2f411ab6ab26547579afee29ec495789fa3f5f0",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/BambooWaterGun.prefab",
+      "sha256": "7302d1521f94aa24d9815995e9bcd655c99c32a1b4ab598b8037ce400bff399b",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/BambooWaterGun.prefab.meta",
+      "sha256": "f775e2669ea84419bd4ea056036719f1c63b0ba0fa7ac5903f913ff90b3bcf71",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Cologne.prefab",
+      "sha256": "55389b4681e1e548bc43cdc43560c002549ecdbf69625a9d4b51261ae702267e",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Cologne.prefab.meta",
+      "sha256": "12f1905008fd5bfbfb3b5defe94dd35a8175e11f24a8dd2666b7959d2483a655",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Dryer.prefab",
+      "sha256": "b1a29487fbd61109d5b767f904ec1e336257d7ed4d1b3c037dbd0ad86d9398c9",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Dryer.prefab.meta",
+      "sha256": "c69ff35d4c0fe03a48a1210347b0ee7b42d74b37adce864002d6092e55cfd2d3",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/DuckWaterGun.prefab",
+      "sha256": "999dda12f20edd2f7b97d3368f6e4f386c0506ab2a9ec2f2bea3ffc9802c76d8",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/DuckWaterGun.prefab.meta",
+      "sha256": "8e6849efe22900cbe781bc39d6a44be99aa0858e287fd292e2e199aa324158b5",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FishWaterGun.prefab",
+      "sha256": "51dcd010f47c52b3c4954cd96a15326a2c642781c189cfe6ba12c8b42734d895",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FishWaterGun.prefab.meta",
+      "sha256": "da00528fe346e9d17885d6016be400cf9d8e3998e695e673d17bed6d64d21e15",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FloatingDuck.prefab",
+      "sha256": "41aa88166b644b3e90382869fb9111ceacb68fd8fbeaf3481da245c5ceec5c41",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FloatingDuck.prefab.meta",
+      "sha256": "c26012831864cb184b788e919a3d218406af8add10503026560013d224257fcb",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FlowerShower.prefab",
+      "sha256": "efa4ff3d98e7520f305347f0c737d315b3d9ff7e5bf8cc3547714b32b349a414",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FlowerShower.prefab.meta",
+      "sha256": "2feb71b322c584efa4edf441c244080b29bcd95c6af25c0cc63f85081d3887c4",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FoamCannon.prefab",
+      "sha256": "580396ee2a18d78628c741b6fac42cd5edd7cf9d0dc8f6ae174501d45c60fb82",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/FoamCannon.prefab.meta",
+      "sha256": "605c83b0873d465fe1f6006692c56c5a2618661965f643990bbdcdea98084648",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/GroomingBrush.prefab",
+      "sha256": "9da3ba34c2bdf8d0b88afe02e0bd7b74588f9c3d708755852c02048dbbecbb37",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/GroomingBrush.prefab.meta",
+      "sha256": "3015a6df4c497c1664134c4a6579aa337e4b5f8fbe6e797a3a3aef43b559157c",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/HinokiBath.prefab",
+      "sha256": "f9f1906936b687d135cac5c0ca5a722bc33200aa898917b9192ada8794556793",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/HinokiBath.prefab.meta",
+      "sha256": "f553ea35b12055c1e1a14d3102c98f61aef324a75261f709796d8300963df717",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Hose.prefab",
+      "sha256": "55fbcc12aac7ae6302c3ea8dd2f714eac734c4e11e9f61a7684a65bb01c1b4d5",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/Hose.prefab.meta",
+      "sha256": "6983a83d01f7beae0b04205c059b27d12058e7462ac87302aab014d37b73e083",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/LargeSponge.prefab",
+      "sha256": "4f66a42dd968f37763d8df608aca58df679b5ba18c9a46e1efeb0544c7972f12",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/LargeSponge.prefab.meta",
+      "sha256": "6fedde312955db421287b75a28f4ec5cfc90b3aa83153d90ea3f78a6e479e505",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PatternTowel.prefab",
+      "sha256": "1f909477c0f0f694be5445b89315abc70a375f41838a3eb25ede601886d97f18",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PatternTowel.prefab.meta",
+      "sha256": "cab7cb7a9a55b295059727cc161d9e2d1e4daa614231f2e1e82849d133b7ab95",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PawMitt.prefab",
+      "sha256": "23eea8f888601846fa627a720ce7bbf844e3b45fa8cf2f603856becb57c9f207",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PawMitt.prefab.meta",
+      "sha256": "6d502f92021487fa2b1d3815e91b8213c95af6574f3b762808b9afe8fc0ed49a",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PoolBath.prefab",
+      "sha256": "a7fd0b7c7408b5c141bf8f35a43e0e6973971a119b188325115992589e83ff00",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PoolBath.prefab.meta",
+      "sha256": "6dc2c1036bcebb08580cde70b90edb9d4e318b89f81248ef4167bc316d862dd5",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PremiumWashPreview.prefab",
+      "sha256": "d8ad9e102cd1f454af01035ccfba712024db5928375213cc4b8365684a3254ba",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/PremiumWashPreview.prefab.meta",
+      "sha256": "9c977cb904bc32d878a66e17d8b2404831d82a073401a07f9323aa8723ee24d8",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/RainShower.prefab",
+      "sha256": "5e6a2df7bbe06f261a801ad8c6db316a563e6fae90ef69659f7cdcb9f348b78c",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/RainShower.prefab.meta",
+      "sha256": "d8d2edb0abf89888b171aa8fa11c0760f937d7597f7a9b533dad8e54e3f536dd",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/StoneBath.prefab",
+      "sha256": "9a96cf87c46e62af5b676a13f7e6bf2b3a5316520a8ab275570c0e74dfd211c9",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/StoneBath.prefab.meta",
+      "sha256": "aaa104f8abea05c5a899c06825a19df73f78541d17f8add7bcfe53660cf29c5d",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TelescopicSupport.prefab",
+      "sha256": "9516a92b80185ed204f207e4e0376a9de070d0b6b3a4e9b1defc46e5a8e5f9e7",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TelescopicSupport.prefab.meta",
+      "sha256": "499f05d181224511b4f03fd33f4617562c93b75b5e94535352ecc9f9886f049a",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TileBath.prefab",
+      "sha256": "c9435629fe0e4279c1ad219a63076c166a494d35c7d6f697ebe9640ba1d0def1",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/TileBath.prefab.meta",
+      "sha256": "6229390f9b8e4744fc895d1a8812779922e9f93c7f12b29463af7e94683d4c91",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WateringCan.prefab",
+      "sha256": "1fa55ef89651b5cb99e5e01a32d04cd91cb9aeb332e35fd7d7f0b6568a1911e0",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WateringCan.prefab.meta",
+      "sha256": "c77b93069087e2eb6551972ae2bc3351ca512d85fd9c55681224cb07d502e3a7",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WaterPistol.prefab",
+      "sha256": "8e42436e2f44559ad83b71482356522f82cc4cc6d2927cb99a177b149aa59d58",
+      "unchanged": true
+    },
+    {
+      "path": "Assets/KominkaHillside/Prefabs/WashPremium/WaterPistol.prefab.meta",
+      "sha256": "0d77fdd4d0f485ed1cfd6c12c648f4ba7075c2aa74ebddabf460503fe5c38b14",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/01-foam.png",
+      "sha256": "91432577c93ab560b79f438212c18a0c7b571a9230e0283626e79dc81cead807",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/02-water.png",
+      "sha256": "94e8663a4cc62d98d20bcbdffda073573667fdcc1a16b87ed77035e39344c3ef",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/03-finish.png",
+      "sha256": "7ddaff8c4edd1ac41c8b08b81b6993a073bf1e0d7c93a9b805e154aff1f29e7c",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/04-station.png",
+      "sha256": "38963b831d503c9337057b1ae700ad32e6da9381236645d496b26b3cec3d4f97",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/05-complete.png",
+      "sha256": "3bb90014ea97c09339af1059524689d440607d20e6ec392ef18d7d4a5450c71b",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/manifest.json",
+      "sha256": "b5219d69002f7de4c269d9ca915b43a08ba7a313cf836a0d56e4db9529517b5e",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/README.md",
+      "sha256": "494ab75b9672495df476e6ecf11244167ce5595f466ab7bc2b56d723f38a4358",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/wash-listings-1024.zip",
+      "sha256": "e856314991d578df21cc067da8a7cbb67ad8e5e91200f875ca60a4ee5edccd98",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/board.png",
+      "sha256": "018de006c96ec17cd67af88f9409d6fe130aaaeeb71c7a3bacc51b7c947094f5",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/font-verify.txt",
+      "sha256": "aaedcbb180f59234693b38bf83ce372a192298e3f9bc683c0c9ebf208c8a8adb",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/play-20261008-103823.json",
+      "sha256": "a51beed3169c158ca0a898cc182b07b67f56dc3589f063bb63510a0f8c2d6d03",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/play-20261008-104240.json",
+      "sha256": "b64576b917c89f03de605e7fd6501c7982679a1e9ae3531ed32ce0067bdc5138",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/play-20261008-104738.json",
+      "sha256": "2e6207d3710e2a8c034d67cdc842b550c52fbc7068945b94b046bd39e6e843eb",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/selection-verify.txt",
+      "sha256": "a5271f71ee3de8ec065fdfd6031b86b10b2287bcf7a5e5c07397156f7d754f93",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/station.png",
+      "sha256": "9297acaa7b788d611544e519f55bf4c043e888129d4908b77e820f8f06e24c85",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-08/evidence/summary.json",
+      "sha256": "2510d78aa4e1644a4662af14384ab670b44a519e872c025468ca616dbe441b2d",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/01-foam.png",
+      "sha256": "9731d6cab8ad21104802f2a5f8c2c73aa462767b5e6288179a986f18fa06b9c3",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/02-water.png",
+      "sha256": "a2644dd0454b66fd2cb3f0f81b2d91ca2bc70341a1a168e937c2a58792cb598f",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/03-finish.png",
+      "sha256": "909d0059952d5155153c754fa3feb6c4b4604a32f41716db1cfff2c0ebfc78c3",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/04-station.png",
+      "sha256": "8d98abfef3e02505cba77ae94b21b5bdf4280b2fb762125274aaf24e54121425",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/05-complete.png",
+      "sha256": "ade893dc9086e9ce9949648340326681b116e8c7974c803364d158694b0783bc",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/evidence/board.png",
+      "sha256": "d7abbe5f0bc1c1594803c6b3d4b19d2afa34b779ac5bebb673ecc32f204e9694",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11/evidence/station.png",
+      "sha256": "b9597c975c02c9905b59baa9d3bab37226078687498da01fce55f0762826535e",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/01-foam.png",
+      "sha256": "9731d6cab8ad21104802f2a5f8c2c73aa462767b5e6288179a986f18fa06b9c3",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/02-water.png",
+      "sha256": "a245fa415635900bedc53f79de761ebc08c88e7f590973c391173a714f27204d",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/03-finish.png",
+      "sha256": "909d0059952d5155153c754fa3feb6c4b4604a32f41716db1cfff2c0ebfc78c3",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/04-station.png",
+      "sha256": "3e678d8229f7164c12946782ef354fda82473cb799e22831d62a2da4f303f5cb",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/05-complete.png",
+      "sha256": "1f121cc26276042a0a78468c769eddfc89ae9c2128a2fdc5c9846d52241bd73f",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/evidence/board.png",
+      "sha256": "d7abbe5f0bc1c1594803c6b3d4b19d2afa34b779ac5bebb673ecc32f204e9694",
+      "unchanged": true
+    },
+    {
+      "path": "artifacts/wash-listings/2026-10-11-040/evidence/station.png",
+      "sha256": "d5053238c787e2239b267847bd8f64dfd2fb5f55c0ea5c01be62e4b5c7df2cab",
+      "unchanged": true
+    }
+  ],
+  "checks": {
+    "csharpErrors": 0,
+    "sceneDirtyAfter": false,
+    "play": false,
+    "independentRoles": [
+      "U",
+      "D",
+      "M",
+      "X",
+      "P",
+      "V"
+    ],
+    "finalImageRechecks": [
+      "U: water and complete",
+      "V: complete"
+    ],
+    "finalCodeRecheck": "M"
+  },
+  "notTested": [
+    "runtime grip and effects",
+    "current world integration photos",
+    "PCVR/Quest/iOS visuals and performance"
+  ],
+  "warning": "Temporary image font lacks unused underline glyph; caption character preflight passed."
+}

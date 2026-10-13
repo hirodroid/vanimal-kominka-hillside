@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "added": [],
+  "removed": [],
+  "unexpected": [],
+  "counts": {
+    "colliders": 8,
+    "selectors": 4,
+    "backings": 4
+  }
+}
