@@ -3,11 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using VRC.SDKBase;
+using VRC.Economy;
 namespace KominkaHillside
 {
     // IMP-DOG-046 / 047 (2026-10-11): the tabs are the sets = the categories (foam / water / finish / station, then all). Only the
     // items in `order` are listed (dropped and unbuilt items are absent, Q4). A tool that is out here shows outColor; Take is refused
     // only while a tool of the chosen item's own category is held (Q3). Reset answers code 3 when a held tool stayed out (Q2).
+    // IMP-DOG-056 §3 (2026-10-14, minimal default until DES-UI-005): the notice line shows the chosen item's set as this client sees it
+    // (Owned: usable in this instance, no purchase prompt even when someone else bought it / None: the price and [open the purchase page] /
+    // Unknown: checking / still out after its owner left: until the wash ends). The Owner's gate decides; this board only reports it.
+    // Buying is a separate button that opens the Storefront listing; opening it is never taken as a purchase (Store events bring it back).
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WashSelectionBoard : UdonSharpBehaviour
     {
@@ -15,7 +20,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_Language language;
         public string[] languageCodes;
         public string[] words;
-        public int wordCount=46;      // WashPremium/48 / 49 write the scene value (KH_WashSelectionEditor.WordCount)
+        public int wordCount=52;      // WashPremium/48 / 49 / 54 write the scene value (KH_WashSelectionEditor.WordCount)
         public int[] groups;          // by item id: the tab (0 foam / 1 water / 2 finish / 3 station), -1 = not offered
         public int[] order;           // the offered item ids in display order
         public int[] itemWords;       // by item id: the word holding its name (20 + id for the first 17; new items append words)
@@ -30,6 +35,16 @@ namespace KominkaHillside
         public GameObject[] itemRows;
         public AudioSource uiSound;
         public Color normalColor, selectedColor, outColor;
+        // IMP-DOG-056: the complete set's Listing (C-5: the four set Products in one Listing, no Product of its own) and its price, written by
+        // WashPremium/54 from KD_ProductDefinitions.WashAllListing / WashAllCredits; the purchase button (54 builds and wires it, hidden).
+        public string allListingId="";
+        public int allCredits;
+        public Button buyButton;
+        public TextMeshProUGUI buyLabel;
+        // Store display state (KD_ShopItem.Instance* plus StoreContinuing) and the category it belongs to; -1 / -2 = not read yet.
+        public const int StoreContinuing=3;
+        private int _storeState=-1, _storeCategory=-2;
+        private string _storeLanguage="?";
         private int _tab, _page, _chosen=-1, _lang;
         private bool _wasBusy;
         private int _labelKey=-1, _seenRevision=-1;
@@ -64,6 +79,9 @@ namespace KominkaHillside
             }
             if(selection!=null&&selection.revision!=_seenRevision){_seenRevision=selection.revision;RefreshItems();}
             int category=Category(_chosen);
+            // IMP-DOG-056: the set's state through KD_ShopItem's cache (cheap per tick); the line is rewritten only when it changes
+            int store=StoreState(category);
+            if(store!=_storeState||category!=_storeCategory||code!=_storeLanguage){_storeState=store;_storeCategory=category;_storeLanguage=code;ShowStore();}
             bool busy=selection!=null&&category>=0&&category<KH_WashSelection.Categories&&selection._CategoryHeld(category);
             if(!_pending&&Time.time>=_resultUntil){if(busy)status.text=W(5);else if(_wasBusy)status.text=W(40);}_wasBusy=busy;
             if(actionButton!=null)actionButton.interactable=!_pending&&selection!=null&&_chosen>=0&&!busy&&!(category==KH_WashSelection.CategoryBath&&IsOut(_chosen));
@@ -91,10 +109,53 @@ namespace KominkaHillside
             return d.sqrMagnitude>NearMeters*NearMeters;
         }
         public string _Word(int index){return W(index);}
-        string W(int i){int k=_lang*wordCount+i;return words!=null&&k>=0&&k<words.Length?words[k]:"";}
+        string W(int i){int k=_lang*wordCount+i;return words!=null&&i>=0&&i<wordCount&&k<words.Length?words[k]:"";}   // never the next language's word
         int NameWord(int id){return itemWords!=null&&id>=0&&id<itemWords.Length?itemWords[id]:20+id;}
         int Category(int id){return groups!=null&&id>=0&&id<groups.Length?groups[id]:-1;}
-        int ResultWord(int code){return code==KH_WashSelection.ResultApplied?41:code==KH_WashSelection.ResultHeld?5:code==KH_WashSelection.ResultKeptHeld?42:7;}
+        int ResultWord(int code){return code==KH_WashSelection.ResultApplied?41:code==KH_WashSelection.ResultHeld?5:code==KH_WashSelection.ResultKeptHeld?42:code==KH_WashSelection.ResultLocked?48:code==KH_WashSelection.ResultPending?49:7;}
+        /// <summary>IMP-DOG-056: the chosen category's set here (KD_ShopItem.Instance*), StoreContinuing when it is None but its item is still
+        /// out (the owner left; kept until the wash ends), -1 with no category.</summary>
+        int StoreState(int category)
+        {
+            if(selection==null||category<0)return -1;
+            int st=selection._SetState(category);
+            if(st==KominkaDogRun.KD_ShopItem.InstanceNone&&selection._RevertPendingFor(category))return StoreContinuing;
+            return st;
+        }
+        /// <summary>The notice line and the purchase button from the cached state (no Store call: _Refresh and the Edit-mode menus use it).
+        /// A state read for another category (a tab or item just changed) shows "checking" until the next tick.</summary>
+        void ShowStore()
+        {
+            if(notice==null)return;
+            int c=Category(_chosen);
+            int st=c>=0&&c==_storeCategory?_storeState:-1;
+            if(c<0)notice.text=W(8);
+            else if(st==StoreContinuing)notice.text=W(50)+"  ·  "+W(8);
+            else if(st==KominkaDogRun.KD_ShopItem.InstanceOwned)notice.text=W(47)+"  ·  "+W(8);
+            else if(st==KominkaDogRun.KD_ShopItem.InstanceNone)notice.text=Price(c)+"  ·  "+W(48);
+            else notice.text=W(49)+"  ·  "+W(8);
+            bool buy=st==KominkaDogRun.KD_ShopItem.InstanceNone||st==StoreContinuing;   // Unknown: never pushed to the purchase page
+            if(buyButton!=null&&buyButton.gameObject.activeSelf!=buy)buyButton.gameObject.SetActive(buy);
+            if(buyLabel!=null)buyLabel.text=W(46);
+        }
+        /// <summary>The price the purchase button leads to: the complete set on the complete-set tab, else the chosen item's set.</summary>
+        string Price(int c)
+        {
+            int credits=0;
+            if(_tab==4)credits=allCredits;
+            else if(selection!=null&&selection.setItems!=null&&c>=0&&c<selection.setItems.Length&&selection.setItems[c]!=null)credits=selection.setItems[c].ceCredits;
+            return credits>0?credits.ToString()+" "+W(51):"";
+        }
+        /// <summary>IMP-DOG-056: opens the Storefront page of this tab's set (the complete set's Listing on its tab). Local only; ownership comes
+        /// back through the Store events (KD_ShopItem / KH_WashSelection), never from this press.</summary>
+        public void _Buy()
+        {
+            string id="";
+            if(_tab==4)id=allListingId;
+            else if(selection!=null&&selection.setItems!=null&&_tab>=0&&_tab<selection.setItems.Length&&selection.setItems[_tab]!=null)id=selection.setItems[_tab].ceListingId;
+            if(id==null||id.Length==0)return;
+            Click();Store.OpenListing(id);Poke();
+        }
         bool IsOut(int id){int c=Category(id);return selection!=null&&c>=0&&selection._Selected(c)==id;}
         bool Listed(int id){int g=Category(id);return g>=0&&(_tab==4||g==_tab);}
         public void _Tab0(){Tab(0);}public void _Tab1(){Tab(1);}public void _Tab2(){Tab(2);}public void _Tab3(){Tab(3);}public void _Tab4(){Tab(4);}
@@ -108,7 +169,7 @@ namespace KominkaHillside
         public void _Refresh()
         {
             if(title==null||groups==null||order==null)return;
-            title.text=W(0);setTitle.text=W(10+_tab);description.text=W(15+_tab);notice.text=W(9)+"  ·  "+W(8);resetLabel.text=W(3);nextLabel.text=W(39);
+            title.text=W(0);setTitle.text=W(10+_tab);description.text=W(15+_tab);resetLabel.text=W(3);nextLabel.text=W(39);
             if(!_pending)status.text=W(40);
             hero.texture=setPhotos[_tab];
             for(int i=0;i<5;i++){setLabels[i].text=W(10+i);setButtons[i].color=i==_tab?selectedColor:normalColor;}
@@ -127,6 +188,7 @@ namespace KominkaHillside
             // a hidden row drops its photo too (no texture of an item that is not listed stays referenced in the scene)
             for(int s=0;s<6;s++){itemRows[s].SetActive(s<shown);if(s>=shown)itemImages[s].texture=null;}
             RefreshItems();
+            ShowStore();   // IMP-DOG-056: the notice line (was W(9) "all available" + W(8)) follows the chosen item's set
         }
         // The out marks and the action label (also on a selection change: it must not overwrite a result in the status line).
         void RefreshItems()

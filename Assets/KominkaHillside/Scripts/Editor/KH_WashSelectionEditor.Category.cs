@@ -19,7 +19,10 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  // 2.0 cm, inside the tray by 1.6 cm (left, mitt) and 1.0 cm (right, towel). 44 prints the measured footprints; adjust here, then 48.
  public static readonly Vector3[] HomeLocal={new Vector3(-1.25f,.82f,-.04f),new Vector3(-1.07f,.82f,-.04f),new Vector3(-.785f,.82f,-.04f)};
  public static readonly Vector3 TrayCentre=new Vector3(-.975f,.82f,-.04f),TrayLocal=new Vector3(-.975f,.785f,.03f),TrayScale=new Vector3(.73f,.03f,.42f),PostLocal=new Vector3(-.975f,.38f,.03f);
- public const int WordCount=46;                                      // 42 + word 42 "held tools stay out" (Q2) + 43..45 the names of items 17..19
+ // 42 + word 42 "held tools stay out" (Q2) + 43..45 the names of items 17..19 + 46..51 the purchase words of IMP-DOG-056 (46 open the purchase
+ // page, 47 usable in this instance, 48 purchase needed here (Locked), 49 checking purchases (Pending), 50 usable until this wash ends, 51 the
+ // credits suffix "C"). 48 / 49 / 54 write words + wordCount to the boards; 44 checks 13 x WordCount.
+ public const int WordCount=52;
  // By item id (same length as Names): the word holding its name. Explicit, not 20 + id: words 37.. are other texts, so a new item
  // (id 17+) appends its name to every language in words.json (index WordCount, then WordCount += 1) and that index here.
  public static readonly int[] ItemWords={20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,43,44,45};   // 17 WaterPistol, 18 Hose, 19 PoolBath: AI-written names (13 languages)
@@ -226,6 +229,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   check(sel.freeTableRenderers!=null&&sel.freeTableRenderers.All(r=>r!=null&&!r.name.StartsWith("Slat_")&&!sel.models.Where(m=>m!=null).Any(m=>r.transform.IsChildOf(m.transform)))&&sel.freeTableRenderers.Length>0,"freeTableRenderers "+st+" = ["+(sel.freeTableRenderers==null?"null":string.Join(", ",sel.freeTableRenderers.Select(r=>r==null?"null":r.name)))+"] (no slat, no premium model)");
   if(platform!=null)check(slats.All(r=>!r.enabled),"old slats hidden under ImportedPlatform "+st+" ("+slats.Count(r=>r.enabled)+" / "+slats.Length+" enabled)");
   var dryer=At(sel.itemSprays,7);var dr=dryer!=null?dryer.GetComponent<ParticleSystemRenderer>():null;
+  VerifyStoreWiring(sel,check,log);   // IMP-DOG-056 (Store.cs): setItems / reset / the board's complete-set Listing and purchase button (54)
   check(dr!=null&&dr.renderMode==ParticleSystemRenderMode.Stretch&&Mathf.Abs(dryer.main.startSpeed.constant-DryerSpeed)<1e-4f,"dryer wind streaks "+st+" (mode "+(dr==null?"-":dr.renderMode.ToString())+", speed "+(dryer==null?"-":dryer.main.startSpeed.constant.ToString("F2"))+")");
   foreach(var ps in sel.itemSprays.Where(x=>x!=null))check((ps.collision.collidesWith.value&(1<<22))==0,"spray "+ps.transform.parent.name+"/"+ps.name+" collidesWith leaves out floor 22 "+st+" (mask "+ps.collision.collidesWith.value+")");
  }
@@ -233,6 +237,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  /// other categories while a tool is held, Q2 reset keeps held tools, held model retained until put down. Restores everything.</summary>
  static void VerifyCategoryLogic(KH_WashSelection sel,Action<bool,string> check,StringBuilder log)
  {
+  const int Own=KominkaDogRun.KD_ShopItem.InstanceOwned;   // IMP-DOG-056: these Q1-Q3 checks run with the set owned (the gate: VerifyStoreLogic)
   string st=sel.transform.parent.name;int f0=sel.selectedFoam,w0=sel.selectedWater,n0=sel.selectedFinish,b0=sel.selectedBath,r0=sel.revision;var held=new int[sel.slots.Length];for(int s=0;s<held.Length;s++)held[s]=sel.slots[s].debugHeldOverride;
   var recv=typeof(KH_WashSelection).GetField("_receivedState",BindingFlags.Instance|BindingFlags.NonPublic);
   Func<string> state=()=>"foam="+sel.selectedFoam+" water="+sel.selectedWater+" finish="+sel.selectedFinish+" bath="+sel.selectedBath+" rev="+sel.revision;
@@ -240,38 +245,39 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   {
    ResetApplyState(sel);sel.selectedFoam=sel.selectedWater=sel.selectedFinish=sel.selectedBath=-1;sel._Apply(false);
    // Q1: one item per category, all three out together, each on its own pickup with its own nozzle
-   foreach(int item in new[]{0,6,7}){int code=sel._Decide(item,sel.revision);sel.revision++;sel._Apply(false);check(code==0,"decide "+Names[item]+" -> 0 (actual "+code+", "+state()+")");}
+   foreach(int item in new[]{0,6,7}){int code=sel._Decide(item,sel.revision,Own);sel.revision++;sel._Apply(false);check(code==0,"decide "+Names[item]+" -> 0 (actual "+code+", "+state()+")");}
    var on=Enumerable.Range(0,sel.pickups.Length).Where(s=>sel.pickups[s].pickupable).ToArray();
    check(on.SequenceEqual(new[]{0,2,4})&&sel.models[0].activeSelf&&sel.models[6].activeSelf&&sel.models[7].activeSelf,"Q1 foam + water + finish out at once: pickups ["+string.Join(",",on)+"] (want 0,2,4)");
    check(sel.slots[0].nozzle==sel.nozzleAnchors[0]&&sel.slots[2].nozzle==sel.nozzleAnchors[6]&&sel.slots[4].nozzle==sel.nozzleAnchors[7]&&sel.slots[4].spray==sel.itemSprays[7],"each out slot carries its item's nozzle / spray");
    check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun==sel.gunHolds[0]&&sel.pickups[2].orientation==VRC_Pickup.PickupOrientation.Grip&&sel.pickups[2].ExactGrip==sel.gripAnchors[6],"hold per item: FoamCannon Gun / WateringCan Grip (actual "+sel.pickups[0].orientation+" / "+sel.pickups[2].orientation+")");
    // IMP-DOG-049: the water slot takes each water item's hold, nozzle, spray, input and reach (pistol / hose Gun, back to the can Grip)
-   foreach(int item in new[]{WaterPistolId,HoseId,6}){int code=sel._Decide(item,sel.revision);sel.revision++;sel._Apply(false);var pu=sel.pickups[Slots[item]];var t=sel.slots[Slots[item]];bool gun=sel.gunHolds[item]!=null;
+   foreach(int item in new[]{WaterPistolId,HoseId,6}){int code=sel._Decide(item,sel.revision,Own);sel.revision++;sel._Apply(false);var pu=sel.pickups[Slots[item]];var t=sel.slots[Slots[item]];bool gun=sel.gunHolds[item]!=null;
     check(code==0&&sel.selectedWater==item&&sel.models[item].activeSelf&&pu.pickupable&&t.nozzle==sel.nozzleAnchors[item]&&t.spray==sel.itemSprays[item]&&t.pulseSeconds==sel.pulseDurations[item]&&Mathf.Abs(t.sprayRange-sel.sprayRanges[item])<1e-6f&&pu.orientation==(gun?VRC_Pickup.PickupOrientation.Gun:VRC_Pickup.PickupOrientation.Grip)&&(gun?pu.ExactGun==sel.gunHolds[item]:pu.ExactGrip==sel.gripAnchors[item])&&sel.selectedFoam==0&&sel.selectedFinish==7,
      "water swap -> "+Names[item]+": slot"+Slots[item]+" "+pu.orientation+", pulse "+t.pulseSeconds+", range "+t.sprayRange+" m, foam / finish stay ("+state()+")");}
    VerifyCanTilt(sel,check,log);   // IMP-DOG-049: the can is out on the water slot now (the loop ends on it): its tilt-to-pour bodies (Water.cs)
    // swap inside one category leaves the others
-   int c9=sel._Decide(9,sel.revision);sel.revision++;sel._Apply(false);check(c9==0&&sel.selectedFoam==9&&sel.selectedWater==6&&sel.selectedFinish==7&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable&&sel.pickups[2].pickupable,"foam swap to PawMitt leaves water / finish ("+state()+")");
+   int c9=sel._Decide(9,sel.revision,Own);sel.revision++;sel._Apply(false);check(c9==0&&sel.selectedFoam==9&&sel.selectedWater==6&&sel.selectedFinish==7&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable&&sel.pickups[2].pickupable,"foam swap to PawMitt leaves water / finish ("+state()+")");
    // Q3: the water slot held -> water requests refused, the platform and the other categories accepted
    sel.slots[2].debugHeldOverride=1;
-   int cw=sel._Decide(6,sel.revision);check(cw==KH_WashSelection.ResultHeld&&sel.selectedWater==6,"held water: water request -> 1 (actual "+cw+")");
-   int cb=sel._Decide(13,sel.revision);sel.revision++;sel._Apply(false);check(cb==0&&sel.selectedBath==13&&sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled),"Q3 held water: platform -> Hinoki accepted and shown, free table hidden (code "+cb+", "+state()+")");
+   int cw=sel._Decide(6,sel.revision,Own);check(cw==KH_WashSelection.ResultHeld&&sel.selectedWater==6,"held water: water request -> 1 (actual "+cw+")");
+   int cb=sel._Decide(13,sel.revision,Own);sel.revision++;sel._Apply(false);check(cb==0&&sel.selectedBath==13&&sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled),"Q3 held water: platform -> Hinoki accepted and shown, free table hidden (code "+cb+", "+state()+")");
    // IMP-DOG-044: the pool as the platform (support mount depth .036), then back to the hinoki
-   int cp=sel._Decide(PoolBathId,sel.revision);sel.revision++;sel._Apply(false);check(cp==0&&sel.selectedBath==PoolBathId&&sel.models[PoolBathId].activeSelf&&!sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled)&&sel.support!=null&&Mathf.Abs(sel.support.mountBelowCollider-.036f)<1e-6f,"held water: platform -> PoolBath shown, hinoki hidden, support mount "+(sel.support==null?"-":sel.support.mountBelowCollider.ToString("F3"))+" ("+state()+")");
-   sel._Decide(13,sel.revision);sel.revision++;sel._Apply(false);
-   int cf=sel._Decide(0,sel.revision);sel.revision++;sel._Apply(false);check(cf==0&&sel.selectedFoam==0&&sel.models[0].activeSelf,"held water: foam -> FoamCannon accepted ("+state()+")");
-   int stale=sel._Decide(8,sel.revision-1);check(stale==KH_WashSelection.ResultStale,"stale revision -> 2 (actual "+stale+")");
+   int cp=sel._Decide(PoolBathId,sel.revision,Own);sel.revision++;sel._Apply(false);check(cp==0&&sel.selectedBath==PoolBathId&&sel.models[PoolBathId].activeSelf&&!sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled)&&sel.support!=null&&Mathf.Abs(sel.support.mountBelowCollider-.036f)<1e-6f,"held water: platform -> PoolBath shown, hinoki hidden, support mount "+(sel.support==null?"-":sel.support.mountBelowCollider.ToString("F3"))+" ("+state()+")");
+   sel._Decide(13,sel.revision,Own);sel.revision++;sel._Apply(false);
+   int cf=sel._Decide(0,sel.revision,Own);sel.revision++;sel._Apply(false);check(cf==0&&sel.selectedFoam==0&&sel.models[0].activeSelf,"held water: foam -> FoamCannon accepted ("+state()+")");
+   int stale=sel._Decide(8,sel.revision-1,Own);check(stale==KH_WashSelection.ResultStale,"stale revision -> 2 (actual "+stale+")");
    // Q2: reset keeps the held category, clears the rest and the platform
-   int cr=sel._Decide(-1,sel.revision);sel.revision++;sel._Apply(false);
+   int cr=sel._Decide(-1,sel.revision,Own);sel.revision++;sel._Apply(false);
    check(cr==KH_WashSelection.ResultKeptHeld&&sel.selectedWater==6&&sel.selectedFoam==-1&&sel.selectedFinish==-1&&sel.selectedBath==-1&&sel.models[6].activeSelf&&!sel.models[0].activeSelf&&!sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>r.enabled),"Q2 reset with water held -> 3, water stays, others and platform back to free ("+state()+")");
    // a held model stays until put down (the race after the owner's decision), the platform still changes (Q3 on the display side)
-   sel.slots[2].debugHeldOverride=0;sel._Decide(-1,sel.revision);sel.revision++;sel._Apply(false);
-   sel._Decide(0,sel.revision);sel.revision++;sel._Apply(false);recv.SetValue(sel,true);sel.slots[0].debugHeldOverride=1;
+   sel.slots[2].debugHeldOverride=0;sel._Decide(-1,sel.revision,Own);sel.revision++;sel._Apply(false);
+   sel._Decide(0,sel.revision,Own);sel.revision++;sel._Apply(false);recv.SetValue(sel,true);sel.slots[0].debugHeldOverride=1;
    sel.selectedFoam=9;sel.selectedBath=13;sel.revision++;sel._Apply(false);
    check(sel.models[0].activeSelf&&!sel.models[9].activeSelf&&sel.models[13].activeSelf,"held FoamCannon kept while foam -> PawMitt waits; platform applied meanwhile");
    sel.slots[0].debugHeldOverride=0;sel._Apply(false);check(!sel.models[0].activeSelf&&sel.models[9].activeSelf&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable,"put down -> PawMitt replaces it");
-   int all=sel._Decide(-1,sel.revision);check(all==0,"reset with nothing held -> 0 (actual "+all+")");
+   int all=sel._Decide(-1,sel.revision,Own);check(all==0,"reset with nothing held -> 0 (actual "+all+")");
    check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun!=null&&sel.pickups[0].ExactGun.name==FoamHoldName,"FoamCannon Gun hold survives the category cycle");
+   VerifyStoreLogic(sel,check,log);   // IMP-DOG-056 (Store.cs): _Decide x 3 set states, _StationIdle branches, the board's store lines
    log.AppendLine("logic "+st+" (Edit mode, proxy, _Decide/_Apply shared with runtime): "+state());
   }
   finally

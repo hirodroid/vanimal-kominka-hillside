@@ -48,7 +48,13 @@
         "持っている道具は、置いてから戻せます",
         "水鉄砲",
         "ホース",
-        "プール"
+        "プール",
+        "購入画面をひらく",
+        "このインスタンスで利用できます",
+        "この洗い場で使うには購入が必要です",
+        "購入情報を確認しています…",
+        "今の洗いが終わるまで利用できます",
+        "C"
       ]
     },
     {
@@ -99,7 +105,13 @@
         "Tools in hand stay out; put them down to reset",
         "Water pistol",
         "Hose",
-        "Pool"
+        "Pool",
+        "Open store page",
+        "Available in this instance",
+        "Purchase needed to use at this station",
+        "Checking purchases…",
+        "Available until this wash ends",
+        "C"
       ]
     },
     {
@@ -150,7 +162,13 @@
         "들고 있는 도구는 내려놓은 뒤 되돌릴 수 있어요",
         "물총",
         "호스",
-        "물놀이 풀"
+        "물놀이 풀",
+        "구매 화면 열기",
+        "이 인스턴스에서 사용할 수 있어요",
+        "이 세척대에서 쓰려면 구매가 필요해요",
+        "구매 정보를 확인하는 중…",
+        "지금 세척이 끝날 때까지 사용할 수 있어요",
+        "C"
       ]
     },
     {
@@ -201,7 +219,13 @@
         "手中的工具放下后才能恢复",
         "水枪",
         "水管",
-        "水池"
+        "水池",
+        "打开购买页面",
+        "此实例中可用",
+        "在此清洗台使用需要购买",
+        "正在确认购买信息…",
+        "可使用到本次清洗结束",
+        "C"
       ]
     },
     {
@@ -252,7 +276,13 @@
         "手中的工具放下後才能恢復",
         "水槍",
         "水喉",
-        "水池"
+        "水池",
+        "開啟購買頁面",
+        "此實例中可用",
+        "在此清洗台使用需要購買",
+        "正在確認購買資訊…",
+        "可使用至本次清洗結束",
+        "C"
       ]
     },
     {
@@ -303,7 +333,13 @@
         "Инструменты в руках остаются; положите их, чтобы сбросить",
         "Водяной пистолет",
         "Шланг",
-        "Бассейн"
+        "Бассейн",
+        "Страница покупки",
+        "Доступно в этом инстансе",
+        "Для этой мойки нужна покупка",
+        "Проверяем покупки…",
+        "Доступно до конца этого мытья",
+        "C"
       ]
     },
     {
@@ -354,7 +390,13 @@
         "Інструменти в руках залишаються; покладіть їх, щоб скинути",
         "Водяний пістолет",
         "Шланг",
-        "Басейн"
+        "Басейн",
+        "Сторінка покупки",
+        "Доступно в цьому інстансі",
+        "Для цієї мийки потрібна покупка",
+        "Перевіряємо покупки…",
+        "Доступно до кінця цього миття",
+        "C"
       ]
     },
     {
@@ -405,7 +447,13 @@
         "Gehaltene Werkzeuge bleiben; zum Zurücksetzen ablegen",
         "Wasserpistole",
         "Schlauch",
-        "Planschbecken"
+        "Planschbecken",
+        "Kaufseite öffnen",
+        "In dieser Instanz verfügbar",
+        "Für diesen Waschplatz ist ein Kauf nötig",
+        "Käufe werden geprüft…",
+        "Verfügbar bis zum Ende dieser Wäsche",
+        "C"
       ]
     },
     {
@@ -456,7 +504,13 @@
         "Las herramientas en mano se quedan; suéltalas para restablecer",
         "Pistola de agua",
         "Manguera",
-        "Piscina"
+        "Piscina",
+        "Ir a la tienda",
+        "Disponible en esta instancia",
+        "Se necesita una compra para este lavadero",
+        "Comprobando compras…",
+        "Disponible hasta que termine este lavado",
+        "C"
       ]
     },
     {
@@ -507,7 +561,13 @@
         "Les outils en main restent ; posez-les pour réinitialiser",
         "Pistolet à eau",
         "Tuyau",
-        "Piscine"
+        "Piscine",
+        "Voir la boutique",
+        "Disponible dans cette instance",
+        "Un achat est nécessaire pour ce poste",
+        "Vérification des achats…",
+        "Disponible jusqu'à la fin de ce lavage",
+        "C"
       ]
     },
     {
@@ -558,7 +618,13 @@
         "Ferramentas na mão ficam; solte-as para redefinir",
         "Pistola d'água",
         "Mangueira",
-        "Piscina"
+        "Piscina",
+        "Abrir a loja",
+        "Disponível nesta instância",
+        "É preciso comprar para usar neste lavatório",
+        "Verificando compras…",
+        "Disponível até o fim desta lavagem",
+        "C"
       ]
     },
     {
@@ -609,7 +675,13 @@
         "Gli strumenti in mano restano; posali per ripristinare",
         "Pistola ad acqua",
         "Canna dell'acqua",
-        "Piscina"
+        "Piscina",
+        "Apri il negozio",
+        "Disponibile in questa istanza",
+        "Serve un acquisto per usarlo in questo lavaggio",
+        "Verifica degli acquisti…",
+        "Disponibile fino alla fine di questo lavaggio",
+        "C"
       ]
     },
     {
@@ -660,7 +732,13 @@
         "Narzędzia w dłoni zostają; odłóż je, by przywrócić",
         "Pistolet na wodę",
         "Wąż",
-        "Basenik"
+        "Basenik",
+        "Otwórz stronę zakupu",
+        "Dostępne w tej instancji",
+        "Do użycia w tej myjni potrzebny jest zakup",
+        "Sprawdzanie zakupów…",
+        "Dostępne do końca tego mycia",
+        "C"
       ]
     }
   ]

@@ -219,6 +219,11 @@ namespace KominkaHillside
         private float _prevHolderUntil = -100f;
         private int _ownerSinceId = -1;
         private float _ownerSinceAt = -100f;
+        // IMP-DOG-056 (Codex review 2026-10-14): the last Time.time this client saw the tool held (TrackHolder 2 Hz when idle / every frame
+        // when awake, OnPickup / OnDrop, _HeldNow). KH_WashSelection._StationIdle counts its 60 s from the latest of these, so a use between
+        // the Owner's 2 s polls is not missed. Local, not synced.
+        private float _lastHeldSeen = -1000f;
+        public float _LastHeldAt() { return _lastHeldSeen; }
 
         // Every client, every frame (and on demand): who holds the tool, and who held it last.
         void TrackHolder()
@@ -229,6 +234,7 @@ namespace KominkaHillside
                 VRCPlayerApi p = _pickup.currentPlayer;
                 if (Utilities.IsValid(p)) id = p.playerId;
             }
+            if (id >= 0 || _held) _lastHeldSeen = Time.time;   // IMP-DOG-056
             if (id == _holderId) return;
             if (_holderId >= 0)
             {
@@ -268,6 +274,7 @@ namespace KominkaHillside
         public override void OnPickup()
         {
             _held = true;
+            _lastHeldSeen = Time.time;            // IMP-DOG-056
             _useHeld = false;
             _sprayOn = false;                     // picked up: always starts off
             RestModel();                          // the can's Desktop tilt starts upright
@@ -280,6 +287,7 @@ namespace KominkaHillside
         public override void OnDrop()
         {
             _held = false;
+            _lastHeldSeen = Time.time;            // IMP-DOG-056: held until now
             _useHeld = false;
             _sprayOn = false;
             RestModel();                          // dropped: the frame loop stops, so no ease back (snap upright)
@@ -499,7 +507,7 @@ namespace KominkaHillside
         }
 
         /// <summary>Held as far as this client can see (the reset skips it; the harness reads it).</summary>
-        public bool _HeldNow() { TrackHolder(); return HeldForReturn(); }   // IMP-DOG-034 B2: TrackHolder (idle Update is 2 Hz)
+        public bool _HeldNow() { TrackHolder(); bool h = HeldForReturn(); if (h) _lastHeldSeen = Time.time; return h; }   // IMP-DOG-034 B2: TrackHolder (idle Update is 2 Hz)
 
         /// <summary>Harness only (Course/100 W-tool-spray): the return itself, now, even while debugHeldOverride plays a
         /// holder, so the spray stop on the return path is seen apart from the Owner's clean-up of an orphaned spray.

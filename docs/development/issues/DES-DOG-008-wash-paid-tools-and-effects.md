@@ -168,4 +168,4 @@ C#/Udonコンパイル、4か所×5姿勢の接点/bounds、保存再読込のba
 
 2026-10-11: 9品の設計案 (046・047・049・044、ユーザーが決めること Q1〜Q14) を [docs/plans/2026-10-11-wash-items-design.md](../../plans/2026-10-11-wash-items-design.md) に作成。
 
-2026-10-14: 購入画面・商品 ID・所有判定 (IMP-DOG-043 の「次工程」) を [IMP-DOG-056](IMP-DOG-056-wash-premium-purchase.md) に起票。Storefront の ID の置き場として [CE 商品台帳](../design/ce-listings.md) を作成 (§2 C に 5 Listing の空欄、§4-2 に全部入りの作り方)。価格・構成・共有条件は本票のまま。コード・シーン・Storefront は未変更。
+2026-10-14: 購入画面・商品 ID・所有判定 (IMP-DOG-043 の「次工程」) を [IMP-DOG-056](IMP-DOG-056-wash-premium-purchase.md) に起票。Storefront の ID の置き場として [CE 商品台帳](../design/ce-listings.md) を作成 (§2 C に 5 Listing の空欄、§4-2 に全部入りの作り方)。価格・構成・共有条件は本票のまま。コード・シーン・Storefront は未変更。同日に 056 を実装 (review)。**「洗いの終わり」の推奨 (ユーザー確認待ち)**: 洗い場単位で「その洗い場の道具 (無料 + 追加) を誰も持っていない、台に犬が呼ばれていない、その状態が 60 秒続いた」(056 §2.3)。買った人が居る間は戻さない。

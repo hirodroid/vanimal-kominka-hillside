@@ -294,7 +294,7 @@ Network IDの保全：unknown
 各洗い場のボード右に900×680のWorldSpace Canvasを0.001倍で配置。Default layer、同一GOにVRCUiShape・BoxCollider・GraphicRaycaster。深緑の背景、生成りの文字と操作面、選択中は淡い緑。セット写真と説明、道具写真6枠、取り出す／外観に適用／基本に戻すで操作する。全部入りはページ送り。
 
 - 閲覧タブ・選択中の写真・言語は個人状態。確定した道具・台・アヒルは**その洗い場だけ**の共有状態。他の3洗い場は変えない。
-- 現在はすべて購入なしで利用可能。購入ボタン・価格・商品ID・所有判定は後工程。使用中の追加道具を置くまでは切替を止め、理由を状態欄に表示。
+- 2026-10-14 ([IMP-DOG-056](development/issues/IMP-DOG-056-wash-premium-purchase.md)): Credits 商品の門を接続。所有はインスタンス単位 (誰か 1 人が所有すれば全員が選べる。Unknown / Owned / None、Store が正本、台帳に書かない)、Owner が要求時に判定 (Pending / Locked)。所有者が全員退室したら、洗い場の道具を誰も持たず台に犬が居ない状態が 60 秒続いた後に無料へ戻す。ボードは状態行 (利用できます / 価格 + 購入が必要 / 確認中 / 洗いが終わるまで) と [購入画面をひらく] (`Store.OpenListing`)。ID は [CE 商品台帳](development/design/ce-listings.md) §2 C。実機 2 人・実課金は未確認。使用中の追加道具を置くまでは切替を止め、理由を状態欄に表示 (従来どおり)。
 - 13言語（ja/en/ru/uk/ko/de/zh-cn/es/fr/pt-br/it/pl/zh-hk）。正本は Data/WashPremium/words.json、既存KD_Languageへ追従。2026-10-13 [IMP-UI-007](development/issues/IMP-UI-007-wash-font-fallback.md)で専用CareFontを撤回し、既存KD_NotoSerif SDFとVRChatクライアントのフォールバックへ統一。字形を自動追加しない。字形・枠内収まりは全言語・5タブ・状態文言を実機で確認する。商品画像の撮影だけは既存TTFからキャプションの必要文字を一時Static化し、撮影後に破棄する（新規の配布フォントなし）。
 - 状態表示：選択案内／反映中／保持中／適用完了／再試行。Ownerの応答は要求者IDを確認するローカル結果通知。アヒルは明示ON/OFF。途中参加の初期復元では出現演出を鳴らさない。
 - [実装・局所テスト・実機確認待ち](development/issues/IMP-DOG-043-wash-premium-selection.md)、[写真・画像仕様](../artifacts/wash-listings/2026-10-08/README.md)。

@@ -26,8 +26,10 @@ namespace KominkaDogRun.Editor
             public bool IsCE { get { return !string.IsNullOrEmpty(ceListingId); } }
         }
         // 裏山改変 (IMP-DOG-050): 末尾に collar (首輪とリードのおそろいセット)。Categories と Defaults は添字で対応する
-        public static readonly string[] Categories = { "toy", "petfx", "treat", "live", "accessory", "experience", "action", "collar" };
-        public static readonly string[] Defaults = { "toy.basic_ball", "petfx.heart", "treat.bone_biscuit", "", "accessory.bandana", "", "", "collar.basic" };
+        // 裏山改変 (IMP-DOG-056): 末尾に wash (洗い場の追加道具のセット)。既定は "" (live と同じ: 初期品なし)。
+        // 売り場は洗い場のボード。手元メニューには出さない
+        public static readonly string[] Categories = { "toy", "petfx", "treat", "live", "accessory", "experience", "action", "collar", "wash" };
+        public static readonly string[] Defaults = { "toy.basic_ball", "petfx.heart", "treat.bone_biscuit", "", "accessory.bandana", "", "", "collar.basic", "" };
 
         // ---- CE の ID (ce-listings.md §2 と同じ値。2026-09-15 ユーザーが Storefront で作成。1〜6 の Listing は 09-16 に Permanent で作り直し) ----
         const string PlushProduct = "prod_de49c223-4170-4518-b0f3-4c69d6528339", PlushListing = "prod_bbd71ab8-65e9-42ab-9dec-7e566d43d007";
@@ -38,6 +40,15 @@ namespace KominkaDogRun.Editor
         const string PumpkinProduct = "prod_e98d15e4-ccdc-45f2-83a3-21598512a430", PumpkinListing = "prod_de900221-4711-403b-bd4a-1a93e6c5e195";
         // トレーナーは Subscription。Product は Listing に含めた「udon」種別の ID (Role 商品の ID を入れるとアップロードが Unrecognized udon product ID で失敗する)。Listing は Storefront 表記「Subscription ID」
         const string TrainerProduct = "prod_8c044b21-35f2-4ebb-80f9-e4f685f7bf9f", TrainerListing = "prod_81a5ac65-bd3d-40ad-8edb-2fc7d13b1cee";
+        // 裏山改変 (IMP-DOG-056): 洗い場の追加道具 (裏山専用、ce-listings.md §2 C-1〜C-5。2026-10-14 ユーザーが Storefront で作成)。
+        // 洗い場の検査 (KH_WashSelection 側) が台帳と突き合わせるので public。全部入り (C-5) は C-1〜C-4 の 4 Product を含める Listing だけで、
+        // Product もアセットも行も持たない (所有はセットごとの Product で判定。ce-listings §4-2 案 1)
+        public const string WashFoamProduct = "prod_a538fd94-bd1e-49ab-89bc-3a34d3f89808", WashFoamListing = "prod_0b367ec3-d288-4434-9097-93949dd1ec15";
+        public const string WashWaterProduct = "prod_fd26e530-34dc-4eee-a186-20d1573987f3", WashWaterListing = "prod_e0938881-138f-4c44-b7df-08bb969b76da";
+        public const string WashFinishProduct = "prod_c23c31d2-ef0e-45b4-ab3f-f5abf5f041f8", WashFinishListing = "prod_f78351ab-9cdc-4a43-997d-073fea2c2381";
+        public const string WashStationProduct = "prod_396c89c7-3bd9-46d3-93af-28983d95feb7", WashStationListing = "prod_0632ffa5-a39e-4459-8ca3-5648c1d43356";
+        public const string WashAllListing = "prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e";
+        public const int WashAllCredits = 1500;
 
         public static readonly Row[] All = {
             new Row("action.belly_up", "action", "KD_ShopItem_Action_BellyUp", 30, 0, 0, 0, ""),
@@ -108,7 +119,19 @@ namespace KominkaDogRun.Editor
             new Row("collar.check", "collar", "KD_ShopItem_Collar_Check", 30, 0, 0, 0, ""),
             new Row("collar.momiji", "collar", "KD_ShopItem_Collar_Momiji", 30, 0, 0, 0, ""),
             new Row("collar.leather_brass", "collar", "KD_ShopItem_Collar_LeatherBrass", 50, 0, 0, 0, ""),
+            // 裏山改変 (IMP-DOG-056、DES-DOG-008): 洗い場の追加道具 4 セット (各 500C)。末尾に足す (既存行の並びを動かさない)。
+            // 1 人が買えば同じインスタンスの全員が使える (判定は KD_ShopItem.CeInstanceOwnership、門は KH_WashSelection)。
+            // 売り場は洗い場のボード。手元メニューには出さない。全部入り (1500C) は Listing だけなので行を持たない (WashAllListing)
+            new Row("wash.foam_set", "wash", "KD_ShopItem_Wash_Foam", 0, 0, 0, 0, WashFoamListing, WashFoamProduct, 500, "KD_Product_WashFoam"),
+            new Row("wash.water_set", "wash", "KD_ShopItem_Wash_Water", 0, 0, 0, 0, WashWaterListing, WashWaterProduct, 500, "KD_Product_WashWater"),
+            new Row("wash.finish_set", "wash", "KD_ShopItem_Wash_Finish", 0, 0, 0, 0, WashFinishListing, WashFinishProduct, 500, "KD_Product_WashFinish"),
+            new Row("wash.station_set", "wash", "KD_ShopItem_Wash_Station", 0, 0, 0, 0, WashStationListing, WashStationProduct, 500, "KD_Product_WashStation"),
         };
+        // 裏山改変 (IMP-DOG-056): 洗い場のセット。添字 = 洗い場の分類 (0 泡 / 1 水 / 2 仕上げ / 3 洗い場)。
+        // KH_WashSelection.setItems の並びと Setup / 検査がこの 2 つを読む (Validate が All の行と突き合わせる)
+        public const string WashCategory = "wash";
+        public static readonly string[] WashSetKeys = { "wash.foam_set", "wash.water_set", "wash.finish_set", "wash.station_set" };
+        public static readonly string[] WashSetSceneNames = { "KD_ShopItem_Wash_Foam", "KD_ShopItem_Wash_Water", "KD_ShopItem_Wash_Finish", "KD_ShopItem_Wash_Station" };
         public static Row Get(string key)
         { var row=Array.Find(All,x=>x.key==key); if(row==null) throw new InvalidOperationException("Unknown product: "+key); return row; }
         public static string SceneName(string key) { return Get(key).sceneName; }
@@ -179,6 +202,21 @@ namespace KominkaDogRun.Editor
             }
             // 1 つの Product ID は 1 つのアセット (別名で二重に作らない)
             if(assets.Values.Select(v=>v.ceProductId).Distinct().Count()!=assets.Count) throw new InvalidOperationException("One product id maps to two CE assets");
+            // 裏山改変 (IMP-DOG-056): 全部入りは Listing だけ。形式が prod_ で、どの CE 行の Listing / Product とも別 (別 Listing を開く入口)
+            if(!ProdId.IsMatch(WashAllListing) || rows.Any(r=>r.IsCE && (r.ceListingId==WashAllListing || r.ceProductId==WashAllListing)))
+                throw new InvalidOperationException("Invalid wash all-in listing: "+WashAllListing);
+            // 裏山改変 (IMP-DOG-056): 洗い場のセット 4 行が WashSetKeys / WashSetSceneNames の並びどおりにあり、区分 wash の CE 行で、Listing が互いに別
+            if(!test)
+            {
+                if(WashSetKeys.Length!=4 || WashSetSceneNames.Length!=WashSetKeys.Length || !cats.Contains(WashCategory)) throw new InvalidOperationException("Wash set tables disagree");
+                var washListings=new HashSet<string>();
+                for(int i=0;i<WashSetKeys.Length;i++)
+                {
+                    var w=rows.FirstOrDefault(r=>r.key==WashSetKeys[i]);
+                    if(w==null || w.categoryKey!=WashCategory || w.sceneName!=WashSetSceneNames[i] || !w.IsCE || !washListings.Add(w.ceListingId)) throw new InvalidOperationException("Invalid wash set row: "+WashSetKeys[i]);
+                }
+                if(rows.Count(r=>r.categoryKey==WashCategory)!=WashSetKeys.Length) throw new InvalidOperationException("Unexpected rows in category "+WashCategory);
+            }
         }
         public static void ValidateItem(KD_ShopItem item)
         {

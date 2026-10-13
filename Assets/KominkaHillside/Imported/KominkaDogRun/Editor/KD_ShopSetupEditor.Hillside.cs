@@ -96,6 +96,12 @@ namespace KominkaDogRun.Editor
             { "collar.check", "collar.name.check" },
             { "collar.momiji", "collar.name.momiji" },
             { "collar.leather_brass", "collar.name.leatherBrass" },
+            // 裏山改変 (IMP-DOG-056): 洗い場の追加道具のセット。文言は洗い場のボード (words.json) が持つ。
+            // 手元メニューには出さないので UITranslations.json には登録しない (Setup の「文言キー未登録」WARN は想定内。displayName は key になる)
+            { "wash.foam_set", "KD_ShopItem_Wash_Foam.displayNameKey.0" },
+            { "wash.water_set", "KD_ShopItem_Wash_Water.displayNameKey.0" },
+            { "wash.finish_set", "KD_ShopItem_Wash_Finish.displayNameKey.0" },
+            { "wash.station_set", "KD_ShopItem_Wash_Station.displayNameKey.0" },
         };
 
         /// <summary>表に無い行 (後から商品を足したとき) の文言キー。ライブの行と同じ `<シーン名>.displayNameKey.0` 型。</summary>
@@ -426,7 +432,8 @@ namespace KominkaDogRun.Editor
                 foreach (var c in KD_ProductDefinitions.Categories)
                 {
                     int n = starters.ContainsKey(c) ? starters[c] : 0;
-                    if (c == CategoryLive || c == "experience" || c == "action")
+                    // 裏山改変 (IMP-DOG-056): wash (洗い場のセット、全行 CE) も初期品なし。無料の標準道具は洗い場側が持つ
+                    if (c == CategoryLive || c == "experience" || c == "action" || c == KD_ProductDefinitions.WashCategory)
                         v.Check(n == 0, "category " + c + " に初期品が無い (actual " + n + ")");
                     else
                         v.Check(n == 1, "category " + c + " の初期品がちょうど 1 つ (actual " + n + ") — 復元に失敗したときの倒れ先");

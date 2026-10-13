@@ -672,6 +672,10 @@ bash scripts/kh-harness-run.sh walk "Course/100f - Harness Wash call + height"
 - 失敗したケースが残した人形・そのリード・その洗い保持は、次のケースの `WcSetup` (`WcCleanup` → `WaCleanupStandIns`) が片付ける
 - 見ていないもの: 本物の他人のストローク (NetStroke) で洗われている犬の表示、2 人の実際の画面 (表示の後に他人が先にリードを付けた・呼んだ時)、言語を切り替えた後の文字と枠、読みやすさ、範囲の値が自然か (4 か所の内・境目・外の歩いた感じ)。Play / PCVR / 2 人で見る
 
+### 購入の門 (Course/100p5, IMP-DOG-056)
+
+`Tools/KominkaHillside/Course/100p5 - Harness Wash premium store (purchase gate)` (群 `premium-store`、台本 `KH_CourseWalkHarnessEditor.WashPremium.cs`)。前提は WashPremium/54 (setItems の配線。未配線は bind で落ちる)。ClientSim は UdonProduct アセットの `Purchased` で**自分の**所有だけを模擬できる (`ClientSimStoreManager`、イベントは LocalPlayer) ので、3 ケースは「未所有 → Locked (水)」「Play 前に `KD_Product_WashFoam.Purchased = true` → 泡 Applied・水 Locked」「Play 中の購入通知 (`PurchaseConfirmed`) で購入ボタンが消え Applied」。100p5 が立てた Purchased は Play 終了時に戻す (SessionState)。**単独で回す** (100 の全体では先の群が 4 セットを所有にするので 1・3 は SKIP)。他人の所有・退室後の戻し・Owner 交代・実課金は模擬できない (実機 2 人)。既存の premium-* 群は bind で `PremiumOwnAll` (ClientSim の購入経路で 4 セットを所有) を通すので期待は不変。初回 run 20261013-233842: 3 / 3 PASS、sceneUnchanged。
+
 ### 手洗い: ボトルと素手 (Course/100g, IMP-DOG-039)
 
 `Tools/KominkaHillside/Course/100g - Harness Wash hand + bottle` (群 `hand`、台本 `KH_CourseWalkHarnessEditor.WashHand.cs`)。設計は [手洗い](../plans/2026-10-03-hand-wash.md) §8.3 (§13.8 が優先)。前提は `Wash/10` (`KH_HandWash` の Program Asset) と `Wash/11` の後: 主洗い場に `KH_WashBottle_0` (`tool` 4、子 `Nozzle` が `nozzle`)、`KH_WashStation/HandWash` (`KH_HandWash`、`washes` に柴・`calls` に主洗い場)、柴の `KH_DogWash.washCalls` と `tools` (ボトル入り)、`KH_WashStation/Guide` (ボードの `guideLabels` 7・`guidePics` 3、`wordKeys` 34)。どれかが無ければ各ケースが **FAIL** (「run Wash/11」)。SKIP にしない。

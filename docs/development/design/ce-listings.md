@@ -124,3 +124,4 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 - 2026-10-14: 起票 (ユーザー依頼)。ID はすべて空欄、コード・シーン・Storefront は未変更。公式 Listings の「複数 Product」を確認して §4-2 に記載。同日、Codex 相当の確認で §1-5 (メニューは統括が実行) と §4-2 (案 1 も Row の拡張が要る、未確認は Product の 2 Listing 共有) を訂正。
 - 2026-10-14: ユーザーが C-1〜C-4 の Product ID 4 件と C-1〜C-5 の Listing ID 5 件を貼付 (形式検査 OK、9 件とも異なる)。Listing 名は表の案のままで、Storefront 上の実名は未確認。コードの定数への写しは IMP-DOG-056 で行う。
 - 2026-10-14: ユーザー決定「案 1」(全部入りは 4 Product を含める Listing、5 つ目の Product は作らない)。Storefront で 1 Listing に 4 Product を追加できたと報告。C-5 の行を Listing だけに直した。ID はまだ空欄。
+- 2026-10-14: §2 C の 9 ID をコードへ写した (`KD_ProductDefinitions.cs` の Wash* 定数、IMP-DOG-056)。`KD_Product_Wash{Foam,Water,Finish,Station}.asset` を作成 (ID 一致)、Menu/4a・WashPremium/44 が台帳との一致を検査。Listing はまだ公開していない (実課金の検査の直前にユーザーが有効化)。

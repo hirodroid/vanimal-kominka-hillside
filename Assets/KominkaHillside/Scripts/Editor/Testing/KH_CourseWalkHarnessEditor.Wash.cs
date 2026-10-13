@@ -72,6 +72,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessPremiumReset(){WashHarnessGroups(new[]{"premium-free"});}
         [MenuItem("Tools/KominkaHillside/Course/100p4 - Harness Wash premium water tools")]
         public static void WashHarnessPremiumWater(){WashHarnessGroups(new[]{"premium-water"});}   // IMP-DOG-049 P-pistol-shot / P-hose-hold alone (also in 100p)
+        [MenuItem("Tools/KominkaHillside/Course/100p5 - Harness Wash premium store (purchase gate)")]
+        public static void WashHarnessPremiumStore(){PremiumStoreBegin();}   // IMP-DOG-056 (WashPremium.cs): marks the foam set Purchased before Play, puts it back after (also in 100p)
         static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
@@ -826,7 +828,7 @@ namespace KominkaHillside.Editor
             if (WsGroup("height") || WsGroup("height-minlift")) MakeWashMinLiftCases();   // IMP-DOG-044 (WashHeight.cs): the pool raises the main stand to minLift, the dog stands / leaves there. After W-height-stand
             if (WsGroup("height") || WsGroup("stand-size")) MakeWashStandSizeCases();   // IMP-ENV-013 (WashStandSize.cs): the stand eases to the Pome's size on the call, back to idle on the release
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
-            if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free") || WsGroup("premium-water")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
+            if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free") || WsGroup("premium-water") || WsGroup("premium-store")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();

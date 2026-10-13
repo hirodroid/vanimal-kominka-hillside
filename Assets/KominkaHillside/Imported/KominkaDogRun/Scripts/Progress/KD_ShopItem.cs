@@ -13,7 +13,10 @@ namespace KominkaDogRun
     /// 退室で忘れ、再入室時に `OnPurchasesLoaded` で見直す。
     /// CE イベントは全 UdonBehaviour に届くので、商品ごとに自分の Product だけ見る
     /// (ClientSim は旧 `OnPurchaseConfirmed` しか送らないので Multiple と両方受ける。
-    /// 二重に来ても集合に足すだけなので数が狂わない)。</summary>
+    /// 二重に来ても集合に足すだけなので数が狂わない)。
+    ///
+    /// 裏山改変 (IMP-DOG-056): インスタンス単位の所有 (洗い場のセット) を <see cref="CeInstanceOwnership"/> で返す。
+    /// Unknown (誰かの購入情報が未着) / Owned (在室者に所有者が居る) / None (全員の分が届いて所有者 0)。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KD_ShopItem : UdonSharpBehaviour
     {
@@ -52,6 +55,20 @@ namespace KominkaDogRun
         private bool _ceOwnedLocal;
         private int[] _ceOwnerIds = new int[0];
         private int _ceOwnerCount;
+        // 裏山改変 (IMP-DOG-056): インスタンス単位の所有 (契約は IMP-DOG-056 §2.1)。
+        // 在室者ごとの「購入情報が届いた」(OnPurchasesLoaded の player。自分も入る) と、3 状態の結果のキャッシュ
+        public const int InstanceUnknown = 0;
+        public const int InstanceOwned = 1;
+        public const int InstanceNone = 2;
+        private int[] _ceLoadedIds = new int[0];
+        private int _ceLoadedCount;
+        private int _ceInstCache;
+        private bool _ceInstCacheValid;
+        private int _ceLeftId = -1;
+        // Unknown も短く覚える (ボードが 4 洗い場 × 4 Hz で聞くので、毎回の走査を避ける)。下の無効化はどれも即座に効く
+        public const float CeUnknownRecheckSeconds = 1f;
+        private float _ceUnknownUntil;
+        private VRCPlayerApi[] _cePlayers = new VRCPlayerApi[0]; // 走査用。人数が増えた時だけ伸ばす
         private int _dbgStoreOpenCount;
         public const string VarCeOwnedLocal = nameof(_ceOwnedLocal);
         public const string VarCePurchasesLoaded = nameof(_cePurchasesLoaded);
@@ -72,6 +89,9 @@ namespace KominkaDogRun
         {
             if (!IsCE() || ceProduct == null || !Utilities.IsValid(player)) return;
             if (player.isLocal) _cePurchasesLoaded = true;
+            // 裏山改変 (IMP-DOG-056): 誰の分でも「届いた」を記録する (products が null でも読込は済んでいる = 何も持っていない)
+            NoteCeLoaded(player.playerId);
+            _ceInstCacheValid = false;
             if (products == null) return;
             for (int i = 0; i < products.Length; i++)
                 if (products[i] != null && products[i].ID == ceProduct.ID) { NoteCeOwner(player); return; }
@@ -79,11 +99,13 @@ namespace KominkaDogRun
 
         public override void OnPurchaseConfirmed(IProduct product, VRCPlayerApi player, bool purchasedNow)
         {
+            _ceInstCacheValid = false; // 裏山改変 (IMP-DOG-056)
             NoteCePurchase(product, player);
         }
 
         public override void OnPurchaseConfirmedMultiple(IProduct product, VRCPlayerApi player, bool purchasedNow, int quantity)
         {
+            _ceInstCacheValid = false; // 裏山改変 (IMP-DOG-056)
             NoteCePurchase(product, player);
         }
 
@@ -92,10 +114,28 @@ namespace KominkaDogRun
             // 期限の判定は入室時 — 滞在中に切れても使い切れる (§13.3)。次の入室で見直す
         }
 
+        // 裏山改変 (IMP-DOG-056): 入室者の購入情報はまだ届いていない (Unknown になりうる) ので、キャッシュを捨てる
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            _ceInstCacheValid = false;
+        }
+
         public override void OnPlayerLeft(VRCPlayerApi player)
         {
-            if (!Utilities.IsValid(player) || _ceOwnerCount == 0) return;
+            // 裏山改変 (IMP-DOG-056): 「所有者 0 なら何もしない」の早期 return を外し、読込記録の削除とキャッシュの無効化を先に行う。
+            // 退室の通知中は GetPlayers がまだ退室者を返しうるので、その id を CeInstanceOwnership の走査から外す
+            // (Store の肯定で退室者を所有者に戻して Owned をキャッシュしないため。id はインスタンス内で再利用されない)
+            if (!Utilities.IsValid(player)) return;
             int id = player.playerId;
+            _ceLeftId = id;
+            _ceInstCacheValid = false;
+            for (int i = 0; i < _ceLoadedCount; i++)
+            {
+                if (_ceLoadedIds[i] != id) continue;
+                _ceLoadedIds[i] = _ceLoadedIds[_ceLoadedCount - 1];
+                _ceLoadedCount--;
+                break;
+            }
             for (int i = 0; i < _ceOwnerCount; i++)
             {
                 if (_ceOwnerIds[i] != id) continue;
@@ -124,6 +164,80 @@ namespace KominkaDogRun
             }
             _ceOwnerIds[_ceOwnerCount++] = id;
             if (player.isLocal) _ceOwnedLocal = true;
+            _ceInstCacheValid = false; // 裏山改変 (IMP-DOG-056): 所有者が増えたら 3 状態を数え直す
+        }
+
+        // 裏山改変 (IMP-DOG-056): 在室者ごとの「購入情報が届いた」の集合 (_ceOwnerIds と同じ手作りの伸長)
+        private void NoteCeLoaded(int id)
+        {
+            if (HasCeLoaded(id)) return;
+            if (_ceLoadedCount >= _ceLoadedIds.Length)
+            {
+                var grown = new int[_ceLoadedIds.Length + 8];
+                for (int i = 0; i < _ceLoadedCount; i++) grown[i] = _ceLoadedIds[i];
+                _ceLoadedIds = grown;
+            }
+            _ceLoadedIds[_ceLoadedCount++] = id;
+        }
+
+        private bool HasCeLoaded(int id)
+        {
+            for (int i = 0; i < _ceLoadedCount; i++) if (_ceLoadedIds[i] == id) return true;
+            return false;
+        }
+
+        /// <summary>裏山改変 (IMP-DOG-056 §2.1): インスタンス単位の所有 (洗い場のセット。1 人が持てば全員が使える)。
+        /// CE でない / ceProduct 未配線 → None。在室者を走査し、観測済みの所有者が居るか、観測の無い在室者に Store が肯定すれば Owned
+        /// (自分については購入情報の読込後だけ Store に聞く)。所有者が居ず、在室者全員の購入情報が届いていれば None、
+        /// 誰かの分が未着なら Unknown (「居ない」と断定しない)。Owned / None はキャッシュし、購入情報・購入通知・入退室・所有者の追加で捨てる。
+        /// Unknown は <see cref="CeUnknownRecheckSeconds"/> 秒だけキャッシュする (同じ無効化で即座に捨てる。
+        /// 通知を伴わない変化 = Store の肯定が先に立つ場合だけ、最長その秒数遅れて拾う)。</summary>
+        // net: callable-ok: 読み取りのみ (キャッシュの更新はローカルの観測だけ)
+        public int CeInstanceOwnership()
+        {
+            if (!IsCE() || ceProduct == null) return InstanceNone;
+            if (_ceInstCacheValid && (_ceInstCache != InstanceUnknown || Time.time < _ceUnknownUntil)) return _ceInstCache;
+            int n = VRCPlayerApi.GetPlayerCount();
+            if (n <= 0) return InstanceUnknown;
+            if (_cePlayers.Length < n) _cePlayers = new VRCPlayerApi[n + 8];
+            VRCPlayerApi.GetPlayers(_cePlayers);
+            bool allLoaded = true;
+            int seen = 0;
+            // 先頭 n 件だけ見る (配列が長いとき、後ろには前回の在室者が残りうる)
+            for (int i = 0; i < n; i++)
+            {
+                VRCPlayerApi p = _cePlayers[i];
+                if (!Utilities.IsValid(p)) continue;
+                int id = p.playerId;
+                if (id == _ceLeftId) continue;
+                seen++;
+                bool local = p.isLocal;
+                bool loaded = local ? _cePurchasesLoaded : HasCeLoaded(id);
+                bool owns = HasCeOwner(id);
+                if (!owns && (!local || _cePurchasesLoaded) && Store.DoesPlayerOwnProduct(p, ceProduct))
+                {
+                    NoteCeOwner(p);
+                    owns = true;
+                }
+                if (owns)
+                {
+                    _ceInstCache = InstanceOwned;
+                    _ceInstCacheValid = true;
+                    return InstanceOwned;
+                }
+                if (!loaded) allLoaded = false;
+            }
+            if (seen == 0) return InstanceUnknown;
+            if (!allLoaded)
+            {
+                _ceInstCache = InstanceUnknown;
+                _ceInstCacheValid = true;
+                _ceUnknownUntil = Time.time + CeUnknownRecheckSeconds;
+                return InstanceUnknown;
+            }
+            _ceInstCache = InstanceNone;
+            _ceInstCacheValid = true;
+            return InstanceNone;
         }
 
         private bool HasCeOwner(int id)

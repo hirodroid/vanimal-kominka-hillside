@@ -2,10 +2,10 @@
 id: IMP-DOG-056
 type: IMP
 system: DOG
-status: todo
+status: review
 priority: Medium
 summary: 洗い場の追加道具 5 セット (泡 / 水 / 仕上げ / 洗い場 各 500C、全部入り 1500C) を Credits 商品として接続する。Storefront の ID は ce-listings.md、所有判定は「インスタンスに 1 人でも所有者がいれば全員が選べる、洗い終わりまで継続」
-next: "案 1 で決定 (2026-10-14)。ユーザー: Storefront の Udon Product 4 と Listing 5 の ID を ce-listings.md §2 C に貼る (全部入りは Listing ID だけ)、Listing 文面の起草。AI: 貼られたら商品定義の行追加・所有判定の設計 (§2) → Codex 相談 → 実装"
+next: "実装・静的検証 (4a / 44 PASS 1095 / 51)・Codex 独立レビュー反映・Course/100p5 3 ケース PASS (run 20261013-233842) まで完了 (2026-10-14)。残り: ユーザーの実機 2 人 (§2.4: 他人の所有で選べる・途中参加・Owner 兼所有者の退室と 60 s 後の戻り・実課金 1 件・購入 0 件の人にも購入読込が届くか)、「洗いの終わり」の推奨 (§2.3) の確認、Listing 文面の起草、Listing の有効化 (実課金の直前)、ボードの表示文言の確認 (DES-UI-005)"
 updated: 2026-10-14
 ---
 
@@ -98,3 +98,18 @@ updated: 2026-10-14
 決定: 2026-10-14 (ユーザー) 全部入りは案 1 (4 Product を含める Listing)。Storefront で 1 Listing に 4 Product を追加できたと報告。同日 ID 9 件を台帳へ貼付。
 
 2026-10-14: §2 の契約案を Codex 相談 (gpt-6-astra、読み取りのみ) に出し、7 点の指摘を反映 (所有を Unknown / Owned / None の 3 状態に、裁定順 Held → Stale → 戻す → Unknown → Locked → 反映、戻しの再評価経路を 1 本に、洗いの終わりは洗い場単位 + 60 s、Menu/4a の初期品要件 (wash は 0)、Pouch には自動で現れない、ID は 9 件)。採らなかった案: 「明示的な終了の記録」(新しい操作が要る。道具・犬・経過時間の観測で代える。ユーザー確認待ち)。
+
+## 実装 (2026-10-14。統括 Fable、実装 Opus 2 名 (A: 商品定義・KD_ShopItem・4a、B: 選択・ボード・Editor 54/44・ハーネス)、Codex 独立レビュー)
+
+- **商品定義** (`KD_ProductDefinitions.cs`): 分類 `wash` (Defaults は空 = 初期品なし)、CE 4 行 `wash.foam_set / water_set / finish_set / station_set` (500C、`KD_ShopItem_Wash_*`、`KD_Product_Wash*`)、定数 `WashAllListing` / `WashAllCredits = 1500` / `WashSetKeys` / `WashSetSceneNames`。Validate に全部入り Listing の形式・重複なし、wash が 4 行の検査。4a の初期品検査に wash (0 件)、文言キー表に 4 行 (フォールバック形。手元メニューには出さない)。
+- **所有 3 状態** (`KD_ShopItem.CeInstanceOwnership()`、裏山改変): 在室者ごとの購入読込の記録 `_ceLoadedIds`、退室中の守り `_ceLeftId`、Owned / None はイベントで無効化されるまで・Unknown は 1 s キャッシュ (Codex 低 1 件の反映)、プレイヤー配列は再利用。
+- **門と戻し** (`KH_WashSelection`): `setItems[4]` / `reset`、`_SetState`、`_Decide(item, rev, setState)` (Held → Stale → 戻す → Pending 5 → Locked 4 → 反映)、`_Reevaluate` (Owner。退室 / Owner 交代 / 購入通知で 2 s 以内の poll に予約、直前に再確認)、`_StationIdle` = 道具を誰も持たない + 台に犬なし + 最終保持 (`KH_WashTool._LastHeldAt()`、Codex 中 1 件の反映: poll の隙間で持って置いた道具も数える) と犬の最終時刻から 60 s。
+- **ボード** (`KH_WashSelectionBoard`): 状態行 (Owned 47 / None 価格 + 48 / Unknown 49 / 継続 50)、[購入画面をひらく] (`_Buy` → `Store.OpenListing`、全部入りタブは全部入り Listing)、語 46〜51 を 13 言語 (es / fr / pt-br / it のボタン語は Editor のはみ出しで短縮)。
+- **Editor**: `WashPremium/54 - Wire Store` (setItems / reset / allListingId / allCredits / Buy ボタン。dirty 判定・Undo・変更なしは書かない)、44 に配線・ID・`reset.tools` の完全照合 (Codex 中)・ボタン listener の状態と String モード (Codex 中)・裁定 3 状態 × 経路・`_StationIdle` の両枝 (実時計の 3 ケース含む)・13 言語 × 5 タブ × 4 状態の表示。
+- **ハーネス**: 群 `premium-store` (Course/100p5、3 ケース)。既存 premium-* は `PremiumOwnAll` (ClientSim の購入経路で 4 セット所有) で救済、期待は不変。
+
+**検証 (統括)**: C# 0 / U# 0 → Products/1 (UdonProduct 4 件、ID 一致) → Menu/4 PASS (60 件、WARN 4 = 文言キー未登録は想定内) → 4a PASS → 54 WIRE_STORE_OK (4 洗い場) → 44 PASS 1095 / FAIL 0 → 51 PASS (共有フォント Static、新しい字は端末の代替) → 19b (NetworkIDs 383 → 387) → 保存 → Course/100p5 WASH_PASS 3 / 3 (run 20261013-233842、sceneUnchanged: 未所有 → Locked、Play 前 Purchased で泡 Applied・水 Locked、Play 中の購入通知で解放)。
+
+**Codex 独立レビュー (gpt-6-astra)**: 中 3 (60 s が poll の隙間で保証されない / 44 が reset.tools の欠けを見逃す / 購入ボタンの listener 状態を見ない)・低 1 (Unknown の走査負荷) → 全部反映。同期・権限・回帰・U# 制約・ハーネス・語・文書は問題なし。ハーネスは「修正後に 100p5 を単独で 3 ケース」の結論で回した。
+
+**未確認 (実機 2 人でしか決まらない)**: 購入 0 件の在室者にも `OnPurchasesLoaded` が届くか (届かないと None に到達せず「確認しています…」が続く。契約の前提)、他人の所有で選べる、途中参加、Owner 兼最後の所有者の退室 → 60 s 後の戻り、実課金 1 件、同じ Product を 2 Listing に入れた状態の成立 (ce-listings §4-2)。
