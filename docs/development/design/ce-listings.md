@@ -28,7 +28,7 @@ Storefront で作った ID を **ここに貼るだけで配線に進める**た
    - トレーナー (Subscription) は裏山で新しく作らない (古民家の ID をそのまま使う。§2 A)
 3. 下表の空欄 2 つに貼る。**両方 `prod_` 始まりなので、取り違えないよう Product → Listing の順で貼る**
 4. [KD_ProductDefinitions.cs](../../../Assets/KominkaHillside/Imported/KominkaDogRun/Editor/KD_ProductDefinitions.cs) の定数 (`PlushProduct` / `PlushListing` …) へ同じ値を写す。**表とコードの両方が同じ ID を持つ** (コードが実行時の正本、表は貼る場所)。裏山専用の行は末尾に足す (既存行の並びを動かさない。前例 `live.hillside_dusk`、`collar.*`)
-5. Unity (ユーザー担当。AI はメニュー実行をしない):
+5. Unity (統括が `scripts/unity-api.sh` 経由で実行する。サブエージェントにはさせない。Play・実機・Storefront はユーザー):
    - UdonProduct アセット (`Assets/KominkaHillside/Data/CE/KD_Product_*.asset`) を作って Product ID を焼くのは `KD_ProductDefinitions.EnsureCeAssets` = `Tools/KominkaHillside/Menu/Imported-Unused/Products/1 - Apply Metadata` (撫で FX の `KD_BundledPetFxEditor` からも呼ばれる)。新しい CE 行を足したら先にこれを 1 回
    - 各 `KD_ShopItem` への `ceProduct` / `ceListingId` / `ceCredits` の配線は裏山の正本 `Tools/KominkaHillside/Menu/4 Setup Shop` → `4a Verify Shop` (表の `Validate` / `ValidateItem` がアセットの ID と突き合わせる。`Imported-Unused/Shop/2・3` は古民家版で使わない)
 6. 審査は無い (Seller 登録時のみ)。作成後すぐ購入できるので、**Listing の公開スイッチは配線・検証が終わるまで入れない**
@@ -114,11 +114,11 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 | # | 論点 | 現状 | 担当 |
 |---|---|---|---|
 | 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。裏山でこれらを画面に出す前に、裏山用 ID へ差し替えるか、行を売り場から外す。コード・シーンは 2026-10-14 時点で未変更 (`Validate` が形式を見るだけで、古民家の ID かどうかは判別しない) | 飾り 2 件は DES-UI-005 の棚卸し、ライブ 3 件は DES-LIV-001、ぬいぐるみは初期公開外 |
-| 4-2 | **全部入り (C-5) の作り方** | 公式では 1 Listing に複数 Product を入れられる。案 1: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し。所有判定は 4 Product のどれかで足りるので、ワールド側は「セットごとの所有」だけ見ればよい)。案 2: 5 つ目の Udon Product を作り、全部入り所有者は別途 4 セット分も解放する (`Row` は 1 行 1 Listing なので、所有判定側で OR を書く)。**案 1 を推奨** (購入者の所有が 4 セットの所有そのものになり、二重の判定が要らない)。Storefront で Permanent Listing に複数 Udon Product を入れられることは実機で未確認 | IMP-DOG-056 (ユーザー決定) |
+| 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める | IMP-DOG-056 (ユーザー決定) |
 | 4-3 | **インスタンス共有の所有判定** | 既存 CE は購入者本人の `Store` 判定だけ。洗い場は「誰か 1 人が所有」+「洗い終わりまで継続」+「所有者 0 で無料に戻る」。所有者の退室・途中参加・洗いの終わりの判定が要る。`KH_WashSelection` には購入判定が無い (IMP-DOG-043 は購入なしで先行導入) | IMP-DOG-056 |
 | 4-4 | 裏山の Listing 名の接尾 | 古民家と同名の Listing を 2 つ作ると Storefront で見分けにくい。「｜裏山」などを付けるかはユーザー | DES-UI-005 |
 | 4-5 | 画像の価格表記・犬なしの既定 | 古民家の既定 (1024×1024、価格なし) を踏襲。C の 5 枚は撮影済み | — |
 
 ## 記録
 
-- 2026-10-14: 起票 (ユーザー依頼)。ID はすべて空欄、コード・シーン・Storefront は未変更。公式 Listings の「複数 Product」を確認して §4-2 に記載。
+- 2026-10-14: 起票 (ユーザー依頼)。ID はすべて空欄、コード・シーン・Storefront は未変更。公式 Listings の「複数 Product」を確認して §4-2 に記載。同日、Codex 相当の確認で §1-5 (メニューは統括が実行) と §4-2 (案 1 も Row の拡張が要る、未確認は Product の 2 Listing 共有) を訂正。
