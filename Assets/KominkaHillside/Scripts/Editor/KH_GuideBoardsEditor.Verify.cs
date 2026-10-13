@@ -26,8 +26,12 @@ namespace KominkaHillside.Editor
         const float WashFloorHalf = 2.5f;
         const float EntranceRadius = 18f;       // the board's centre from the spawn
         const float GateSideMin = 1.5f;         // in front of the gate line (the gate's forward; was the spawn's until 2026-10-06, when the spawn turned to 352 deg) by at least this
-        const float GateSideMinKominka = 0.5f;  // the 古民家ドッグラン board stands beside the gate on purpose (IMP-WLD-006)
-        const float PortalSpawnClear = 4.0f;    // the portal from the spawn (IMP-ENV-003: a portal right behind the spawn was walked into)
+        const float GateSideMinKominka = 0.5f;  // the 古民家ドッグラン board stands at the gate on purpose (IMP-WLD-006; in front of it since IMP-WLD-016)
+        // 2026-10-13 ユーザー決定 IMP-WLD-016 (案内板は門の前にドンと、ポータルはその隣): the spawn KH_Entrance is 2.50 m out on the gate's centre
+        // line, so the board and its portal stand 1-2 m behind it. Relaxed for the Kominka board / portal only (A / B keep SpawnClear):
+        const float KominkaSpawnClear = 0.5f;   // the board's footprint from the spawn point (was SpawnClear 3.0): the frame stays off the arrival point
+        const float PortalSpawnClear = 1.5f;    // the portal from the spawn (was 4.0, IMP-ENV-003: the old always-on portal 1.4 m right behind the spawn
+                                                // was walked into). Now it appears only for the player who pressed the board, for 60 s, beside the board
         /// <summary>The world id of the portal to 古民家ドッグラン, copied from the scene on 2026-10-03 for this check only. The builder never
         /// writes roomId; a different value here means someone changed the portal by hand (or a second portal took its place).</summary>
         const string ExpectedRoomId = "wrld_b03ddfbb-8bbb-47b2-8ac3-75f4b5964600";
@@ -143,7 +147,7 @@ namespace KominkaHillside.Editor
             if (kt != null)
             {
                 var broken = KominkaRules(c, kt.position, kt.rotation);
-                req(broken.Count == 0, "Kominka placement rules (wash working area, boards A / B, gate opening, spawn, loop, fixtures)" + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
+                req(broken.Count == 0, "Kominka placement rules (in front of the gate, wash working area, boards A / B, spawn, portal view, loop, fixtures)" + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
             }
             CheckCuts(c, req, warn, v);
             CheckAsobLayout(c, req, warn, v);
@@ -255,8 +259,14 @@ namespace KominkaHillside.Editor
             if (a.spawn != null)
             {
                 float f = minTo(foot, a.spawn.position), r = minTo(read, a.spawn.position);
-                req(f >= SpawnClear, tag + "spawn " + f.ToString("F2") + " m (>= " + SpawnClear + ")");
-                req(r >= ReaderSpawnClear, tag + "readers' area from the spawn " + r.ToString("F2") + " m (>= " + ReaderSpawnClear + ")");
+                // 2026-10-13 ユーザー決定 IMP-WLD-016: the Kominka board stands in front of the gate, right behind the spawn (2.50 m out on the
+                // gate's centre line): its footprint only stays KominkaSpawnClear off the spawn point, and the spawn may be in its readers'
+                // area (reported as a note, not a check)
+                bool kom = b == Kominka;
+                float spawnMin = kom ? KominkaSpawnClear : SpawnClear;
+                req(f >= spawnMin, tag + "spawn " + f.ToString("F2") + " m (>= " + spawnMin + (kom ? ", relaxed by IMP-WLD-016" : "") + ")");
+                if (kom) v.notes.Add(b.name + ": readers' area " + r.ToString("F2") + " m from the spawn (the >= " + ReaderSpawnClear + " rule is not applied to this board, IMP-WLD-016)");
+                else req(r >= ReaderSpawnClear, tag + "readers' area from the spawn " + r.ToString("F2") + " m (>= " + ReaderSpawnClear + ")");
                 float centre = Flat(t.position - a.spawn.position);
                 req(centre <= EntranceRadius, tag + "within the entrance (" + centre.ToString("F1") + " m from the spawn, <= " + EntranceRadius + ")");
                 Vector3 spawnFwd = a.spawn.forward; spawnFwd.y = 0f; spawnFwd.Normalize();
@@ -269,12 +279,27 @@ namespace KominkaHillside.Editor
                     float min = b == Kominka ? GateSideMinKominka : GateSideMin;
                     req(side >= min, tag + "outside the gate, " + side.ToString("F2") + " m in front of the gate line (>= " + min + ")");
                     float d = Mathf.Abs(Mathf.DeltaAngle(bearingBoard, Bearing(a.spawn.position, a.gate.position)));
-                    req(d >= FarmhouseSectorMin, tag + "not in the turn-around view to the gate (" + d.ToString("F0") + " deg apart, >= " + FarmhouseSectorMin + ")");
+                    // 2026-10-13 ユーザー決定 IMP-WLD-016: the Kominka board stands in the turn-around view on purpose (in front of the gate): note only
+                    if (kom) v.notes.Add(b.name + ": " + d.ToString("F0") + " deg from the spawn's bearing to the gate (in front of the gate by design, IMP-WLD-016)");
+                    else req(d >= FarmhouseSectorMin, tag + "not in the turn-around view to the gate (" + d.ToString("F0") + " deg apart, >= " + FarmhouseSectorMin + ")");
+                    if (kom)
+                    {
+                        // IMP-WLD-016: the in-front-of-the-gate rule (also inside KominkaRules) as its own line, with the distances
+                        Vector3 gr = a.gate.right; gr.y = 0f; gr.Normalize();
+                        float reach = foot.Max(p => Mathf.Abs(Vector3.Dot(Flat3(p - a.gate.position), gr)));
+                        float along, outward; GateFrame(c, t.position, out along, out outward);
+                        req(reach <= GateOpeningHalf + 0.01f && outward <= GateFrontOutMax + 0.01f, tag + "in front of the gate: centre " + along.ToString("+0.00;-0.00") + " m from the gate's centre line, "
+                            + outward.ToString("F2") + " m out from the gate (<= " + GateFrontOutMax + "), footprint within " + reach.ToString("F2") + " m of the centre line (<= " + GateOpeningHalf + ", the opening's half width)");
+                        v.notes.Add(b.name + ": " + Mathf.Abs(along).ToString("F2") + " m from the gate's centre line (" + (along < 0f ? "west" : "east") + "), " + outward.ToString("F2") + " m out from the gate, centre "
+                            + centre.ToString("F2") + " m from the spawn, footprint " + f.ToString("F2") + " m from the spawn");
+                    }
                 }
                 if (a.kominka != null)
                 {
                     float d = Mathf.Abs(Mathf.DeltaAngle(bearingBoard, Bearing(a.spawn.position, a.kominka.position)));
-                    req(d >= FarmhouseSectorMin, tag + "not in the turn-around view to the farmhouse (" + d.ToString("F0") + " deg apart, >= " + FarmhouseSectorMin + ")");
+                    // 2026-10-13 ユーザー決定 IMP-WLD-016: as above, note only for the Kominka board
+                    if (kom) v.notes.Add(b.name + ": " + d.ToString("F0") + " deg from the spawn's bearing to the farmhouse (IMP-WLD-016: not applied to this board)");
+                    else req(d >= FarmhouseSectorMin, tag + "not in the turn-around view to the farmhouse (" + d.ToString("F0") + " deg apart, >= " + FarmhouseSectorMin + ")");
                 }
                 Vector3 front = -t.forward; front.y = 0f;
                 float facing = Vector3.Angle(front, Flat3(a.spawn.position - t.position));
@@ -418,7 +443,9 @@ namespace KominkaHillside.Editor
             if (a.spawn != null)
             {
                 float d = Flat(p - a.spawn.position);
-                req(d >= PortalSpawnClear, "the portal " + d.ToString("F2") + " m from the spawn (>= " + PortalSpawnClear + "; IMP-ENV-003)");
+                req(d >= PortalSpawnClear, "the portal " + d.ToString("F2") + " m from the spawn (>= " + PortalSpawnClear + "; IMP-ENV-003, relaxed from 4.0 by IMP-WLD-016)");
+                float side = anchor.localPosition.x >= 0f ? 1f : -1f;
+                v.notes.Add("portal on the board's " + (side > 0f ? "+X (readers' right)" : "-X (readers' left)") + " side; PortalSide now says " + (PortalSide(c, board.position, board.rotation) > 0f ? "+X" : "-X"));
                 float bp = Bearing(a.spawn.position, p);
                 if (a.kominka != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.kominka.position))) >= FarmhouseSectorMin, "the portal is not in the turn-around view to the farmhouse");
                 if (a.gate != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.gate.position))) >= FarmhouseSectorMin, "the portal is not in front of the gate from the spawn");

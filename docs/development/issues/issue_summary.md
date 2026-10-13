@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-142 件 — 対応中 16 / 確認待ち 83 / 未着手 9 / 保留 3 / 完了 31
+142 件 — 対応中 16 / 確認待ち 84 / 未着手 8 / 保留 3 / 完了 31
 
 ## 実行キュー
 
@@ -106,6 +106,7 @@
 | [IMP-WLD-013](IMP-WLD-013-cart-group-voice.md) | Medium | 同じ自動散歩カートグループの相手の声だけ減衰をほぼなくす (near 25 m / far 40 m、離脱で VRChat 既定へ戻す) を KH_CartManager.Voice.cs で実装。Unity のコンパイル・Cart/2 と複数人の聴取は未実施 | review | 統括が Unity で compile (--udon) → Cart/2 Verify (voice の項目) → 保存。独立レビューの後、複数人の実機で下の B1〜B5 を聴取し、near / far / lowpass を決める |
 | [IMP-WLD-014](IMP-WLD-014-cart-single-back-cushion.md) | Medium | カートの背もたれのクッションが 2 つ並んでいて二人乗りに見える。一人用の 1 つにする (Blender 原本 scripts/art/osanpo-cart.py から再生成) | review | 再生成した FBX・BaseColor を取り込み済み (10-13 の IMP-WLD-015 の再生成後は Body 2,576 / LOD1 936、Cart/2 Verify CART_OK)。ユーザーが背面と乗車時の見た目を確認 |
 | [IMP-WLD-015](IMP-WLD-015-cart-remove-armrest-stop-switch.md) | Medium | カートの肘掛け (とって) の先にある停止スイッチ (StopL / StopR の操作面) がもう機能しておらず見た目も変。撤去した (停止は操作帯の「停止」だけ)。メッシュ・コード・シーン・文書から外し、Verify CART_OK | review | 実装・取り込み済み (2026-10-13、Body 2,576 / LOD1 936、Cart/2 Verify CART_OK 2,088)。残りはユーザーの確認: 全カートの肘掛け先に操作面が無いこと (PCVR の見た目) と、操作帯の「停止」で降りられること (Play) |
+| [IMP-WLD-016](IMP-WLD-016-portal-board-in-front-of-gate.md) | Medium | 古民家ドッグランへの案内板を門の前に置き、ポータルはその隣に出す (いまは門の開口の西側、壁線から 1 m 外) | review | ユーザーの Play (PCVR / Desktop): スポーンで振り返ると門の正面 1.2 m に案内板、Interact で西隣 (46.65, 38.12) にポータルが出るか。スポーンの真後ろ約 1.2 m に板が立つ (読む場所がスポーン位置と重なる) のが気になるか。実機でポータルに入れるか等は IMP-WLD-006 のまま |
 | [BUG-UI-001](BUG-UI-001-shopkeeper-walk-info-destinations.md) | Low | おじいさん (KD_ShopKeeper) の「さんぽ」の案内文が、行き先を「広場」と「古民家側の入口」の 2 つだけと言っている (実際は 6 目的地) | review | ユーザー確認: おじいさんの [さんぽ] の案内文が 6 つの行き先で、手元メニューの呼び名と合い、11 言語でも枠に収まるか (A0-20) |
 | [IMP-ENV-009](IMP-ENV-009-course-roadside-scenery.md) | Low | 秋の木立と低木で周回道の単調さを和らげ、川・古民家・犬の見通しを守る。10-04 着手、負荷の詳細調査は景観改善後の VER-ENV-002 | review | 第2段階の川沿い・地面の塗り分けを比較HTMLで確認。小物品質もIMP-ENV-012で追加。詳しい性能調査は景観後のVER-ENV-002 |
 | [IMP-UI-005](IMP-UI-005-complete-thirteen-language-ui.md) | High | 13言語の枠だけでなく、散歩・追加画面を含む全UIの翻訳を揃える | todo | 実装着手時に現行コードと仕様の差を整理する。今回はIssueと資料の更新のみ |
@@ -113,7 +114,6 @@
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。10-04 に Quest で真っ黒とユーザーが確認 (iOS も同じらしい)。原因の見立ては材質の金属 1 で、修正は BUG-ENV-001 で行う | todo | BUG-ENV-001 でディスクと顔の材質を金属 0 へ直した後、Quest と iOS で 6 色と顔が見分けられるかを確認する |
 | [IMP-DOG-048](IMP-DOG-048-collar-and-leash-patterns.md) | Medium | 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色 | todo | 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す |
 | [IMP-DOG-050](IMP-DOG-050-collar-leash-set-products.md) | Medium | 首輪とリードのおそろいセット 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt) を Point 商品として実装する。商品定義、首輪の同期 (飾りと同じ)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表、古民家の正本への反映 | todo | 2026-10-13 コードとメニューを実装 (Unity 未実行、§実装 2026-10-13)。統括がコンパイル → Collar/0 → U# → Menu/4 → Collar/1 → 19b → 保存 → Collar/2 ほかの検査を回す。既定は無料の collar.basic を置いた (AI の仮決定、ユーザー確認待ち)。柄のテクスチャは仮 (*_provisional.png)。本番の絵は BUG-DOG-011 の VR 確認の後。残り: Play・2 人・Quest / iOS |
-| [IMP-WLD-016](IMP-WLD-016-portal-board-in-front-of-gate.md) | Medium | 古民家ドッグランへの案内板を門の前に置き、ポータルはその隣に出す (いまは門の開口の西側、壁線から 1 m 外) | todo | 門の前の置き場所を決める (門の通行・スポーン・リード台・主洗い場の輪と重ならない位置)。Guide/1 の物理探索の基準 (壁線の西側 1 m) を門の前へ変え、Guide/1 → 2 で PASS、保存 |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo | Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外 |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 の Play (A0-26・B66・C20) が 10-06 までに済んだら着手。同期・犬の姿勢・Desktop/Touch の扱いは [設計案](../../plans/2026-10-03-call-placement-tilt.md) (傾き上限 30°・8° 未満は水平、Desktop/Touch は地面に自動で合わせる) を実装する |
 | [IMP-DOG-055](IMP-DOG-055-wash-premium-model-and-sound-quality.md) | Low | 洗浄用の有料製品 (道具・台・仕上げ) のモデルと音声を見直してクオリティを上げる (Z ファイトの修正 BUG-DOG-013 とは別件) | todo | 見直す範囲を決める (どの品から・何を基準に)。モデルはラボ 0.3.0 / 0.4.0 の元データ、音は scripts/art/wash-premium-audio.cjs の合成音が現状。まず現状の一覧 (品・三角形数・テクスチャ・音の種類) を作り、ユーザーと優先順を決める |

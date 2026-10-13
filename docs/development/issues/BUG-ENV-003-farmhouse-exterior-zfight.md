@@ -2,7 +2,7 @@
 id: BUG-ENV-003
 type: BUG
 system: ENV
-status: todo
+status: wip
 priority: Medium
 summary: 古民家の外観 (スポーンから見える瓦の外壁の端の角の上側と、入口の石段) が Z ファイトしている。外周のオブジェクトの重なりを確認して直す
 next: "スポーンから見える外壁の端の角と入口の石段で、重なっている面の組 (オブジェクト名・材質) を特定して記録する (Editor のカメラで再現できる画像を残す)。直す先はワールド側のコピー (KH_FarKominka) で、購入原本は触らない"

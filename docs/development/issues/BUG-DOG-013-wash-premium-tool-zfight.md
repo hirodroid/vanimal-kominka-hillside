@@ -2,7 +2,7 @@
 id: BUG-DOG-013
 type: BUG
 system: DOG
-status: todo
+status: wip
 priority: Medium
 summary: 洗浄の有料道具 (水鉄砲か泡もこもこ銃) のモデルが Z ファイトしている。どの品か特定し、Blender の元モデルで面の重なりを直して取り込み直す
 next: "どの品か特定する (候補: WaterPistol / DuckWaterGun / FishWaterGun / BambooWaterGun / FoamCannon。ユーザーに画像か品名を聞くか、Editor で 5 品を近接で確認)。直す先は vrc-asset-lab/assets/wash-premium の元モデル。0.3.0 の品なら取り込み直しの手順 (WashPremium/10 は再実行しない決まり) を先に決める"

@@ -27,7 +27,8 @@ namespace KominkaHillside.Editor
     ///               is a TMP label bound to the menu's own keys (.Cuts.cs). Guide/1 refuses without the atlas / manifest;
     ///   Map       = the trail-head map board (the hand map's texture KH_TravelMap.png, the 6 spots, the wash stations, "you are
     ///               here"), west of the trail start, facing the spawn / the trail;
-    ///   Kominka   = IMP-WLD-006: the 古民家ドッグラン board beside the gate. Interact (KH_PortalBoard, local only) shows the scene's one
+    ///   Kominka   = IMP-WLD-006: the 古民家ドッグラン board, in front of the gate since IMP-WLD-016 (2026-10-13 user decision; it stood
+    ///               west of the opening before). Interact (KH_PortalBoard, local only) shows the scene's one
     ///               VRCPortalMarker, taken over (moved under Kominka/PortalAnchor, never re-typed) and hidden in the saved scene.
     ///               Guide/0 creates KH_PortalBoard's Program Asset (once, before the first Guide/1).
     /// Each board is a wooden frame (cubes, KH_RiverWood, no collider, Batching Static) + one read-only World Space Canvas (no
@@ -64,9 +65,11 @@ namespace KominkaHillside.Editor
         /// <summary>Root yaw: the root's +Z points away from the readers (they look along +Z; the Canvas's front is -Z), like the wash station.</summary>
         static readonly Board Asob = new Board { name = "Asobikata", createXZ = new Vector2(53.0f, 44.5f), createYaw = 55f, canvasMm = new Vector2(3240f, 1440f), canvasBottom = 0.80f };   // yaw 65 -> 55 on 2026-10-06 (faces the spawn; docs/plans/2026-10-06-spawn-area-layout.md)
         static readonly Board MapBoard = new Board { name = "Map", createXZ = new Vector2(39.2f, 46.6f), createYaw = 330f, canvasMm = new Vector2(1300f, 1200f), canvasBottom = 0.80f };
-        /// <summary>IMP-WLD-006: the 古民家ドッグラン board at the gate (west of the opening, 1 m out from the wall line, facing out = -26 deg like the
-        /// spawn). Readers face the wall; the portal appears on their right (root +X), against the wall.</summary>
-        static readonly Board Kominka = new Board { name = "Kominka", createXZ = new Vector2(44.52f, 36.90f), createYaw = 154f, canvasMm = new Vector2(1300f, 1100f), canvasBottom = 0.80f };
+        /// <summary>IMP-WLD-006 / IMP-WLD-016: the 古民家ドッグラン board in front of the gate (2026-10-13 user decision "門の前にドンと"): on the
+        /// gate's centre line, 1 m out from KH_GateBlock toward the spawn, parallel to the wall (root yaw 154 = the gate's 334 + 180), facing
+        /// out. Readers face the gate; the portal appears beside the board (PortalSide). Guide/1 searches the actual pose (FindKominkaPose);
+        /// this design pose is only used when the board does not exist yet.</summary>
+        static readonly Board Kominka = new Board { name = "Kominka", createXZ = new Vector2(48.30f, 38.74f), createYaw = 154f, canvasMm = new Vector2(1300f, 1100f), canvasBottom = 0.80f };
         static readonly Board[] Boards = { Asob, MapBoard, Kominka };
 
         const float Mm = 0.001f;
@@ -124,7 +127,8 @@ namespace KominkaHillside.Editor
         static readonly Vector2 KomPaperPos = new Vector2(0f, -80f), KomPaperSize = new Vector2(1240f, 920f), KomBodySize = new Vector2(1160f, 860f);
         const float KomBodyMax = 48f, KomBodyMin = 26f, KomLineSpacing = 14f;
         const string InteractName = "Interact", PortalAnchorName = "PortalAnchor";
-        /// <summary>Portal anchor in board-local: on the readers' right (+X = west-south-west), on the board's line, facing the readers.</summary>
+        /// <summary>Portal anchor in board-local: beside the board (x = PortalSide * PortalSideX; +X = the readers' right = west-south-west),
+        /// on the board's line, facing the readers.</summary>
         const float PortalSideX = 1.75f, PortalYaw = 180f;
         const float PortalShowSeconds = 60f, InteractProximity = 2.5f;
         public const string PortalProgramPath = "Assets/KominkaHillside/Scripts/KH_PortalBoard";
@@ -403,21 +407,86 @@ namespace KominkaHillside.Editor
         /// <summary>The board volume and, separately, the portal volume (1 x 2 x 1 m + room to step in) in board-local x / z.</summary>
         static Rect PortalRect(float side) { float x = side * PortalSideX; return Rect.MinMaxRect(x - 0.5f - PortalSideRoom, BackZ - 0.5f - PortalFrontRoom, x + 0.5f + PortalSideRoom, BackZ + 0.5f); }
 
-        /// <summary>+1 / -1: the portal goes on the board's side away from the gate opening (board-local +X or -X).</summary>
+        /// <summary>IMP-WLD-016 (2026-10-13 ユーザー決定 "門の前にドンと"): the board stands in front of the gate. KH_GateBlock (the transparent
+        /// collider that seals the gate for players) is 4.5 m wide; "in front of the gate" = the board's whole footprint (roof overhang
+        /// included, half length 1.05 m) stays within the opening's width along the wall, i.e. its centre within 1.2 m of the gate's centre
+        /// line, and its centre at most GateFrontOutMax out from the gate (it stays at the gate, between the gate and the spawn, which is
+        /// 2.50 m out on the same line). Checked by KominkaRules (Guide/1 and Guide/2); the old west-of-the-opening pose fails it, so the
+        /// next Guide/1 re-places the board, and the new pose passes it, so later runs keep it.</summary>
+        const float GateOpeningHalf = 2.25f, GateFrontOutMax = 2.0f, PhotoPortalClear = 2.5f;
+        static float GateFrontAlongMax { get { return GateOpeningHalf - Footprint(Kominka).xMax; } }
+
+        /// <summary>The board's centre in the gate's frame: along = metres along the wall from the gate's centre (gate +X = east-north-east),
+        /// out = metres in front of the gate (the gate's forward = the spawn's side). False without KH_GateBlock.</summary>
+        static bool GateFrame(Ctx c, Vector3 pos, out float along, out float outward)
+        {
+            along = outward = 0f;
+            var gate = ScenePath(c.scene, "KH_World/KH_Places/KH_GateBlock");
+            if (gate == null) return false;
+            var gr = gate.right; gr.y = 0f; gr.Normalize();
+            var gf = gate.forward; gf.y = 0f; gf.Normalize();
+            along = Vector3.Dot(Flat3(pos - gate.position), gr);
+            outward = Vector3.Dot(Flat3(pos - gate.position), gf);
+            return true;
+        }
+
+        /// <summary>+1 / -1: the portal's side of the board (board-local +X or -X = PortalSide * PortalSideX).
+        /// Beside the gate (the 2026-10-03 pose, |along| > GateFrontAlongMax): the side away from the gate opening, as before.
+        /// In front of the gate (IMP-WLD-016, 2026-10-13): the board straddles the gate's centre line, so "away from the opening" is
+        /// undefined (the old dot product is ~0 and float noise could flip it). Decided deterministically instead:
+        ///   1. a side whose portal would stand in the spawn's turn-around view (within FarmhouseSectorMin of the bearing to the gate or
+        ///      to KH_FarKominka, the Guide/2 portal rule) is not taken;
+        ///   2. of the rest, the side whose portal is farther from the nearest of KH_PhotoBoard (right of the gate), the welcome spot, the
+        ///      treats, the leash rack and the shopkeeper (2026-10-13 offline estimate: west 3.7 m (treats) vs east 3.1 m (photo board));
+        ///   3. a tie within 0.05 m, or no side left: +1 (= west, the readers' right).
+        /// The three callers (TryKominka, KominkaRules, BuildPortal) get the same answer for the same pose.</summary>
         static float PortalSide(Ctx c, Vector3 pos, Quaternion rot)
         {
             var gate = ScenePath(c.scene, "KH_World/KH_Places/KH_GateBlock");
             if (gate == null) return 1f;
-            float d = Vector3.Dot(Flat3(pos - gate.position), rot * Vector3.right);
-            return d >= 0f ? 1f : -1f;
+            float along, outward;
+            GateFrame(c, pos, out along, out outward);
+            if (Mathf.Abs(along) > GateFrontAlongMax + 0.01f)
+            {
+                float d = Vector3.Dot(Flat3(pos - gate.position), rot * Vector3.right);
+                return d >= 0f ? 1f : -1f;
+            }
+            var a = FindAnchors(c);
+            var near = new List<Transform> { ScenePath(c.scene, "KH_PhotoBoard"), a.welcome, a.rack, a.keeper };
+            near.AddRange(a.treats);
+            float best = float.NegativeInfinity, pick = 1f;
+            foreach (var s in new[] { 1f, -1f })
+            {
+                var spot = pos + rot * new Vector3(s * PortalSideX, 0f, BackZ);
+                if (a.spawn != null && PortalInTurnAround(a, spot) != null) continue;
+                float score = float.PositiveInfinity;
+                foreach (var t in near) if (t != null) score = Mathf.Min(score, Flat(spot - t.position));
+                if (score > best + 0.05f) { best = score; pick = s; }
+            }
+            return pick;
+        }
+
+        /// <summary>The Guide/2 portal rule (CheckPortal): seen from the spawn, the portal is not within FarmhouseSectorMin of the gate or
+        /// the farmhouse. Returns the name of the one it is in front of, or null.</summary>
+        static string PortalInTurnAround(Anch a, Vector3 portal)
+        {
+            if (a.spawn == null) return null;
+            float bp = Bearing(a.spawn.position, portal);
+            foreach (var t in new[] { a.gate, a.kominka })
+                if (t != null && Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, t.position))) < FarmhouseSectorMin) return t.name;
+            return null;
         }
 
         /// <summary>Start points for the Kominka board, tried in order (first that passes wins). Measured from the gate (KH_GateBlock):
         /// along = metres along the wall (gate +X; negative = west), out = metres in front of the gate line (spawn side). The board stays
-        /// parallel to the wall (yaw = gate yaw + 180) and steps further out from there with physics. 2026-10-03 offline estimate in
-        /// docs/plans/2026-10-02-guide-boards.md §12-2.</summary>
-        static readonly Vector2[] KominkaStarts = { new Vector2(-4.2f, 1.0f), new Vector2(4.2f, 1.0f), new Vector2(-5.2f, 1.0f) };
-        static readonly string[] KominkaStartNames = { "gate-west 4.2 m", "gate-east 4.2 m", "gate-west 5.2 m" };
+        /// parallel to the wall (yaw = gate yaw + 180) and steps further out from there with physics (KomStep), until KominkaRules stop it
+        /// (GateFrontOutMax, the spawn, the welcome spot).
+        /// 2026-10-13 ユーザー決定 IMP-WLD-016: the gate's centre first, then 1 m west / east (the roof still within the opening; +-2 m would
+        /// put the roof past the opening and fail the in-front-of-the-gate rule, so there is no such fallback). Out 1.0: the footprint's
+        /// back edge is then 0.62 m in front of the gate line (GateSideMinKominka 0.5) and clear of KH_GateBlock (0.6 m thick).
+        /// Until 2026-10-13: west 4.2 m / east 4.2 m / west 5.2 m, 1.0 m out (docs/plans/2026-10-02-guide-boards.md §12-2).</summary>
+        static readonly Vector2[] KominkaStarts = { new Vector2(0f, 1.0f), new Vector2(-1.0f, 1.0f), new Vector2(1.0f, 1.0f) };
+        static readonly string[] KominkaStartNames = { "gate-front centre", "gate-front west 1.0 m", "gate-front east 1.0 m" };
 
         /// <summary>Null = keep the board where it is (it exists and both volumes are clear). Otherwise the x / yaw / z (as Vector3(x, yaw, z))
         /// to put it at: from the current position (or the design point) stepped out along the board's front normal (toward the readers,
@@ -481,6 +550,12 @@ namespace KominkaHillside.Editor
                     continue;
                 }
                 var broken = KominkaRules(c, pos, rot);
+                // IMP-WLD-016 (2026-10-13): the readers now stand between the gate and the spawn, so Guide/2's "no solid collider where the
+                // readers stand" is checked here too (same box and heights as Verify's Placement), before anything is saved
+                var rr = ReaderArea(Kominka);
+                float ry = Ground(pos + rot * new Vector3(0f, 0f, rr.center.y));
+                var hr = SolidIn(c, pos, rot, rr, ry + 0.3f, ry + 1.9f);
+                if (hr.Count > 0) broken.Add("solid collider where the readers stand (" + string.Join(", ", hr.Take(3)) + ")");
                 if (broken.Count > 0) { why = "first clear point " + d.ToString("F1") + " m out " + V(pos) + " breaks " + string.Join("; ", broken); return null; }
                 why = "stepped " + d.ToString("F1") + " m out from " + V(start) + " to " + V(pos) + " yaw " + yaw.ToString("F1") + "; portal at "
                     + V(pos + rot * new Vector3(side * PortalSideX, 0f, BackZ)) + (tried.Count > 0 ? " (" + string.Join("; ", tried) + ")" : "");
@@ -499,7 +574,8 @@ namespace KominkaHillside.Editor
                 .Select(x => KD_SceneObjects.PathOf(x.gameObject)).Distinct().ToList();
         }
 
-        /// <summary>The Guide/2 rules that a step toward the spawn could break (Guide/2 checks all of them again after the build).</summary>
+        /// <summary>The Guide/2 rules that a step toward the spawn could break (Guide/2 checks all of them again after the build).
+        /// IMP-WLD-016 (2026-10-13): includes the in-front-of-the-gate rule, so a board left beside the gate fails here and is re-placed.</summary>
         static List<string> KominkaRules(Ctx c, Vector3 pos, Quaternion rot)
         {
             var bad = new List<string>();
@@ -514,21 +590,28 @@ namespace KominkaHillside.Editor
             if (a.spawn != null)
             {
                 float ds = foot.Min(q => Flat(q - a.spawn.position)), dp = Flat(portal - a.spawn.position);
-                if (ds < SpawnClear) bad.Add("board " + ds.ToString("F2") + " m from the spawn (< " + SpawnClear + ")");
+                // 2026-10-13 ユーザー決定 IMP-WLD-016: relaxed for this board. The spawn is 2.50 m out on the gate's centre line, so a board in
+                // front of the gate stands right behind it: SpawnClear 3.0 -> KominkaSpawnClear (the frame only stays off the arrival point).
+                if (ds < KominkaSpawnClear) bad.Add("board " + ds.ToString("F2") + " m from the spawn (< " + KominkaSpawnClear + ")");
                 if (dp < PortalSpawnClear) bad.Add("portal " + dp.ToString("F2") + " m from the spawn (< " + PortalSpawnClear + ")");
-                float bb = Bearing(a.spawn.position, pos);
-                foreach (var t in new[] { a.gate, a.kominka })
-                    if (t != null && Mathf.Abs(Mathf.DeltaAngle(bb, Bearing(a.spawn.position, t.position))) < FarmhouseSectorMin) bad.Add("in the turn-around view to " + t.name);
+                // 2026-10-13 ユーザー決定 IMP-WLD-016: the board's own "not in the turn-around view to the gate / farmhouse" rule is dropped (in
+                // front of the gate IS that view; Guide/2 reports the angles as notes). The portal keeps the rule (CheckPortal), checked here too
+                // so that Guide/1 never saves a pose Guide/2 would fail.
+                var pv = PortalInTurnAround(a, portal);
+                if (pv != null) bad.Add("portal in the turn-around view to " + pv);
                 if (a.gate != null)
                 {
                     // the gate line follows the gate itself (KH_GateBlock faces out along the wall's normal), not the spawn's look direction (352 deg since 2026-10-06)
                     Vector3 fwd = a.gate.forward; fwd.y = 0f; fwd.Normalize();
                     float side = foot.Min(q => Vector3.Dot(Flat3(q - a.gate.position), fwd));
                     if (side < GateSideMinKominka) bad.Add("only " + side.ToString("F2") + " m in front of the gate line");
-                    // the gate opening (KH_GateBlock is 4.5 m wide): keep the footprint (roof overhang included) 0.5 m clear of its ends along the wall
+                    // 2026-10-13 ユーザー決定 IMP-WLD-016: in front of the gate. Replaces the 2026-10-03 rule "keep the footprint 0.5 m clear of the
+                    // gate opening's ends" (the gate is sealed for players by KH_GateBlock, so there is no passage to keep open).
                     var gr = a.gate.right; gr.y = 0f; gr.Normalize();
-                    float along = foot.Min(q => Mathf.Abs(Vector3.Dot(Flat3(q - a.gate.position), gr)));
-                    if (along < 2.25f + 0.5f) bad.Add("within 0.5 m of the gate opening (" + along.ToString("F2") + " m from its centre along the wall)");
+                    float reach = foot.Max(q => Mathf.Abs(Vector3.Dot(Flat3(q - a.gate.position), gr)));
+                    float along, outward; GateFrame(c, pos, out along, out outward);
+                    if (reach > GateOpeningHalf + 0.01f) bad.Add("not in front of the gate: the footprint reaches " + reach.ToString("F2") + " m from the gate's centre line (> " + GateOpeningHalf + ", the opening's half width; centre " + along.ToString("+0.00;-0.00") + " m)");
+                    if (outward > GateFrontOutMax + 0.01f) bad.Add("not at the gate: the centre is " + outward.ToString("F2") + " m out from the gate (> " + GateFrontOutMax + ")");
                 }
             }
             if (a.route != null && a.route.Length > 1)
@@ -572,6 +655,11 @@ namespace KominkaHillside.Editor
             }
             foreach (var t in new[] { a.rack, a.keeper, a.welcome }.Concat(a.treats))
                 if (t != null && foot.Concat(new[] { portal }).Min(q => Flat(q - t.position)) < FixtureClear) bad.Add("within " + FixtureClear + " m of " + t.name);
+            // IMP-WLD-016 (2026-10-13): in front of the gate the photo board (right of the gate) is near; Photo/2 wants portals 2.5 m from its
+            // footprint and readers (KH_PhotoGalleryEditor.Place PortalClear). Approximated from its root here so Guide/1 does not pick a
+            // pose Photo/2 fails outright; Photo/2 stays the authority.
+            var photo = ScenePath(c.scene, "KH_PhotoBoard");
+            if (photo != null && Flat(portal - photo.position) < PhotoPortalClear) bad.Add("portal " + Flat(portal - photo.position).ToString("F2") + " m from KH_PhotoBoard (< " + PhotoPortalClear + ")");
             return bad;
         }
 
