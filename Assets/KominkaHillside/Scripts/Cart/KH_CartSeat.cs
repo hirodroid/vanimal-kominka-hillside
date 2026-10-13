@@ -38,6 +38,8 @@ namespace KominkaHillside
         // BUG-WLD-001: 着座の高さの自動補正 (ローカルの乗員だけが測る。着座ごとに 1 回)
         // 腰の骨 (Hips) の中心は尻の接地面より少し上にあるので、目標は「座面 + これ」。Play で調整する
         const float HipAboveSeat = 0.10f;
+        // 2026-10-13 ユーザー報告「前は高すぎ、全量補正 (1.0) は埋まった。中間に」→ 測った差のこの割合だけ補正する (0 = 補正なし、1 = 腰を目標に)
+        const float SeatAutoFraction = 0.5f;
         const float HipMeasureDelay = 0.5f;   // 着座から測るまで (座りのアニメーションが落ち着くのを待つ)
         const int SeatAutoMax = 20;           // 自動補正の段数の上限 (±1 m。manager.SeatAutoMax と同じ)
         private bool _hipMeasured;            // この着座で測り終えた (補正後に測り直さない = ループ防止)
@@ -247,10 +249,11 @@ namespace KominkaHillside
             }
             float step = manager.seatStep > 0f ? manager.seatStep : SeatStep;
             float seatY = seat.parent != null ? seat.parent.TransformPoint(_seatPos).y : _seatPos.y;
-            float delta = seatY + HipAboveSeat - hips.y;
+            float full = seatY + HipAboveSeat - hips.y;          // 腰を目標に乗せる全量
+            float delta = full * SeatAutoFraction;               // 実際に掛ける量 (中間)
             int steps = Mathf.Clamp(Mathf.RoundToInt(delta / step), -SeatAutoMax, SeatAutoMax);
             Debug.Log("[KH_Cart] seat-auto cart=" + index + " hips=" + hips.y.ToString("F3") + " feet=" + feetY.ToString("F3")
-                + " seat=" + seatY.ToString("F3") + " delta=" + delta.ToString("F3") + " steps=" + steps);
+                + " seat=" + seatY.ToString("F3") + " full=" + full.ToString("F3") + " fraction=" + SeatAutoFraction.ToString("F2") + " delta=" + delta.ToString("F3") + " steps=" + steps);
             if (steps == 0) return;
             // 最後の文にする: Owner 自身だと Commit → ApplyCore → この Behaviour の _ApplySeat へ入れ子で戻るので、送った後は何も読まない
             manager._SendSeatAuto(steps);

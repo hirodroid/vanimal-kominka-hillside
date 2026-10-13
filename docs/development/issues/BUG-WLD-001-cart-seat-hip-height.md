@@ -5,8 +5,8 @@ system: WLD
 status: review
 priority: High
 summary: カートに座った直後、足元が座面の高さに来て腰が浮く (PC・Quest とも)。座席の高さを一番下 (−30 cm) にしても足りない。腰 (お尻) が座面に乗る高さに自動で合わせる
-next: "実装・コンパイル・Cart/2 Verify 済み (2026-10-12)。ユーザーの Play (PC / Quest、背の違うアバター 2 種類以上) で、座った直後に腰が座面に乗るか、ログ [KH_Cart] seat-auto の hips / feet / seat / delta を確認。HipAboveSeat 0.10 は結果で調整"
-updated: 2026-10-12
+next: "2026-10-13 ユーザー報告「前は高すぎ、今回は埋まった。中間に」→ 補正量を測った差の半分に (SeatAutoFraction 0.5、目標 座面 + 0.10 は据え置き)。C# 0 / U# 0、Cart/2 CART_OK。ユーザーの Play で中間の高さを確認し、ログ [KH_Cart] seat-auto の full / delta で割合を詰める"
+updated: 2026-10-13
 ---
 
 # BUG-WLD-001 カートの着座の高さを腰で合わせる
@@ -34,6 +34,8 @@ updated: 2026-10-12
 - [ ] Cart/2 Verify PASS (同期配列の長さを含む)
 
 ## 記録
+
+2026-10-13: ユーザー報告「カートに座った時、今度は下がりすぎて埋まっていた。前は高すぎたので中間ぐらいに」。全量補正 (腰を座面 + 0.10 に乗せる) が下げすぎなので、`KH_CartSeat.SeatAutoFraction = 0.5` を足し、測った差の半分だけ補正する (0 = 補正なし = 以前の高さ、1 = 今回の全量。どのアバターでも「前と今回の真ん中」になる)。目標 HipAboveSeat 0.10 は据え置き。ログに full / fraction / delta を出す。C# 0 / U# 0、Cart/2 Verify CART_OK 2,088。Play 未確認 (ユーザー)。割合は Play の結果で 0.3〜0.7 に詰める。
 
 2026-10-12: 起票。実装は Opus (統括 Fable)。
 
