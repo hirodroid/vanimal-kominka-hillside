@@ -63,11 +63,11 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 
 | # | Listing 名 (案) | 種別 / 価格 | **Product ID** | **Listing ID** | Unity アセット (案) | 接続先 productKey (案) | 中身 (9 品) |
 |---|---|---|---|---|---|---|---|
-| C-1 | VAnimal｜あらいばセット 泡 | Permanent / 500C |  |  | `KD_Product_WashFoam.asset` | `wash.foam_set` | 泡もこもこ銃、肉球ミトン |
-| C-2 | VAnimal｜あらいばセット 水 | Permanent / 500C |  |  | `KD_Product_WashWater.asset` | `wash.water_set` | じょうろ、ホース、水鉄砲 |
-| C-3 | VAnimal｜あらいばセット 仕上げ | Permanent / 500C |  |  | `KD_Product_WashFinish.asset` | `wash.finish_set` | ドライヤー、柄タオル |
-| C-4 | VAnimal｜あらいばセット 洗い場 | Permanent / 500C |  |  | `KD_Product_WashStation.asset` | `wash.station_set` | 檜の洗い台、プール |
-| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) |  | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定) |
+| C-1 | VAnimal｜あらいばセット 泡 | Permanent / 500C | `prod_a538fd94-bd1e-49ab-89bc-3a34d3f89808` | `prod_0b367ec3-d288-4434-9097-93949dd1ec15` | `KD_Product_WashFoam.asset` | `wash.foam_set` | 泡もこもこ銃、肉球ミトン |
+| C-2 | VAnimal｜あらいばセット 水 | Permanent / 500C | `prod_fd26e530-34dc-4eee-a186-20d1573987f3` | `prod_e0938881-138f-4c44-b7df-08bb969b76da` | `KD_Product_WashWater.asset` | `wash.water_set` | じょうろ、ホース、水鉄砲 |
+| C-3 | VAnimal｜あらいばセット 仕上げ | Permanent / 500C | `prod_c23c31d2-ef0e-45b4-ab3f-f5abf5f041f8` | `prod_f78351ab-9cdc-4a43-997d-073fea2c2381` | `KD_Product_WashFinish.asset` | `wash.finish_set` | ドライヤー、柄タオル |
+| C-4 | VAnimal｜あらいばセット 洗い場 | Permanent / 500C | `prod_396c89c7-3bd9-46d3-93af-28983d95feb7` | `prod_0632ffa5-a39e-4459-8ca3-5648c1d43356` | `KD_Product_WashStation.asset` | `wash.station_set` | 檜の洗い台、プール |
+| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) | `prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e` | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定) |
 
 リスティング画像 (1024×1024、価格なし、犬なし) は [artifacts/wash-listings/2026-10-13-v05/](../../../artifacts/wash-listings/2026-10-13-v05/README.md) の 5 枚 (9 品の再設計版)。それ以前の撮影分 ([2026-10-13](../../../artifacts/wash-listings/2026-10-13/README.md)、[2026-10-08](../../../artifacts/wash-listings/2026-10-08/README.md)) は保全で、Storefront には使わない。
 
@@ -122,4 +122,5 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 ## 記録
 
 - 2026-10-14: 起票 (ユーザー依頼)。ID はすべて空欄、コード・シーン・Storefront は未変更。公式 Listings の「複数 Product」を確認して §4-2 に記載。同日、Codex 相当の確認で §1-5 (メニューは統括が実行) と §4-2 (案 1 も Row の拡張が要る、未確認は Product の 2 Listing 共有) を訂正。
+- 2026-10-14: ユーザーが C-1〜C-4 の Product ID 4 件と C-1〜C-5 の Listing ID 5 件を貼付 (形式検査 OK、9 件とも異なる)。Listing 名は表の案のままで、Storefront 上の実名は未確認。コードの定数への写しは IMP-DOG-056 で行う。
 - 2026-10-14: ユーザー決定「案 1」(全部入りは 4 Product を含める Listing、5 つ目の Product は作らない)。Storefront で 1 Listing に 4 Product を追加できたと報告。C-5 の行を Listing だけに直した。ID はまだ空欄。
