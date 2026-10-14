@@ -44,9 +44,9 @@ Storefront で作った ID を **ここに貼るだけで配線に進める**た
 
 Product は Listing に含めた「udon」種別の ID。Role 商品の ID を入れるとアップロードが `Unrecognized udon product ID` で失敗する (古民家 2026-09-15 実測)。裏山では芸 (バーン・ジャンプ、[IMP-DOG-054](../issues/IMP-DOG-054-tricks-bang-jump.md)) もトレーナー特典だが、提供前は Listing 文面に載せない (DES-UI-005 2026-10-13 決定)。
 
-### B. 古民家から移植した CE 商品 (裏山用の別 ID が要る。2026-10-14 時点ですべて空欄)
+### B. 古民家から移植した CE 商品 (今回の公開対象外)
 
-game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以外は**ワールド別購入**。移植したコードは古民家の Product / Listing ID を定数として持ったままなので (`PlushProduct` … `PumpkinListing`)、このままだと古民家で買った人が裏山でも所有扱いになり、訂正と食い違う (§4-1)。**裏山で売る商品は Storefront で別の Udon Product と Listing を作って下表へ貼り、定数を差し替える。** 売らない商品は行を残しても画面に出さない (`KD_DogDefs.LiveProducts` / 各カタログの掲載が別にある)。
+**2026-10-14 ユーザー再確認: 移植したアイテム類は今回外す決定済み。** 下表の 6 商品は今回の公開対象外とし、裏山用の ID 作成待ちにはしない。移植元の ID・所有情報から商品へ到達する入口を外す作業は [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。現行コード・シーンへの除外反映は未実施。表は対象を照合する履歴として残す。共通トレーナー (A)・裏山の洗浄商品 (C) と、別途企画する裏山専用ライブは分けて扱う。
 
 | # | Listing 名 (案。古民家と区別する接尾は未決) | 種別 / 価格 (古民家の現行値) | **Product ID** (裏山) | **Listing ID** (裏山) | Unity アセット | 接続先 productKey | 裏山で売るか |
 |---|---|---|---|---|---|---|---|
@@ -67,7 +67,7 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 | C-2 | VAnimal｜あらいばセット 水 | Permanent / 500C | `prod_fd26e530-34dc-4eee-a186-20d1573987f3` | `prod_e0938881-138f-4c44-b7df-08bb969b76da` | `KD_Product_WashWater.asset` | `wash.water_set` | じょうろ、ホース、水鉄砲 |
 | C-3 | VAnimal｜あらいばセット 仕上げ | Permanent / 500C | `prod_c23c31d2-ef0e-45b4-ab3f-f5abf5f041f8` | `prod_f78351ab-9cdc-4a43-997d-073fea2c2381` | `KD_Product_WashFinish.asset` | `wash.finish_set` | ドライヤー、柄タオル |
 | C-4 | VAnimal｜あらいばセット 洗い場 | Permanent / 500C | `prod_396c89c7-3bd9-46d3-93af-28983d95feb7` | `prod_0632ffa5-a39e-4459-8ca3-5648c1d43356` | `KD_Product_WashStation.asset` | `wash.station_set` | 檜の洗い台、プール |
-| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) | `prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e` | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定) |
+| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) | `prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e` | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定)。**個別のセットを 1 つでも持つ人にはボードの購入ボタンが非活性** (§4-6) |
 
 リスティング画像 (1024×1024、価格なし、犬なし) は [artifacts/wash-listings/2026-10-13-v05/](../../../artifacts/wash-listings/2026-10-13-v05/README.md) の 5 枚 (9 品の再設計版)。それ以前の撮影分 ([2026-10-13](../../../artifacts/wash-listings/2026-10-13/README.md)、[2026-10-08](../../../artifacts/wash-listings/2026-10-08/README.md)) は保全で、Storefront には使わない。
 
