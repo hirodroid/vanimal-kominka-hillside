@@ -1251,9 +1251,20 @@ namespace KominkaDogRun.Editor
             if (stage >= 1)
             {
                 int fxSet = pouch.fxItems == null ? 0 : System.Array.FindAll(pouch.fxItems, x => x != null).Length;
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない同梱 FX の枠は null が正 (行ごと隠れる)。それ以外の null だけ WARN
+                KD_PetHeartsSetupEditor.GetShopEntries(out var fxKeys, out _, out _, out _, out _);
+                int fxWithheld = 0, fxLeak = 0;
+                for (int i = 0; pouch.fxItems != null && i < pouch.fxItems.Length && i < fxKeys.Length; i++)
+                {
+                    if (!KD_ProductDefinitions.IsWithheldKey(fxKeys[i])) continue;
+                    fxWithheld++;
+                    if (pouch.fxItems[i] != null) fxLeak++;
+                }
                 v.Check(pouch.fxItems != null && pouch.fxItems.Length == KD_ShopSetupEditor.PetFxProductCount,
-                    PouchName + ".fxItems が " + KD_ShopSetupEditor.PetFxProductCount + " 枠 (配線 " + fxSet + "。null の枠は WARN 扱い: 描画・購入は段階 2 IMP-DOG-015)");
-                if (fxSet < KD_ShopSetupEditor.PetFxProductCount) log.AppendLine("  WARN fxItems の null " + (KD_ShopSetupEditor.PetFxProductCount - fxSet) + " 枠 (Menu/4 Setup Shop の撫でFX 行)");
+                    PouchName + ".fxItems が " + KD_ShopSetupEditor.PetFxProductCount + " 枠 (配線 " + fxSet + "。公開しない " + fxWithheld + " 枠は null が正 = IMP-PRG-002。ほかの null は WARN 扱い: 描画・購入は段階 2 IMP-DOG-015)");
+                v.Check(fxLeak == 0, PouchName + ".fxItems に公開しない同梱 FX が無い (IMP-PRG-002。残り " + fxLeak + " 枠。Menu/6g Setup Pet Fx で外す)");
+                int fxMissing = KD_ShopSetupEditor.PetFxProductCount - fxSet - (fxWithheld - fxLeak);
+                if (fxMissing > 0) log.AppendLine("  WARN fxItems の null " + fxMissing + " 枠 (公開する撫でFX。Menu/4 Setup Shop → Menu/6g)");
             }
             StageRef(pouch.accessories != null, PouchName + ".accessories (KD_AccessoryBox)", 2, "IMP-DOG-015");
             StageRef(pouch.petFxBox != null, PouchName + ".petFxBox (KD_PetFxBox)", 2, "IMP-DOG-015");

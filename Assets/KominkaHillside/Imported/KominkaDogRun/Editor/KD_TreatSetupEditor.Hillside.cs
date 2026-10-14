@@ -331,8 +331,11 @@ namespace KominkaDogRun.Editor
             int fxN = KD_ShopSetupEditor.PetFxProductCount;
             fxItems = new KD_ShopItem[fxN];
             int fxFound = 0;
+            KD_PetHeartsSetupEditor.GetShopEntries(out var fxKeys, out _, out _, out _, out _);
             for (int i = 0; i < fxN; i++)
             {
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない同梱 FX は null (行ごと隠れる。Menu/6g も同じ値を書く)
+                if (i < fxKeys.Length && KD_ProductDefinitions.IsWithheldKey(fxKeys[i])) { fxItems[i] = null; continue; }
                 string name = KD_ShopSetupEditor.PetFxItemNameAt(i);
                 var fxGo = KD_SceneObjects.Find(name, out int count);
                 fxItems[i] = (count == 1 && fxGo != null) ? fxGo.GetComponent<KD_ShopItem>() : null;

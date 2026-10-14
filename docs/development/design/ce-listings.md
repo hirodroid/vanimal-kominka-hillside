@@ -46,7 +46,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 
 ### B. 古民家から移植した CE 商品 (今回の公開対象外)
 
-**2026-10-14 ユーザー再確認: 移植したアイテム類は今回外す決定済み。** 下表の 6 商品は今回の公開対象外とし、裏山用の ID 作成待ちにはしない。移植元の ID・所有情報から商品へ到達する入口を外す作業は [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。現行コード・シーンへの除外反映は未実施。表は対象を照合する履歴として残す。共通トレーナー (A)・裏山の洗浄商品 (C) と、別途企画する裏山専用ライブは分けて扱う。
+**2026-10-14 ユーザー再確認: 移植したアイテム類は今回外す決定済み。** 下表の 6 商品は今回の公開対象外とし、裏山用の ID 作成待ちにはしない。移植元の ID・所有情報から商品へ到達する入口を外す作業は [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。**2026-10-14 コードへ除外を反映** (`KD_ProductDefinitions.HillsideWithheldCeAssets` の 6 アセット = 13 行。行とキーは残し、UdonProduct を刺さず、手元メニューの一覧から外す。シーンへの適用は統括の Menu/4 → 6e → 6g と保存、実機の確認は未)。コードの定数 (`KD_ProductDefinitions.cs` の Plush / Royal / Summer / LivePack / Candy / Pumpkin) は古民家の ID のまま残すが、Store を開く経路は無い (`KD_ShopItem._OpenStore` が開かない)。表は対象を照合する履歴として残す。共通トレーナー (A)・裏山の洗浄商品 (C) と、別途企画する裏山専用ライブは分けて扱う。
 
 | # | Listing 名 (案。古民家と区別する接尾は未決) | 種別 / 価格 (古民家の現行値) | **Product ID** (裏山) | **Listing ID** (裏山) | Unity アセット | 接続先 productKey | 裏山で売るか |
 |---|---|---|---|---|---|---|---|
@@ -113,7 +113,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 
 | # | 論点 | 現状 | 担当 |
 |---|---|---|---|
-| 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。2026-10-14 ユーザー再確認で今回は除外に決定。選択・購入・利用の入口を外す。コード・シーンは 2026-10-14 時点で未変更 (`Validate` が形式を見るだけで、古民家の ID かどうかは判別しない) | [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。裏山専用ライブの企画は DES-LIV-001／002 |
+| 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。2026-10-14 ユーザー再確認で今回は除外に決定。選択・購入・利用の入口を外す。**決定: 2026-10-14 コードへ反映 (IMP-PRG-002)**: 6 アセットを公開しない表 (`HillsideWithheldCeAssets`) に載せ、Product を刺さない・一覧から外す・`_OpenStore` が開かない。ID の定数は履歴として残す (古民家の ID かどうかを `Validate` で判別する仕組みは足していない。公開する CE 行はトレーナーと洗い場だけ) | [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。裏山専用ライブの企画は DES-LIV-001／002 |
 | 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める。**決定: 2026-10-14 ユーザー「案 1」。Storefront で 1 つの Listing に 4 Product を追加できたことを実測** (同じ Product を C-1〜C-4 の各 Listing にも入れた状態で成立するかは、4 つの Listing を作った時点で確かめる) | IMP-DOG-056 (決定済み。Row の拡張 = Listing だけの項目は 056 §1) |
 | 4-3 | **インスタンス共有の所有判定** | 既存 CE は購入者本人の `Store` 判定だけ。洗い場は「誰か 1 人が所有」+「洗い終わりまで継続」+「所有者 0 で無料に戻る」。所有者の退室・途中参加・洗いの終わりの判定が要る。`KH_WashSelection` には購入判定が無い (IMP-DOG-043 は購入なしで先行導入) | IMP-DOG-056 |
 | 4-4 | 裏山の Listing 名の接尾 | 古民家と同名の Listing を 2 つ作ると Storefront で見分けにくい。「｜裏山」などを付けるかはユーザー | DES-UI-005 |
@@ -126,3 +126,4 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 - 2026-10-14: ユーザーが C-1〜C-4 の Product ID 4 件と C-1〜C-5 の Listing ID 5 件を貼付 (形式検査 OK、9 件とも異なる)。Listing 名は表の案のままで、Storefront 上の実名は未確認。コードの定数への写しは IMP-DOG-056 で行う。
 - 2026-10-14: ユーザー決定「案 1」(全部入りは 4 Product を含める Listing、5 つ目の Product は作らない)。Storefront で 1 Listing に 4 Product を追加できたと報告。C-5 の行を Listing だけに直した。ID はまだ空欄。
 - 2026-10-14: §2 C の 9 ID をコードへ写した (`KD_ProductDefinitions.cs` の Wash* 定数、IMP-DOG-056)。`KD_Product_Wash{Foam,Water,Finish,Station}.asset` を作成 (ID 一致)、Menu/4a・WashPremium/44 が台帳との一致を検査。Listing はまだ公開していない (実課金の検査の直前にユーザーが有効化)。
+- 2026-10-14: §2 B の 6 商品の除外をコードへ反映 (IMP-PRG-002)。`KD_ProductDefinitions.HillsideWithheldCeAssets` の 6 アセット (13 行) は行・キーを残し、UdonProduct を刺さない (所有が付かない)。手元メニューのかざり・撫でFX の一覧から外し、`KD_ShopItem._OpenStore` は Product の無い CE 行で開かない。Menu/4a が検査する。シーンへの適用・保存と実機の確認は IMP-PRG-002 の記録を見る。

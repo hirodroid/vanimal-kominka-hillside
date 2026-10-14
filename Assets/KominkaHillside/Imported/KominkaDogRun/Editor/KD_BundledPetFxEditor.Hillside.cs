@@ -176,7 +176,25 @@ namespace KominkaDogRun.Editor
             // ---- 手元メニュー (段階 2 の Menu/7 も同じ配線をする。ここでも入れておくと 18 より前に Verify できる) ----
             var pouchT = dogs.Find(KD_DogDefs.TreatPouchName);
             var pouch = pouchT == null ? null : pouchT.GetComponent<KD_TreatPouch>();
-            if (pouch != null) { pouch.petFxBox = box; try { UdonSharpEditorUtility.CopyProxyToUdon(pouch); } catch (Exception e) { log.AppendLine("FAIL CopyProxyToUdon(pouch): " + e.Message); ok = false; } }
+            if (pouch != null)
+            {
+                pouch.petFxBox = box;
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 撫でFX の行の商品 (fxItems、keys と同じ 11 枠)。書き手の Menu/7 は周回版で拒否されるのでここでも書く。
+                // 公開しない同梱 FX (キャンディ / かぼちゃ / 提灯 / 流れ星 / 紙吹雪) は null = 行ごと隠れる (KD_TreatPouch.RedrawFxRows の既存の扱い)。
+                // 粒 (fxVariants) と fxProductKeys は 11 種のまま (添字を動かさない)
+                var fxItems = new KD_ShopItem[keys.Length];
+                int fxWithheld = 0;
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    if (KD_ProductDefinitions.IsWithheldKey(keys[i])) { fxWithheld++; continue; }
+                    fxItems[i] = catalog.items == null ? null : catalog.items.FirstOrDefault(x => x != null && x.productKey == keys[i]);
+                    if (fxItems[i] == null) { log.AppendLine("FAIL 撫でFX の商品 " + keys[i] + " がカタログに無い。先に Menu/4 Setup Shop"); ok = false; }
+                }
+                pouch.fxItems = fxItems;
+                log.AppendLine("   pouch.fxItems: " + (keys.Length - fxWithheld) + " 件 + 公開しない " + fxWithheld + " 枠は null (IMP-PRG-002。行は隠れる)");
+                try { UdonSharpEditorUtility.CopyProxyToUdon(pouch); } catch (Exception e) { log.AppendLine("FAIL CopyProxyToUdon(pouch): " + e.Message); ok = false; }
+                EditorUtility.SetDirty(pouch);
+            }
 
             var tagGo = KD_SceneObjects.Find(KD_DogDefs.PlayerFxTagName, out int tagCount);
             if (tagGo == null || tagCount != 1 || tagGo.GetComponent<KD_PlayerFxTag>() == null)
@@ -276,16 +294,22 @@ namespace KominkaDogRun.Editor
             bool stage2 = pouch.hillsideStage >= 2;
             if (stage2) v.Check(pouch.petFxBox == box, "pouch.petFxBox = KD_PetFxBox (段階 2 から必須)");
             else v.Note("pouch.petFxBox " + (pouch.petFxBox == box ? "配線済み" : "未配線") + " (段階 " + pouch.hillsideStage + "。段階 2 の Menu/7 で必須)");
-            v.Check(pouch.fxItems != null && pouch.fxItems.Length == keys.Length && Enumerable.Range(0, keys.Length).All(i => pouch.fxItems[i] != null && pouch.fxItems[i].productKey == keys[i]),
-                "pouch.fxItems 11 件が表の順 (" + string.Join(", ", keys) + ")");
-            for (int i = BundledFirst; pouch.fxItems != null && i < keys.Length && i < pouch.fxItems.Length; i++)
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない同梱 FX の枠は null (行ごと隠れる)、ほかは表の順
+            v.Check(pouch.fxItems != null && pouch.fxItems.Length == keys.Length && Enumerable.Range(0, keys.Length).All(i => KD_ProductDefinitions.IsWithheldKey(keys[i])
+                    ? pouch.fxItems[i] == null : pouch.fxItems[i] != null && pouch.fxItems[i].productKey == keys[i]),
+                "pouch.fxItems 11 枠が表の順 (" + string.Join(", ", keys) + ")。公開しない " + keys.Count(KD_ProductDefinitions.IsWithheldKey) + " 枠は null (IMP-PRG-002)");
+            for (int i = BundledFirst; catalog != null && catalog.items != null && i < keys.Length; i++)
             {
-                var item = pouch.fxItems[i];
-                if (item == null || catalog == null) continue;
+                // 同梱の判定はカタログの行で見る (手元メニューの枠は公開しない分が null)
+                var item = catalog.items.FirstOrDefault(x => x != null && x.productKey == keys[i]);
+                if (item == null) { v.Check(false, keys[i] + ": カタログに行がある"); continue; }
                 string parentKey = i == 6 ? "live.candy_step_set" : i == 7 ? "live.pumpkin_parade_set" : "live.kominka_pack";
                 var parent = catalog.items.FirstOrDefault(x => x != null && x.productKey == parentKey);
+                bool withheld = KD_ProductDefinitions.IsWithheldKey(keys[i]);
                 v.Check(parent != null && item.IsCE() && item.price == 0 && item.ceProduct == parent.ceProduct && item.ceListingId == parent.ceListingId && item.ceCredits == parent.ceCredits
-                    && item.menuOnly && item.GetComponent<Collider>() == null, keys[i] + ": 同梱 (" + parentKey + ") と所有・購入先・Credits を共有、Point 価格なし、メニューだけで買う");
+                    && item.menuOnly && item.GetComponent<Collider>() == null && (!withheld || (item.CeWithheld() && parent.CeWithheld())),
+                    keys[i] + ": 同梱 (" + parentKey + ") と所有・購入先・Credits を共有、Point 価格なし、メニューだけで買う"
+                    + (withheld ? "。IMP-PRG-002 で公開しない (Product なし = 所有が付かず購入画面も開かない)" : ""));
             }
             // FxRow (かざりの Content) と onClick
             var backingPouch = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);

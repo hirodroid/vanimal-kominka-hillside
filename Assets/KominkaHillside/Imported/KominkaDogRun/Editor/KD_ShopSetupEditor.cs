@@ -190,6 +190,8 @@ namespace KominkaDogRun.Editor
             {
                 string want = ExpectedCeListing(s.productKey);
                 if (want.Length == 0) continue;             // CE 品ではない
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は開発用の解放でも無料品にしない (Relock は従来どおり表へ戻す)
+                if (!locked && KD_ProductDefinitions.IsWithheldKey(s.productKey)) continue;
                 string next = locked ? want : "";
                 if (s.ceListingId == next) continue;
                 s.ceListingId = next;

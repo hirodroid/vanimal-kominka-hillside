@@ -109,16 +109,23 @@ namespace KominkaDogRun.Editor
                     Check(SceneComponents<KD_ShopItem>().Count(i => i.productKey == item.productKey) == 1, item.productKey + " unique");
                     string key;
                     Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(item).publicVariables.TryGetVariableValue("productKey", out key) && key == item.productKey, item.productKey + " backing");
-                    if (item.IsCE())
+                    if (item.IsCE() && !item.CeWithheld())   // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は Product を持たない (ValidateItem が見る)
                     {
                         // 実行時に読まれるのは backing 側の参照。プロキシだけ刺さっていても実機では null になる
                         VRC.Economy.UdonProduct backingProduct;
                         Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(item).publicVariables.TryGetVariableValue("ceProduct", out backingProduct) && backingProduct == item.ceProduct, item.productKey + " CE asset in backing heap");
                         Check(!item.ceListingId.StartsWith("TODO-"), item.productKey + " real listing id");
                     }
+                    else if (item.IsCE())
+                    {
+                        // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は backing にも Product が残っていない (U# は null を消すので「無い / null」が正。Menu/4a と同じ)
+                        VRC.Economy.UdonProduct backingProduct;
+                        Check(!UdonSharpEditorUtility.GetBackingUdonBehaviour(item).publicVariables.TryGetVariableValue("ceProduct", out backingProduct) || backingProduct == null,
+                            item.productKey + " withheld: no CE asset in backing heap");
+                    }
                 }
                 // セット商品: 同じアセットを指す行は同じ Listing を指す (ぬいぐるみ 3 行 / トレーナー 2 行)
-                foreach (var g in catalog.items.Where(i => i.IsCE()).GroupBy(i => i.ceProduct))
+                foreach (var g in catalog.items.Where(i => i.IsCE() && !i.CeWithheld()).GroupBy(i => i.ceProduct))
                     Check(g.Select(i => i.ceListingId).Distinct().Count() == 1, "CE set rows share one listing: " + (g.Key == null ? "null" : g.Key.name));
                 bool Keys(string[] keys, string category) { return keys != null && keys.Length > 0 && keys.All(k => catalog.items.Any(i => i.productKey == k && i.categoryKey == category)); }
                 foreach (var toy in SceneComponents<KD_ToyBox>()) Check(Keys(toy.productKeys,"toy"), toy.name + " toy keys");

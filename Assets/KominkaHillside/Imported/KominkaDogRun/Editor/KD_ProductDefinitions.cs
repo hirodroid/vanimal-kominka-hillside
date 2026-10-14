@@ -132,6 +132,17 @@ namespace KominkaDogRun.Editor
         public const string WashCategory = "wash";
         public static readonly string[] WashSetKeys = { "wash.foam_set", "wash.water_set", "wash.finish_set", "wash.station_set" };
         public static readonly string[] WashSetSceneNames = { "KD_ShopItem_Wash_Foam", "KD_ShopItem_Wash_Water", "KD_ShopItem_Wash_Finish", "KD_ShopItem_Wash_Station" };
+        // 裏山改変 IMP-PRG-002 (2026-10-14 ユーザー決定「移植したアイテム類は今回外す」): 古民家から移植した CE 6 商品 (ce-listings §2 B) を公開しない。
+        // **UdonProduct アセット名で持つ** (この 6 つを共有する 13 行 = 王様・夏・キャンディ・ハロウィン・Live Pack・ぬいぐるみ と同梱の撫でFX が自動で決まる)。
+        // 行は表・カタログ・台帳に残す (おもちゃ・古民家ライブの行と同じ「台帳のために残す」。キーは再利用しない)。ゲートは Apply が ceProduct を刺さないこと:
+        // ceListingId は表の値のままなので IsCE() は真 (無料品に化けない)、Product が無いので Store の購入通知で所有が付かず (KD_ShopItem.CeOwnedBy)、
+        // 選択の復元は既定へ倒れ、KD_ShopItem._OpenStore も開かない。行を抜いて添字をずらすことはしない (同期・保存の番号が別の品に化ける)
+        public static readonly string[] HillsideWithheldCeAssets = { "KD_Product_RoyalSet", "KD_Product_SummerSet", "KD_Product_CandyStep", "KD_Product_PumpkinParade", "KD_Product_KominkaLivePack", "KD_Product_PlushSet" };
+        /// <summary>IMP-PRG-002: 今回の公開版で出さない行か (Product を外す CE 行)。</summary>
+        public static bool IsWithheld(Row d) { return d != null && d.IsCE && Array.IndexOf(HillsideWithheldCeAssets, d.ceAsset) >= 0; }
+        public static bool IsWithheldKey(string key) { var d=Array.Find(All,x=>x.key==key); return IsWithheld(d); }
+        public static Row[] WithheldRows() { return All.Where(IsWithheld).ToArray(); }
+
         public static Row Get(string key)
         { var row=Array.Find(All,x=>x.key==key); if(row==null) throw new InvalidOperationException("Unknown product: "+key); return row; }
         public static string SceneName(string key) { return Get(key).sceneName; }
@@ -176,7 +187,9 @@ namespace KominkaDogRun.Editor
         {
             var d=Get(key); item.productKey=d.key; item.categoryKey=d.categoryKey; item.price=d.price;
             item.packCount=d.packCount; item.consumable=d.packCount>0; item.initialStock=d.initialStock; item.stockCap=d.stockCap;
-            item.ceListingId=d.ceListingId; item.ceCredits=d.ceCredits; item.ceProduct=LoadCeProduct(d);
+            item.ceListingId=d.ceListingId; item.ceCredits=d.ceCredits;
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行には UdonProduct を刺さない (シーンから参照されないのでビルドにも入らない)
+            item.ceProduct=IsWithheld(d) ? null : LoadCeProduct(d);
         }
         static readonly Regex ProdId=new Regex(@"^prod_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
         public static void Validate(Row[] rows,string[] categories,bool test=false)
@@ -216,6 +229,12 @@ namespace KominkaDogRun.Editor
                     if(w==null || w.categoryKey!=WashCategory || w.sceneName!=WashSetSceneNames[i] || !w.IsCE || !washListings.Add(w.ceListingId)) throw new InvalidOperationException("Invalid wash set row: "+WashSetKeys[i]);
                 }
                 if(rows.Count(r=>r.categoryKey==WashCategory)!=WashSetKeys.Length) throw new InvalidOperationException("Unexpected rows in category "+WashCategory);
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しないアセットは表に実在する CE 行で、重複なし。既定品・洗い場・トレーナーは外さない
+                if(HillsideWithheldCeAssets.Distinct().Count()!=HillsideWithheldCeAssets.Length) throw new InvalidOperationException("Duplicate withheld CE asset");
+                foreach(var a in HillsideWithheldCeAssets)
+                    if(!rows.Any(r=>r.IsCE && r.ceAsset==a) || rows.Any(r=>r.ceAsset==a && !r.IsCE)) throw new InvalidOperationException("Withheld CE asset is not a CE row: "+a);
+                foreach(var r in rows.Where(r=>IsWithheld(r)))
+                    if(Defaults.Contains(r.key) || r.categoryKey==WashCategory || r.categoryKey=="experience") throw new InvalidOperationException("Withheld row must not be a default / wash / trainer: "+r.key);
             }
         }
         public static void ValidateItem(KD_ShopItem item)
@@ -223,6 +242,8 @@ namespace KominkaDogRun.Editor
             var d=Get(item.productKey);
             if(!item.IsConfigured() || item.categoryKey!=d.categoryKey || item.price!=d.price || item.packCount!=d.packCount || item.initialStock!=d.initialStock || item.stockCap!=d.stockCap || item.ceListingId!=d.ceListingId || item.ceCredits!=d.ceCredits) throw new InvalidOperationException("Stale product: "+d.key);
             if(!d.IsCE) { if(item.ceProduct!=null) throw new InvalidOperationException("Non-CE item carries a product asset: "+d.key); return; }
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は Product を持たないことが正
+            if(IsWithheld(d)) { if(item.ceProduct!=null) throw new InvalidOperationException("Withheld CE item still carries a product asset (IMP-PRG-002): "+d.key); return; }
             if(item.ceProduct==null || AssetDatabase.GetAssetPath(item.ceProduct)!=CeAssetPath(d) || item.ceProduct.ID!=d.ceProductId) throw new InvalidOperationException("Stale CE asset: "+d.key);
         }
     }

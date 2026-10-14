@@ -29,6 +29,21 @@ namespace KominkaDogRun.Editor
         /// <summary>一覧の並び (29 件。セットの構成品は各セットの直後)。古民家の Selections の写しを返す。</summary>
         internal static int[] HillsideSelections() { return Selections.ToArray(); }
 
+        /// <summary>裏山改変 IMP-PRG-002 (2026-10-14): 手元メニューの一覧に出す並び。古民家の Selections から、公開しない CE 商品
+        /// (<see cref="KD_ProductDefinitions.IsWithheldKey"/>: 王様 100 / 夏 101 / キャンディ 103 / パンプキン 104 とその構成品 0,5,6 / 7,8,9 / 18..23) を抜く。
+        /// 台帳 (KD_AccessoryBox) の恒久 ID・productItems・setIds・setMembers・nodes は 0..23 / 100..104 のまま (同期値 _slotProduct が恒久 ID を運ぶ)。
+        /// 一覧の配列 (accProductIds ほか) は同期も保存もしない表示用なので、ここで短くしてよい。</summary>
+        internal static int[] HillsidePublishedSelections()
+        {
+            return Selections.Where(id => !KD_ProductDefinitions.IsWithheldKey(GoodsKeyOf(id))).ToArray();
+        }
+
+        /// <summary>一覧の 1 件 (単品の恒久 ID 0..23 / セット 100..104) が属する商品キー。</summary>
+        internal static string GoodsKeyOf(int selection)
+        {
+            return Goods[selection >= 100 ? SetGoods[selection - 100] : ProductGoods[selection]];
+        }
+
         /// <summary>品目 ID × 犬のシーン上のノード名。0..17 = KD_Acc_{Key}_{Dog}、18..20 = KD_CandyCostume_*、21..23 = KD_PumpkinCostume_*
         /// (古民家の BindCandyNodes と同じ命名)。</summary>
         internal static string HillsideNodeName(int product, string dogKey)
@@ -87,16 +102,21 @@ namespace KominkaDogRun.Editor
             if (pouch != null)
             {
                 var catalog = KD_LocalizationEditor.Load();
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 一覧は公開する品だけ (公開しない CE セットとその構成品を出さない)
+                var shown = HillsidePublishedSelections();
                 pouch.accessories = box;
-                pouch.accProductIds = Selections.ToArray();
-                pouch.accItems = Selections.Select(id => id >= 100 ? items[SetGoods[id - 100]] : box.productItems[id]).ToArray();
-                pouch.accNameKeys = Selections.Select(id => "accessory." + (id >= 100 ? GoodsKeys[SetGoods[id - 100]] : Keys[id])).ToArray();
-                pouch.accSlotNameKeys = Selections.Select(id => id >= 100 ? "accessory.set" : "accessory.slot." + box.productSlots[id]).ToArray();
+                pouch.accProductIds = shown.ToArray();
+                pouch.accItems = shown.Select(id => id >= 100 ? items[SetGoods[id - 100]] : box.productItems[id]).ToArray();
+                pouch.accNameKeys = shown.Select(id => "accessory." + (id >= 100 ? GoodsKeys[SetGoods[id - 100]] : Keys[id])).ToArray();
+                pouch.accSlotNameKeys = shown.Select(id => id >= 100 ? "accessory.set" : "accessory.slot." + box.productSlots[id]).ToArray();
                 pouch.accNames = pouch.accNameKeys.Select(k => KD_LocalizationEditor.Text(catalog, "ja", k)).ToArray();
                 pouch.accSlotNames = pouch.accSlotNameKeys.Select(k => KD_LocalizationEditor.Text(catalog, "ja", k)).ToArray();
                 EditorUtility.SetDirty(pouch);
+                log.AppendLine("   IMP-PRG-002: 一覧から公開しない " + (Selections.Length - shown.Length) + " 件を外した ("
+                    + string.Join(",", Selections.Except(shown)) + ")。台帳の恒久 ID・セット表は 24 / 5 のまま");
             }
-            log.AppendLine("   配線: 台帳の商品参照 24 / セット 5 (構成品 15)" + (pouch != null ? " / 手元メニューの一覧 " + Selections.Length + " 件 (見える行 14)" : "") + "。商品は書き換えていない");
+            int visibleRows = HillsidePublishedSelections().Count(id => !HillsideSetMembers.Contains(id));
+            log.AppendLine("   配線: 台帳の商品参照 24 / セット 5 (構成品 15)" + (pouch != null ? " / 手元メニューの一覧 " + HillsidePublishedSelections().Length + " 件 (見える行 " + visibleRows + ")" : "") + "。商品は書き換えていない");
             return true;
         }
 
@@ -126,15 +146,24 @@ namespace KominkaDogRun.Editor
             {
                 var it = items[i]; var def = KD_ProductDefinitions.Get(Goods[i]);
                 bool ce = !string.IsNullOrEmpty(def.ceListingId);
-                v.Check(it.price == def.price && it.IsCE() == ce && (!ce || it.ceProduct != null), "商品 " + Goods[i] + ": " + (ce ? def.ceCredits + " C (UdonProduct " + (it.ceProduct != null ? it.ceProduct.name : "null") + ")" : it.price + " pt"));
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 商品は UdonProduct を持たない (Listing だけ = CeWithheld)
+                bool withheld = KD_ProductDefinitions.IsWithheld(def);
+                v.Check(it.price == def.price && it.IsCE() == ce && (!ce || (withheld ? it.ceProduct == null : it.ceProduct != null)),
+                    "商品 " + Goods[i] + ": " + (ce ? def.ceCredits + " C (UdonProduct " + (it.ceProduct != null ? it.ceProduct.name : "null") + (withheld ? "。IMP-PRG-002 で公開しない = null が正" : "") + ")" : it.price + " pt"));
                 v.Check(shop.Length == 1 && shop[0].items != null && shop[0].items.Count(x => x == it) == 1
                     && ledger.Length == 1 && ledger[0].products != null && ledger[0].products.Count(x => x == it) == 1, "商品 " + Goods[i] + " がカタログと台帳に 1 回ずつ登録");
             }
             if (pouch == null) { v.Note("KD_TreatPouch が無い — 一覧の配線は検査しない"); return; }
             v.Check(pouch.accessories == box, "KD_TreatPouch.accessories = KH_Dogs/" + KD_DogDefs.AccessoryBoxName);
-            v.Check(pouch.accProductIds != null && pouch.accProductIds.SequenceEqual(Selections), "accProductIds が一覧の並び 29 件 (安い → 高い、CE は最後。構成品はセットの直後)");
-            v.Check(pouch.accItems != null && pouch.accItems.Length == Selections.Length && Enumerable.Range(0, Selections.Length).All(i => pouch.accItems[i] == (Selections[i] >= 100 ? items[SetGoods[Selections[i] - 100]] : box.productItems[Selections[i]])),
-                "accItems 29 件が商品表どおり");
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 一覧は公開する品だけ (古民家の 29 件から公開しない CE セットと構成品を抜いた並び)
+            var shown = HillsidePublishedSelections();
+            v.Check(pouch.accProductIds != null && pouch.accProductIds.SequenceEqual(shown), "accProductIds が一覧の並び " + shown.Length + " 件 (安い → 高い、CE は最後。構成品はセットの直後。IMP-PRG-002 の除外後)");
+            v.Check(pouch.accItems != null && pouch.accItems.Length == shown.Length && Enumerable.Range(0, shown.Length).All(i => pouch.accItems[i] == (shown[i] >= 100 ? items[SetGoods[shown[i] - 100]] : box.productItems[shown[i]])),
+                "accItems " + shown.Length + " 件が商品表どおり");
+            v.Check(pouch.accItems != null && pouch.accItems.All(x => x != null && !x.CeWithheld()) && pouch.accProductIds != null && pouch.accProductIds.All(id => !KD_ProductDefinitions.IsWithheldKey(GoodsKeyOf(id))),
+                "IMP-PRG-002: 一覧に公開しない CE 商品 (王様 / 夏 / キャンディ / パンプキン) とその構成品が無い");
+            int shownRows = shown.Count(id => !HillsideSetMembers.Contains(id));
+            v.Check(shownRows % 2 == 0, "見える行 " + shownRows + " が偶数 (2 列の格子で撫でFX の見出しが段の左端に来る)");
             var catalog = KD_LocalizationEditor.Load();
             int missing = 0; string first = "";
             foreach (var k in (pouch.accNameKeys ?? new string[0]).Concat(pouch.accSlotNameKeys ?? new string[0]))
@@ -142,10 +171,27 @@ namespace KominkaDogRun.Editor
                 try { KD_LocalizationEditor.Text(catalog, "ja", k); }
                 catch (InvalidOperationException) { missing++; if (first.Length == 0) first = k; }
             }
-            v.Check(pouch.accNameKeys != null && pouch.accNameKeys.Length == Selections.Length && pouch.accSlotNameKeys != null && pouch.accSlotNameKeys.Length == Selections.Length && missing == 0,
-                "accNameKeys / accSlotNameKeys 29 件が文言表にある (欠け " + missing + (first.Length > 0 ? " 例 " + first : "") + ")");
-            int visible = Selections.Count(id => !HillsideSetMembers.Contains(id));
-            v.Check(visible <= MenuCount && pouch.accRows != null && pouch.accRows.Length >= MenuCount, "見える行 " + visible + " 品 <= 行の器 " + MenuCount);
+            v.Check(pouch.accNameKeys != null && pouch.accNameKeys.Length == shown.Length && pouch.accSlotNameKeys != null && pouch.accSlotNameKeys.Length == shown.Length && missing == 0,
+                "accNameKeys / accSlotNameKeys " + shown.Length + " 件が文言表にある (欠け " + missing + (first.Length > 0 ? " 例 " + first : "") + ")");
+            v.Check(shownRows <= MenuCount && pouch.accRows != null && pouch.accRows.Length >= MenuCount, "見える行 " + shownRows + " 品 <= 行の器 " + MenuCount);
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない品の見た目ノードは残すが (容量は別件)、既定で外れていて、台帳が着けない (KD_AccessoryBox.Apply の CeWithheld)
+            if (box.nodes != null && box.productItems != null && box.dogCount > 0)
+            {
+                int withheldNodes = 0, activeWithheld = 0;
+                for (int p = 0; p < box.productItems.Length && (p + 1) * box.dogCount <= box.nodes.Length; p++)
+                {
+                    if (box.productItems[p] == null || !box.productItems[p].CeWithheld()) continue;
+                    for (int d = 0; d < box.dogCount; d++)
+                    {
+                        var n = box.nodes[p * box.dogCount + d];
+                        if (n == null) continue;
+                        withheldNodes++;
+                        if (n.activeSelf) activeWithheld++;
+                    }
+                }
+                v.Check(activeWithheld == 0, "IMP-PRG-002: 公開しない品の見た目ノード " + withheldNodes + " 個 (12 品 × " + box.dogCount + " 匹) がすべて外れている (active " + activeWithheld + ")");
+                v.Check(typeof(KD_ShopItem).GetMethod("CeWithheld") != null, "IMP-PRG-002: 台帳は CeWithheld の品を同期値が指していても着けない (KD_AccessoryBox.Apply)");
+            }
         }
     }
 }

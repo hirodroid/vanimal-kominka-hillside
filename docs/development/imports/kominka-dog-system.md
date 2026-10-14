@@ -685,3 +685,23 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | `Tools/KominkaHillside/DogBook/0 - Create Program Assets` / `1 - Setup` / `2 - Build Stand And Place` (第 2 波で `2 - Layout Near Keeper` から差し替え。看板 `KH_DogBookStand` を建てて板を載せる) / `3 - Verify` / `4 - Bake Portraits` / `5 - Build Fur Colors` | 新規 (裏山)。古民家の `Menu/Imported-Unused/Dog Book/0〜4` は残す (裏山では 1・2・3 が KD_Places / KD_Systems を前提にして使えない) |
 
 **古民家ドッグランへは未反映** (毛色は 10-06 の決定で両ワールドの対象だが、古民家側の実装は別の作業)。
+
+## 2026-10-14 移植した CE 6 商品を公開しない (IMP-PRG-002)
+
+ユーザー決定 (2026-10-14 再確認): 古民家から移植した CE 商品 ([ce-listings §2 B](../design/ce-listings.md) の 6 件 = 小さな王様 / 夏休み / キャンディ・ステップ / ハロウィン / Kominka Live Pack / ぬいぐるみ) を今回の公開版から外す。棚卸しと検証の記録は [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。**ゲートであって削除ではない**: 商品表の行・シーンの `KD_ShopItem`・飾りのノード・撫でFX の粒・資産ファイルは残す。
+
+| ファイル | 裏山の変更 | 理由 |
+|---|---|---|
+| `Editor/KD_ProductDefinitions.cs` | `HillsideWithheldCeAssets` (6 アセット名) と `IsWithheld` / `IsWithheldKey` / `WithheldRows` (6 アセットを共有する 13 行)。`Apply` は公開しない行に `ceProduct` を刺さない (`ceListingId` は表の値のまま)。`ValidateItem` は公開しない行の `ceProduct == null` を正とする。`Validate` (本番表) に「6 アセットが実在する CE 行・既定品 / 洗い場 / トレーナーを含まない」 | 行を抜くと添字・キーがずれる。Product だけ外せば所有が付かず、`IsCE()` は真のまま (無料品に化けない) |
+| `Scripts/Progress/KD_ShopItem.cs` | `CeWithheld()` (= `IsCE() && ceProduct == null`) を足し、`_OpenStore` はそれが真なら開かない | 移植元の Listing ID を Store へ渡す経路を構造的に閉じる。フラグは足さず既存の 2 値から導く |
+| `Scripts/KD_AccessoryBox.cs` | `Apply` で `productItems[p].CeWithheld()` の品目は同期値が指していても着けない | 他人・旧 Owner の値でも既定 (何も着けない) に落とす。恒久 ID と nodes の並びは不変 |
+| `Editor/KD_AccessorySetsEditor.Hillside.cs` | `HillsidePublishedSelections` / `GoodsKeyOf`。`HillsideWire` は手元メニューの一覧 (accProductIds ほか) を公開する品だけにする (29 → 13 件、見える行 14 → 10)。台帳の productItems / setItems / setIds / setMembers は 24 / 5 のまま。`HillsideVerifyTables` を新しい一覧で検査し、公開しない品の見た目ノード (72) が外れていることを足した | 一覧は同期も保存もしない表示用の配列 |
+| `Editor/KD_BundledPetFxEditor.Hillside.cs` | Menu/6g が `pouch.fxItems` を書く (公開しない同梱 5 種は null。行ごと隠れる)。6h は公開しない枠の null と、カタログ側の同梱行が `CeWithheld` かを見る | 書き手の Menu/7 は周回版で拒否されるため |
+| `Editor/KD_TreatSetupEditor.Hillside.cs` / `KD_TreatSetupEditor.Verify.cs` | Menu/7 の `HillsideFindStage1` も公開しない撫でFX を null に。Menu/20 は公開しない枠の null を正とし、残っていれば FAIL | 6g と同じ値 |
+| `Editor/KD_ShopSetupEditor.Hillside.cs` | Menu/4 のログに除外行。Menu/4a の商品検査を公開しない行で分岐 (proxy も backing も ceProduct なし) し、`VerifyHillsideWithheld` (6 アセット / 13 行、UdonProduct を参照する KD_ShopItem 0、シーンの U# の KD_ShopItem 参照は台帳・カタログ・飾りの台帳だけ) を足した | 除外の検査の正本 |
+| `Editor/KD_ShopSetupEditor.cs` | Menu/4b CE Unlock (dev) は公開しない行を解放しない | 開発用の解放で無料品として復活させない |
+| `Editor/KD_ProductsEditor.cs` | Imported-Unused の Products/2 Verify が公開しない行の backing・セットの Listing 共有を見ない | 古民家版の検査が誤って FAIL しない |
+
+資産・シーン: `Data/CE/KD_Product_{RoyalSet,SummerSet,CandyStep,PumpkinParade,KominkaLivePack,PlushSet}.asset` は残す (Menu/4 の後はシーンから参照されないのでワールドに入らない。`EnsureCeAssets` は従来どおり作り続ける)。飾りのモデル (王様・夏・キャンディ・パンプキンの 12 品 × 6 匹と試着のミニチュア) と同梱の撫でFX (5 種 × 2 層 × 6 匹) はシーンに残り、容量にも残る (削除は別件)。
+
+**古民家ドッグランへは反映しない** (古民家では販売中)。

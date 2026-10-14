@@ -419,11 +419,14 @@ namespace KominkaDogRun
             {
                 int slot = productSlots[p];
                 if (slot < 0 || slot >= SlotCount) continue;
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 品 (商品の Product を外した品) は、同期値が指していても着けない
+                // (他人・旧 Owner の値でも既定 = 何も着けない に落とす)。恒久 ID と nodes の並びは変えない
+                bool withheld = productItems != null && p < productItems.Length && productItems[p] != null && productItems[p].CeWithheld();
                 for (int d = 0; d < dogCount; d++)
                 {
                     var go = nodes[p * dogCount + d];
                     if (go == null) continue;
-                    bool on = !_candyPerformanceOverlay && _slotProduct[d * SlotCount + slot] == productIds[p];
+                    bool on = !withheld && !_candyPerformanceOverlay && _slotProduct[d * SlotCount + slot] == productIds[p];
                     // Shared fitted nodes stay dressed if ordinary selection deserializes during the show.
                     if (_candyPerformanceOverlay && candyPerformanceNodes != null)
                         for (int c = 0; c < candyPerformanceNodes.Length; c++)

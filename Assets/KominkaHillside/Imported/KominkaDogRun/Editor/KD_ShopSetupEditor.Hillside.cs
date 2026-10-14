@@ -18,6 +18,8 @@ namespace KominkaDogRun.Editor
     /// 置き場所: KH_Dogs/KD_ShopCatalog と、その子の KD_ShopItem_* (<see cref="KD_ProductDefinitions.All"/> の全行。
     /// 名前は sceneName どおり)。おもちゃ・ライブ・追加体験・追加動作の行も**台帳のために残す** (画面には出ない)。
     /// 全行 menuOnly = true / Collider なし (Interact で即購入が起きない形)。
+    /// 裏山改変 IMP-PRG-002 (2026-10-14): 古民家から移植した CE 6 商品 (13 行) も行は残し、UdonProduct だけ刺さない
+    /// (<see cref="KD_ProductDefinitions.HillsideWithheldCeAssets"/>。所有が付かず、購入画面も開かない)。検査は 4a の IMP-PRG-002 の節。
     /// 価格・区分・CE の参照は <see cref="KD_ProductDefinitions.Apply"/> (古民家と同じ表)、
     /// ledger.products / catalog.items / categoryKeys / defaultProducts は <see cref="KD_ProductsEditor.BindCatalog"/> が配線する
     /// (古民家の Shop/2 と同じ経路。台帳の _ConfigureCatalog は実行時にこの products で動く)。
@@ -239,6 +241,10 @@ namespace KominkaDogRun.Editor
             ok &= TryCopy(catalog, log);
             log.AppendLine("wired catalog.items = ledger.products = " + catalog.items.Length + " 件 / categories "
                 + string.Join(",", catalog.categoryKeys) + " / consumers " + catalog.consumers.Length);
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は行を残し、UdonProduct だけ刺さない (KD_ProductDefinitions.Apply)
+            log.AppendLine("IMP-PRG-002: 公開しない CE " + KD_ProductDefinitions.HillsideWithheldCeAssets.Length + " アセット / "
+                + KD_ProductDefinitions.WithheldRows().Length + " 行は ceProduct なし (" + string.Join(", ", KD_ProductDefinitions.WithheldRows().Select(r => r.key))
+                + ")。手元メニューの一覧からは Menu/6e (かざり) と Menu/6g (撫でFX) が外す");
 
             // ---- 撫でFXの札 (古民家と同じく Shop Setup が作る。KH_Dogs 直下) ----
             EnsurePlayerFxTag(log, dogs);
@@ -410,7 +416,16 @@ namespace KominkaDogRun.Editor
                 string key;
                 if (ub == null || ub.SyncMethod != VRC.SDKBase.Networking.SyncType.None) probs.Add("backing が無いか SyncMethod != None");
                 else if (!ub.publicVariables.TryGetVariableValue("productKey", out key) || key != s.productKey) probs.Add("backing heap の productKey が違う (CopyProxyToUdon 未了)");
-                if (s.IsCE())
+                // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は UdonProduct を持たない (proxy も backing も)。ほかの CE 行は従来どおり
+                bool withheldRow = row != null && KD_ProductDefinitions.IsWithheld(row);
+                if (s.IsCE() && withheldRow)
+                {
+                    VRC.Economy.UdonProduct backingProduct;
+                    if (s.ceProduct != null) probs.Add("公開しない CE 行が ceProduct を持つ (IMP-PRG-002)");
+                    if (ub != null && ub.publicVariables.TryGetVariableValue("ceProduct", out backingProduct) && backingProduct != null)
+                        probs.Add("公開しない CE 行の backing heap に ceProduct が残る (IMP-PRG-002。CopyProxyToUdon 未了)");
+                }
+                else if (s.IsCE())
                 {
                     VRC.Economy.UdonProduct backingProduct;
                     if (ub == null || !ub.publicVariables.TryGetVariableValue("ceProduct", out backingProduct) || backingProduct == null || backingProduct != s.ceProduct)
@@ -443,6 +458,9 @@ namespace KominkaDogRun.Editor
                 v.Check(dev == 0, "開発用の CE 解放が掛かっていない (actual " + dev + (dev > 0 ? ": " + devNames : "") + ") — Menu/4c CE Relock で戻す");
             }
 
+            // ---- 裏山改変 IMP-PRG-002 (2026-10-14): 古民家から移植した CE 6 商品を今回の公開版から外す ----
+            VerifyHillsideWithheld(v, shops, catalog, ledger);
+
             // ---- 撫でFXの札 ----
             int nTag;
             var tagGo = KD_SceneObjects.Find(PlayerFxTagName, out nTag);
@@ -463,7 +481,8 @@ namespace KominkaDogRun.Editor
             log.AppendLine("  SKIP 棚の面ラベル・確認パネル・効果音・陳列メッシュ・重なり・棚のグリフ — 裏山では対象外 (棚が無い)");
             log.AppendLine("  SKIP KD_ToyBox の器 (ボールの柄、DES-DOG-002) — Course/125 Verify Ball Patterns が見る");
             log.AppendLine("  SKIP おやつ陳列マテリアル — 裏山では対象外 (棚が無い。おやつの実体は IMP-DOG-014)");
-            log.AppendLine("  SKIP 手元メニューの行との対応 (KD_ProductsEditor.HasMenuEntry) — 段階 1 ではおやつ・かざり等は準備中。Menu/20 Verify Pouch が見る");
+            log.AppendLine("  SKIP 手元メニューの行との対応 (KD_ProductsEditor.HasMenuEntry) — 段階 1 ではおやつ・かざり等は準備中。Menu/20 Verify Pouch が見る"
+                + " (公開しない CE 行がメニューの配線に居ないことは上の IMP-PRG-002 の節が見る)");
 
             // ---- PlayerData キー / 自己テスト (古民家版と同じ) ----
             v.Check(CheckPlayerDataKeys(log), "PlayerData キー名 (KD_/KH_ の const) が重複・前方一致していない");
@@ -473,6 +492,70 @@ namespace KominkaDogRun.Editor
             else v.AddFail(SelfTestStock(ledger, log));
 
             v.Finish(HillsideShopVerifyLog);
+        }
+
+        /// <summary>裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 6 商品の検査 (Menu/4a の 1 節)。
+        /// (1) 表: 6 アセット = 13 行 (2) どの KD_ShopItem も 6 つの UdonProduct を参照しない (= 台帳・カタログに登録されない。
+        /// 古民家で買った人の購入通知で所有が付かない) (3) 公開しない行は Listing だけ = CeWithheld (無料品に化けない)
+        /// (4) シーンの U# の KD_ShopItem / KD_ShopItem[] フィールドで公開しない行を指すのは、台帳・カタログと飾りの台帳だけ
+        /// (手元メニュー・ライブ・おもちゃ・あそぶ・呼ぶの入口に居ない)。実行時の所有・購入画面・他人の値は Play / 実機。</summary>
+        static void VerifyHillsideWithheld(KD_VerifyLog v, KD_ShopItem[] shops, KD_ShopCatalog catalog, KD_ProgressLedger ledger)
+        {
+            var log = v.Text;
+            var rows = KD_ProductDefinitions.WithheldRows();
+            var assets = KD_ProductDefinitions.HillsideWithheldCeAssets;
+            v.Check(assets.Length == 6 && rows.Length == 13 && rows.Select(r => r.ceAsset).Distinct().Count() == assets.Length,
+                "IMP-PRG-002: 公開しない CE は 6 アセット / 13 行 (actual " + assets.Length + " / " + rows.Length + ": " + string.Join(", ", rows.Select(r => r.key)) + ")");
+
+            var withheldPaths = new HashSet<string>(rows.Select(KD_ProductDefinitions.CeAssetPath));
+            int refProduct = 0, notWithheld = 0, found = 0;
+            var withheldItems = new HashSet<KD_ShopItem>();
+            foreach (var s in shops)
+            {
+                if (s == null) continue;
+                if (s.ceProduct != null && withheldPaths.Contains(AssetDatabase.GetAssetPath(s.ceProduct)))
+                { refProduct++; log.AppendLine("       " + s.name + " が " + s.ceProduct.name + " を参照"); }
+                var row = KD_ProductDefinitions.All.FirstOrDefault(d => d.key == s.productKey);
+                if (row == null || !KD_ProductDefinitions.IsWithheld(row)) continue;
+                found++;
+                withheldItems.Add(s);
+                if (!s.CeWithheld() || s.ceListingId != row.ceListingId || s.IsFree() || s.IsStarter()) { notWithheld++; log.AppendLine("       " + s.name + ": CeWithheld でない / Listing が表と違う / 無料扱い"); }
+            }
+            v.Check(refProduct == 0, "IMP-PRG-002: シーンの KD_ShopItem が公開しない UdonProduct 6 つを参照しない (actual " + refProduct + ") — 台帳・カタログに登録されず、購入通知で所有が付かない");
+            v.Check(found == rows.Length && notWithheld == 0, "IMP-PRG-002: 公開しない 13 行は Listing だけ (CeWithheld。IsCE のまま、無料・初期品に化けない) (行 " + found + " / 不一致 " + notWithheld + ")");
+            v.Check(typeof(KD_ShopItem).GetMethod("CeWithheld") != null,
+                "IMP-PRG-002: 実行時の門 KD_ShopItem.CeWithheld (所有 = CeOwnedBy は Product が無いと偽 / _OpenStore は開かない) がある");
+
+            // 公開しない行を指してよいのは台帳・カタログ (行は残す) と飾りの台帳 (恒久 ID と並びを保つ。所有で拒否し、Apply が着けない) だけ
+            var allowed = new HashSet<string> { "KD_ShopCatalog.items", "KD_ProgressLedger.products", "KD_AccessoryBox.productItems", "KD_AccessoryBox.setItems" };
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+            int leaks = 0;
+            foreach (var b in KD_ProductsEditor.SceneComponents<UdonSharpBehaviour>())
+            {
+                if (b == null || b is KD_ShopItem) continue;
+                foreach (var f in b.GetType().GetFields(flags))
+                {
+                    string where = b.GetType().Name + "." + f.Name;
+                    if (allowed.Contains(where)) continue;
+                    if (f.FieldType == typeof(KD_ShopItem))
+                    {
+                        var it = f.GetValue(b) as KD_ShopItem;
+                        if (it != null && withheldItems.Contains(it)) { leaks++; log.AppendLine("       " + KD_SceneObjects.PathOf(b.gameObject) + " " + where + " → " + it.productKey); }
+                    }
+                    else if (f.FieldType == typeof(KD_ShopItem[]))
+                    {
+                        var arr = f.GetValue(b) as KD_ShopItem[];
+                        if (arr == null) continue;
+                        foreach (var it in arr)
+                            if (it != null && withheldItems.Contains(it)) { leaks++; log.AppendLine("       " + KD_SceneObjects.PathOf(b.gameObject) + " " + where + " → " + it.productKey); }
+                    }
+                }
+            }
+            v.Check(leaks == 0, "IMP-PRG-002: 公開しない行を指すのは台帳・カタログ・飾りの台帳だけ (手元メニュー・ライブ・おもちゃ・あそぶ・呼ぶに入口が無い。他の参照 " + leaks + " 件。Menu/6e・6g で外す)");
+            v.Check(catalog != null && catalog.items != null && withheldItems.All(x => catalog.items.Contains(x)) && ledger != null && ledger.products != null && withheldItems.All(x => ledger.products.Contains(x)),
+                "IMP-PRG-002: 行は台帳・カタログに残す (キーを再利用しない。選択の復元は所有が無いので既定へ倒れる)");
+            v.Note("IMP-PRG-002 の Play / 実機に残すこと: 古民家で買った人の入室・途中参加で所有が付かない (ClientSim は自分の購入しか模擬できない)、"
+                + "保存済みの撫でFX の選択が既定 ♡ に戻る、他人の札が公開しない FX を指しても既定で描く");
         }
     }
 }

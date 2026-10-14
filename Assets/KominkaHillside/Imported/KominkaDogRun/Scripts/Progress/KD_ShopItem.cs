@@ -263,7 +263,8 @@ namespace KominkaDogRun
         /// ローカル専用なので `_` 始まり。</summary>
         public void _OpenStore()
         {
-            if (!IsCE()) return;
+            // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行 (Product を外した行) は移植元の Listing を開かない
+            if (!IsCE() || CeWithheld()) return;
             _dbgStoreOpenCount++;
             Store.OpenListing(ceListingId);
         }
@@ -378,6 +379,12 @@ namespace KominkaDogRun
 
         // net: callable-ok: 読み取りのみ
         public bool IsStocked() { return packCount > 0; }
+
+        /// <summary>裏山改変 IMP-PRG-002 (2026-10-14): 今回の公開版で出さない CE 行か。Setup (KD_ProductDefinitions.Apply) が
+        /// UdonProduct を刺さなかった CE 行 = Listing はあるが Product が無い。所有は付かず (CeOwnedBy)、購入画面も開かない (_OpenStore)。
+        /// フラグは持たず、既にある 2 つの値から導く (IMP-PRG-002 の「入手方法を導く」と同じ規律)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public bool CeWithheld() { return IsCE() && ceProduct == null; }
 
         // net: callable-ok: 読み取りのみ — 遠隔から呼ばれても状態が動かない
         public bool Owned()
