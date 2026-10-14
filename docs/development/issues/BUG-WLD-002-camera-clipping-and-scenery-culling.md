@@ -2,10 +2,10 @@
 id: BUG-WLD-002
 type: BUG
 system: WLD
-status: todo
+status: wip
 priority: Medium
 summary: 撮影カメラだけ木や遠景の消え方が異なるため、通常視点とのクリップ・カリング設定を比較し、犬への接近と遠景の見え方を両立する
-next: 通常視点・撮影カメラ・古民家ドッグランの設定を比較し、症状の再現と原因の切り分け後に Near / Far 等の候補値を検討する
+next: 調査済み。まず撮影カメラ Far 300→2200 と通常視点用・撮影カメラ Near 0.01 を修正候補とし、実装後に古民家から川への自分追従で遠景・木・接近時の犬・負荷を確認する
 updated: 2026-10-14
 ---
 
@@ -57,3 +57,72 @@ updated: 2026-10-14
 ## 起票時の状態
 
 ユーザー報告と保存設定・生成元の差を記録した段階。実機での再現、原因特定、候補値の比較、設定変更は未着手。
+
+## 調査結果 (2026-10-14)
+
+### 結論と報告場所
+
+追加回答: **古民家から川へ向かう途中、「自分追従」**で気になった。
+
+**撮影カメラの Far 300 m が背景の山・林を切っていることを Editor の同条件比較で確認した。** Far を延ばすと背景が戻る。ユーザー報告の近くの木の欠けまで同じ原因だと確定したわけではない。まず Far の不足を修正するのが妥当で、木の異常が残れば LOD・材質を個別に調べる。
+
+### 設定・描画経路の確認
+
+- 接続先は本プロジェクトの `Assets`。本シーンの Editor メモリ上でも Reference Camera は Near 0.3 / Far 2200、撮影カメラは Near 0.03 / Far 300。撮影カメラのレイヤー別距離は 32 要素すべて 0、球状のレイヤーカリングは false。
+- `KH_VideoCameraEditor.BuildCamera` が撮影カメラ自身へ固定値を書き、Reference Camera の値はコピーしていない。`Assets/KominkaHillside` の実行用 C# には Near / Far・レイヤー別距離・LOD bias を変更する処理を検索で確認できなかった。
+- 裏山全周化時に Reference Camera の Far を **1000→2200** へ広げ、Near 0.3 は保持していた。既存の [全周化記録](../../plans/des-env-002/implementation.md) に、川辺・奥広場で Far 1000 では遠景が切れ、2200 で解消した記録もある。
+- `KH_VideoCamera.Modes.cs` の自分追従は **FOV 55°**。犬なしでは進行方向から 35°ずらした前方 2.4 m に置き、胸へ向いて撮る。犬ありは 3.2 m・犬との間を見る。したがって川へ移動していても、撮影画面の背景が川側とは限らない。
+- 遠景の丘・林・山は layer 0。撮影マスクにも含まれ、レイヤーの除外が今回の遠景欠落の説明にはならない。モニター・録画用の板などの意図的な除外は維持する。
+- コースの木は近景メッシュと交差した板 2 枚の遠景モデルを LODGroup で切り替える (`KH_CourseSceneryEditor.Build.cs`)。画面占有率 .18 / .005、CrossFade。追加の道沿い木は .24 / .012、フェードなし (`KH_RoadsideSceneryEditor.cs`)。FOV・カメラ位置・RT 解像度によって通常視点と切替・ディザの見え方が違う可能性がある。
+- `KH_FoliageLite.shader` はアルファ切抜きと LOD ディザを使用。遠景林の `LMArtShader/NatureLeaves` はアルファ切抜き・両面描画。確認したシェーダーに、プレイヤー位置から円形に隠す距離判定は見つからなかった。遮蔽は Terrain を遮蔽物とする Unity のベイク済みカメラ単位の仕組み (`KH_CourseOcclusionEditor`)。
+
+### 古民家ドッグランとの比較
+
+参照元の `docs/development/issues/archive/IMP-ENV-021-reference-camera-near-clip.md` と `Assets/Scenes/KominkaDogRun.unity` を読み取り確認した。
+
+| 対象 | Near / Far (m) | 採用理由・状態 |
+|---|---|---|
+| 古民家の Reference Camera | 0.01 / 350 | 近接する犬の見え方を改善。遠景の山の最遠約308 mへ余裕を加えた値。記録上は2026-09-20にPC・モバイルでユーザー確認済み。現在の保存値も一致 |
+| 古民家の PhotoCamera・犬目線 | 0.01 / 60 | 別用途の独自カメラ。現在の保存値も一致 |
+| 裏山の自動写真 PhotoCamera | 0.01 / 60 | 今回の動画用 VideoCamera とは別物。Far を全カメラへ一括適用しない |
+
+元 Issue には症状から「実機でも Near 0.3 が効いた」と推論した記述があるが、実値の計測は省略されているため、その断定は今回の根拠にしない。[VRChat 公式 Camera Settings](https://creators.vrchat.com/worlds/udon/vrc-graphics/vrc-camera-settings/) は Near の制限とユーザー上書きの影響を説明している。**保存値 0.3 と実機の有効値は区別し、必要時は ScreenCamera の実値を読む。**
+
+### 比較画像・距離測定
+
+Unity 2022.3.22f1 / Direct3D11 / Edit モード。960×540、FOV 55、Near 0.03、撮影カメラのマスクをコピーした一時カメラを使用。ルート node 0 / 20 / 40 / 160 の頭高 1.6 m と「犬なし自分追従」の静的な位置・注視点で、Far 300 / 1000 / 1500 / 2200 を比較した。Far 2200 は Occlusion ON/OFF も比較 (計20枚)。平滑化・障害物回避・犬ありの構図・実際のプレイヤーアバター・動いている木の再現は含まない。node 0/20/40 は入口側の代表地点であり、報告時の正確な位置・進行方向は未特定。
+
+| 地点 | Far 300 → 2200 の変化画素率 | Far 1000 → 2200 の変化画素率 | Far 1500 → 2200 |
+|---|---:|---:|---|
+| node 0 (門前) | 10.52% | 1画素 | 1画素 |
+| node 20 | 13.52% | 0% | 0画素 |
+| node 40 | 14.53% | 0% | 0画素 |
+| node 160 (奥側) | 17.89% | 0.25% | 0画素 |
+
+変化は RGB のいずれかが 2/255 を超える画素。画像を目視し、Far 300 では山・林が欠け、延長で戻ることを確認。Far 1000 は node 160 で背景の一部を失う。Far 1500 と 2200 の差はこの4視点では最大3/255・1画素のみ。**Occlusion ON/OFF は4視点すべて全画素一致**。この標本では遮蔽を無効にする根拠がなく、他の位置・低いカメラ位置での問題を否定した結果ではない。
+
+- 門前: [Far 300](../../plans/evidence/2026-10-14-camera-clipping/node-0-far-300-occ-True.png) / [Far 2200](../../plans/evidence/2026-10-14-camera-clipping/node-0-far-2200-occ-True.png)
+- node 20: [Far 300](../../plans/evidence/2026-10-14-camera-clipping/node-20-far-300-occ-True.png) / [Far 2200](../../plans/evidence/2026-10-14-camera-clipping/node-20-far-2200-occ-True.png)
+- 奥側: [Far 1000](../../plans/evidence/2026-10-14-camera-clipping/node-160-far-1000-occ-True.png) / [Far 1500](../../plans/evidence/2026-10-14-camera-clipping/node-160-far-1500-occ-True.png)
+- [測定値・撮影条件](../../plans/evidence/2026-10-14-camera-clipping/survey.json)、[画素差](../../plans/evidence/2026-10-14-camera-clipping/image-differences.json)、[一時診断のソース控え](../../plans/evidence/2026-10-14-camera-clipping/survey-source.cs.txt)。全20枚はローカル `Temp/bug-wld-002/`、代表6枚を文書と共に保存。
+
+ルート全436点+頭高1.6 mから遠景3メッシュの全頂点への直線距離も測った。丘の最大 **1321.1 m**、林 **1269.7 m**、山 **1457.1 m**。これは全カメラの移動範囲からの最遠値ではなく、見えている画素の奥行きでもない。Far 1500 が通常ルートの遠景を収める候補である根拠にはなるが、撮影モードごとの位置ずれ・高低差・最遠撮影位置を含めた最小値の確定には使わない。
+
+### 修正候補と残る確認
+
+1. **初回の修正候補: 撮影カメラ Far 300→2200。** 既存の通常視点用設定と景観を揃え、今回確認できた欠落を先に解消する。Near は通常視点用・撮影カメラとも **0.01 m** を初期候補にする (古民家の採用実績を参考にした候補で、裏山での実機合格値ではない)。今回、既存の値は変更していない。
+2. **Far 1500 は縮小比較の候補。** 全ルート・撮影位置の余裕を確認してから採否を決める。古民家の 350 をそのまま移植することや、一律に全カメラへ同値を設定することは避ける。
+3. 犬の顔への接近・撫で・添い寝と、地面・屋根・遠景のちらつきを PCVR / Desktop で確認する。Reference Camera も変更する場合は Quest / iOS の確認を別に残す。Near を小さくしても、モデル内部に視点を入れた際の裏面表示までは解決しない。
+4. 古民家→川の自分追従で、Far 修正後も木の欠けが残れば、その木・位置・進行方向を絞り LOD/材質を比較する。全域の Occlusion 無効化や LOD 撤去は現時点では勧めない。
+5. 描画範囲を広げた際の負荷は未計測。カメラONの同条件で描画量・フレーム時間を変更前後で測る。今回の画像差・メッシュ距離から負荷の増分は推定しない。
+
+一次資料: [Unity Camera](https://docs.unity3d.com/2022.3/Documentation/Manual/class-Camera.html)、[LOD Group](https://docs.unity3d.com/2022.3/Documentation/Manual/class-LODGroup.html)、[描画方式と深度精度](https://docs.unity3d.com/2022.3/Documentation/Manual/SL-PlatformDifferences.html)。Near/Far は球の半径ではなくクリップ平面、LOD は画面内の大きさが基準。深度精度の影響はプラットフォームで異なるため、固定倍率だけで安全性を判断しない。
+
+### 調査の保全・限界
+
+- 本シーン SHA256 は調査前後とも `B82055FD36EA4F45893B2346C2411C12E50A47728D51E95C61D215BEDA0C45CA`。dirty は前後 false、Descriptor のシリアライズ内容は不変、NetworkID 388件も不変。撮影カメラの Near/Far も 0.03/300 のまま。
+- 比較は一時カメラのみ。Play・ハーネス・アップロードは行っていない。一時 Editor 診断スクリプトは画像取得後に撤去し、ソース控えを証拠として保存した。
+- 直接 eval での画像保存は操作ツールの `System.IO.File` 型重複でコンパイルに失敗し、実行されなかった。一時 Editor メニューへ切り替え、C#コンパイル成功後に比較20枚を取得した。
+- 独立相談担当 `/root/camera_investigation_review` の助言から、自分追従の前方から振り返る構図と FOV 55 を採用し、Far と Occlusion を分離して比較した。CLI の相談は空応答だったため担当を切り替えた。実機症状の同一性・最適値・性能合格は未確認。
+- 撤去後の C# コンパイルはエラー0。別の読み取りで dirty=false / Play=false / compilationFailed=false / 一時カメラなし、撮影カメラ Near 0.03 / Far 300 を再確認。自分追従のシーン値も FOV 55 / 距離2.4・犬あり3.2 / 角度35 / 高さ差−0.1 / 胸への下げ幅0.35で、診断に使った犬なし設定と一致した。
+- 同担当が記録と証拠を限定レビューし、重要な誤記なし。Issue 整合・文書リンク検査も通過。性能・実機確認が残るため Issue は完了にしない。

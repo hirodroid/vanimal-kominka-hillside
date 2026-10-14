@@ -1,0 +1,71 @@
+using System;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class KH_CameraClipSurveyTemp
+{
+    [Serializable] public class Shot { public int node; public float near,far,fov; public bool occlusion; public Vector3 position,euler; public string image; }
+    [Serializable] public class Geometry { public string name; public int vertices,layer; public float minDistance,maxDistance; public Bounds bounds; }
+    [Serializable] public class Report
+    {
+        public string utc,scene,unity,gpu;
+        public bool dirtyBefore,dirtyAfter,networkUnchanged;
+        public int networkBefore,networkAfter;
+        public float videoNearBefore,videoFarBefore,videoNearAfter,videoFarAfter;
+        public Shot[] shots; public Geometry[] geometry;
+    }
+    [MenuItem("Tools/KominkaHillside/Diagnostics/Camera Clip Survey Temp")]
+    public static void Run()
+    {
+        var scene=SceneManager.GetActiveScene();
+        if(scene.path!="Assets/Scenes/VRCDefaultWorldScene.unity"||scene.isDirty||EditorApplication.isPlaying||EditorApplication.isCompiling)throw new InvalidOperationException("Idle clean hillside scene required");
+        var descriptor=UnityEngine.Object.FindObjectOfType<VRC.SDKBase.VRC_SceneDescriptor>();
+        var route=UnityEngine.Object.FindObjectOfType<KominkaHillside.KH_WalkRoute>();
+        var source=GameObject.Find("VideoCamera").GetComponent<Camera>();
+        string idsBefore=JsonUtility.ToJson(descriptor);
+        const string dir="Temp/bug-wld-002"; Directory.CreateDirectory(dir);
+        var report=new Report{utc=DateTime.UtcNow.ToString("o"),scene=scene.path,unity=Application.unityVersion,gpu=SystemInfo.graphicsDeviceType.ToString(),dirtyBefore=scene.isDirty,networkBefore=descriptor.NetworkIDCollection.Count,videoNearBefore=source.nearClipPlane,videoFarBefore=source.farClipPlane};
+        var shots=new System.Collections.Generic.List<Shot>();
+        report.geometry=new[]{"MS_BroadHills01","MS_BroadHillsForest01","MS_Mountains01"}.Select(name=>
+        {
+            var go=GameObject.Find(name);var mesh=go.GetComponent<MeshFilter>().sharedMesh;
+            var world=mesh.vertices.Select(v=>go.transform.TransformPoint(v)).ToArray();
+            float min=float.MaxValue,max=0;
+            for(int n=0;n<route.count;n++)foreach(var v in world){float d=Vector3.Distance(route._Position(n)+Vector3.up*1.6f,v);min=Mathf.Min(min,d);max=Mathf.Max(max,d);}
+            return new Geometry{name=name,vertices=world.Length,layer=go.layer,minDistance=min,maxDistance=max,bounds=go.GetComponent<Renderer>().bounds};
+        }).ToArray();
+        GameObject temp=null;RenderTexture rt=null;Texture2D tex=null;var previous=RenderTexture.active;
+        try
+        {
+            temp=new GameObject("KH_TempClipSurvey"){hideFlags=HideFlags.HideAndDontSave};var cam=temp.AddComponent<Camera>();
+            cam.CopyFrom(source);cam.enabled=false;cam.cameraType=CameraType.Game;cam.stereoTargetEye=StereoTargetEyeMask.None;cam.fieldOfView=55;cam.aspect=16f/9f;cam.nearClipPlane=.03f;
+            rt=new RenderTexture(960,540,24,RenderTextureFormat.ARGB32){hideFlags=HideFlags.HideAndDontSave};rt.Create();cam.targetTexture=rt;
+            tex=new Texture2D(960,540,TextureFormat.RGB24,false){hideFlags=HideFlags.HideAndDontSave};
+            foreach(int node in new[]{0,20,40,160})foreach(float far in new[]{300f,1000f,1500f,2200f})
+            {
+                var head=route._Position(node)+Vector3.up*1.6f;var heading=route._Position(node+1)-route._Position(node);heading.y=0;heading.Normalize();
+                cam.transform.position=KominkaHillside.KH_VideoCamera.SelfFollowPos(head,heading,35f,2.4f,-.1f);
+                cam.transform.rotation=Quaternion.LookRotation(KominkaHillside.KH_VideoCamera.SelfFollowLook(head,Vector3.zero,0,.55f,.35f)-cam.transform.position);cam.farClipPlane=far;cam.useOcclusionCulling=true;
+                Save(cam,rt,tex,node,dir,shots);
+                if(far==2200){cam.useOcclusionCulling=false;Save(cam,rt,tex,node,dir,shots);}
+            }
+        }
+        finally
+        {
+            RenderTexture.active=previous;if(temp!=null)UnityEngine.Object.DestroyImmediate(temp);if(tex!=null)UnityEngine.Object.DestroyImmediate(tex);if(rt!=null){rt.Release();UnityEngine.Object.DestroyImmediate(rt);}
+            report.shots=shots.ToArray();report.dirtyAfter=scene.isDirty;report.networkAfter=descriptor.NetworkIDCollection.Count;report.networkUnchanged=idsBefore==JsonUtility.ToJson(descriptor);report.videoNearAfter=source.nearClipPlane;report.videoFarAfter=source.farClipPlane;
+            File.WriteAllText(dir+"/survey.json",JsonUtility.ToJson(report,true));
+        }
+        if(report.dirtyAfter||!report.networkUnchanged)throw new InvalidOperationException("Survey preservation failed");
+        Debug.Log("Camera clip survey complete: "+shots.Count);
+    }
+    static void Save(Camera cam,RenderTexture rt,Texture2D tex,int node,string dir,System.Collections.Generic.List<Shot> shots)
+    {
+        cam.Render();RenderTexture.active=rt;tex.ReadPixels(new Rect(0,0,960,540),0,0);tex.Apply();
+        string path=dir+"/node-"+node+"-far-"+cam.farClipPlane+"-occ-"+cam.useOcclusionCulling+".png";File.WriteAllBytes(path,tex.EncodeToPNG());
+        shots.Add(new Shot{node=node,near=cam.nearClipPlane,far=cam.farClipPlane,fov=cam.fieldOfView,occlusion=cam.useOcclusionCulling,position=cam.transform.position,euler=cam.transform.eulerAngles,image=path});
+    }
+}
