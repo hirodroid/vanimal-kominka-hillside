@@ -50,11 +50,11 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 
 | # | Listing 名 (案。古民家と区別する接尾は未決) | 種別 / 価格 (古民家の現行値) | **Product ID** (裏山) | **Listing ID** (裏山) | Unity アセット | 接続先 productKey | 裏山で売るか |
 |---|---|---|---|---|---|---|---|
-| B-1 | VAnimal｜小さな王様セット | Permanent / 200C |  |  | `KD_Product_RoyalSet.asset` | `accessory.royal_set` | 初期公開の飾り CE (game-design §5)。要 ID |
-| B-2 | VAnimal｜夏休みセット | Permanent / 200C |  |  | `KD_Product_SummerSet.asset` | `accessory.summer_set` | 同上。要 ID |
-| B-3 | VAnimal｜キャンディ・ステップ | Permanent / 300C |  |  | `KD_Product_CandyStep.asset` | `live.candy_step_set` / `petfx.candy` | 演目範囲は DES-LIV-001 で未決 |
-| B-4 | VAnimal｜ハロウィンセット | Permanent / 300C (古民家は 2026-10-31 23:59 JST まで) |  |  | `KD_Product_PumpkinParade.asset` | `live.pumpkin_parade_set` / `petfx.pumpkin` | 同上。裏山のハロウィンは [パレード企画](../../plans/halloween-parade/plan-a.html) が別にある |
-| B-5 | VAnimal｜Kominka Live Pack | Permanent / 200C |  |  | `KD_Product_KominkaLivePack.asset` | `live.kominka_pack` / `petfx.lantern` / `petfx.meteor` / `petfx.confetti` | 同上 |
+| B-1 | VAnimal｜小さな王様セット | Permanent / 200C |  |  | `KD_Product_RoyalSet.asset` | `accessory.royal_set` | 今回対象外 (IMP-PRG-002)。ID 作成不要 |
+| B-2 | VAnimal｜夏休みセット | Permanent / 200C |  |  | `KD_Product_SummerSet.asset` | `accessory.summer_set` | 今回対象外 (IMP-PRG-002)。ID 作成不要 |
+| B-3 | VAnimal｜キャンディ・ステップ | Permanent / 300C |  |  | `KD_Product_CandyStep.asset` | `live.candy_step_set` / `petfx.candy` | 移植商品は今回対象外 (IMP-PRG-002) |
+| B-4 | VAnimal｜ハロウィンセット | Permanent / 300C (古民家は 2026-10-31 23:59 JST まで) |  |  | `KD_Product_PumpkinParade.asset` | `live.pumpkin_parade_set` / `petfx.pumpkin` | 移植商品は今回対象外。裏山のハロウィンは [パレード企画](../../plans/halloween-parade/plan-a.html) が別にある |
+| B-5 | VAnimal｜Kominka Live Pack | Permanent / 200C |  |  | `KD_Product_KominkaLivePack.asset` | `live.kominka_pack` / `petfx.lantern` / `petfx.meteor` / `petfx.confetti` | 移植商品は今回対象外 (IMP-PRG-002) |
 | B-6 | VAnimal｜ぬいぐるみセット | Permanent / 200C |  |  | `KD_Product_PlushSet.asset` | `toy.paw_cushion` / `toy.taiyaki_plush` / `toy.ebiten_plush` | **初期公開に入れない** (game-design §4 おもちゃ、2026-10-03)。ID 不要のまま |
 
 ### C. 洗い場の追加道具 (裏山専用。DES-DOG-008 のセット、2026-10-11 Q5 の中身)
@@ -76,7 +76,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 古民家と同じく**文面はユーザーが書き、開発 AI は文意を足し引きしない**。§4 の確認事項だけユーザーへ返す。2026-10-14 時点で裏山の文面は 1 本も無い。
 
 - A-1 トレーナー: 古民家の文面 (古民家 ce-listings §3-7) をそのまま使う (同じ Listing なので裏山用の文面は無い)。芸は提供後に文面へ足す
-- B-1〜B-5: 古民家の文面を流用するか裏山向けに書き直すかは未決
+- B-1〜B-5: 今回対象外。移植商品の Listing 文面は作成しない (IMP-PRG-002)
 - C-1〜C-5: 未起草。書くときは「1 人買えば同じインスタンスの全員が使える」「買った人が出ても今の洗いが終わるまで使える」を入れるかをユーザーが決める (古民家のライブ 3 本に「開催すると、その場にいる人はみんな一緒に見られます (買っていない人も)」を足した前例)
 
 ### C-1 あらいばセット 泡
@@ -113,7 +113,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 
 | # | 論点 | 現状 | 担当 |
 |---|---|---|---|
-| 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。裏山でこれらを画面に出す前に、裏山用 ID へ差し替えるか、行を売り場から外す。コード・シーンは 2026-10-14 時点で未変更 (`Validate` が形式を見るだけで、古民家の ID かどうかは判別しない) | 飾り 2 件は DES-UI-005 の棚卸し、ライブ 3 件は DES-LIV-001、ぬいぐるみは初期公開外 |
+| 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。2026-10-14 ユーザー再確認で今回は除外に決定。選択・購入・利用の入口を外す。コード・シーンは 2026-10-14 時点で未変更 (`Validate` が形式を見るだけで、古民家の ID かどうかは判別しない) | [IMP-PRG-002](../issues/IMP-PRG-002-exclude-imported-ce-items.md)。裏山専用ライブの企画は DES-LIV-001／002 |
 | 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める。**決定: 2026-10-14 ユーザー「案 1」。Storefront で 1 つの Listing に 4 Product を追加できたことを実測** (同じ Product を C-1〜C-4 の各 Listing にも入れた状態で成立するかは、4 つの Listing を作った時点で確かめる) | IMP-DOG-056 (決定済み。Row の拡張 = Listing だけの項目は 056 §1) |
 | 4-3 | **インスタンス共有の所有判定** | 既存 CE は購入者本人の `Store` 判定だけ。洗い場は「誰か 1 人が所有」+「洗い終わりまで継続」+「所有者 0 で無料に戻る」。所有者の退室・途中参加・洗いの終わりの判定が要る。`KH_WashSelection` には購入判定が無い (IMP-DOG-043 は購入なしで先行導入) | IMP-DOG-056 |
 | 4-4 | 裏山の Listing 名の接尾 | 古民家と同名の Listing を 2 つ作ると Storefront で見分けにくい。「｜裏山」などを付けるかはユーザー | DES-UI-005 |
