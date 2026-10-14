@@ -54,7 +54,9 @@
         "この洗い場で使うには購入が必要です",
         "購入情報を確認しています…",
         "今の洗いが終わるまで利用できます",
-        "C"
+        "C",
+        "ギフトする",
+        "セットを 1 つでも持っていると、全部入りは買えません"
       ]
     },
     {
@@ -111,7 +113,9 @@
         "Purchase needed to use at this station",
         "Checking purchases…",
         "Available until this wash ends",
-        "C"
+        "C",
+        "Gift",
+        "Owning any set means the complete set can't be bought"
       ]
     },
     {
@@ -168,7 +172,9 @@
         "이 세척대에서 쓰려면 구매가 필요해요",
         "구매 정보를 확인하는 중…",
         "지금 세척이 끝날 때까지 사용할 수 있어요",
-        "C"
+        "C",
+        "선물하기",
+        "세트를 하나라도 가지고 있으면 전체 세트는 살 수 없어요"
       ]
     },
     {
@@ -225,7 +231,9 @@
         "在此清洗台使用需要购买",
         "正在确认购买信息…",
         "可使用到本次清洗结束",
-        "C"
+        "C",
+        "赠送",
+        "拥有任意一个套装时，无法购买全部套装"
       ]
     },
     {
@@ -282,7 +290,9 @@
         "在此清洗台使用需要購買",
         "正在確認購買資訊…",
         "可使用至本次清洗結束",
-        "C"
+        "C",
+        "贈送",
+        "擁有任何一個套裝時，無法購買全部套裝"
       ]
     },
     {
@@ -339,7 +349,9 @@
         "Для этой мойки нужна покупка",
         "Проверяем покупки…",
         "Доступно до конца этого мытья",
-        "C"
+        "C",
+        "Подарить",
+        "Если у вас есть хоть один набор, полный купить нельзя"
       ]
     },
     {
@@ -396,7 +408,9 @@
         "Для цієї мийки потрібна покупка",
         "Перевіряємо покупки…",
         "Доступно до кінця цього миття",
-        "C"
+        "C",
+        "Подарувати",
+        "Якщо у вас є хоч один набір, повний купити не можна"
       ]
     },
     {
@@ -453,7 +467,9 @@
         "Für diesen Waschplatz ist ein Kauf nötig",
         "Käufe werden geprüft…",
         "Verfügbar bis zum Ende dieser Wäsche",
-        "C"
+        "C",
+        "Schenken",
+        "Mit einem eigenen Set ist das Komplettset nicht kaufbar"
       ]
     },
     {
@@ -510,7 +526,9 @@
         "Se necesita una compra para este lavadero",
         "Comprobando compras…",
         "Disponible hasta que termine este lavado",
-        "C"
+        "C",
+        "Regalar",
+        "Si tienes algún set, no puedes comprar el completo"
       ]
     },
     {
@@ -567,7 +585,9 @@
         "Un achat est nécessaire pour ce poste",
         "Vérification des achats…",
         "Disponible jusqu'à la fin de ce lavage",
-        "C"
+        "C",
+        "Offrir",
+        "Avec un set déjà acquis, le pack complet est indisponible"
       ]
     },
     {
@@ -624,7 +644,9 @@
         "É preciso comprar para usar neste lavatório",
         "Verificando compras…",
         "Disponível até o fim desta lavagem",
-        "C"
+        "C",
+        "Presentear",
+        "Com algum conjunto, não é possível comprar o completo"
       ]
     },
     {
@@ -681,7 +703,9 @@
         "Serve un acquisto per usarlo in questo lavaggio",
         "Verifica degli acquisti…",
         "Disponibile fino alla fine di questo lavaggio",
-        "C"
+        "C",
+        "Regala",
+        "Se hai già un set, non puoi comprare quello completo"
       ]
     },
     {
@@ -738,7 +762,9 @@
         "Do użycia w tej myjni potrzebny jest zakup",
         "Sprawdzanie zakupów…",
         "Dostępne do końca tego mycia",
-        "C"
+        "C",
+        "Podaruj",
+        "Mając dowolny zestaw, nie kupisz pełnego"
       ]
     }
   ]

@@ -28,6 +28,9 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  static int PremiumItemOf(int c){return c==0?PFoamCannon:c==1?PWateringCan:c==2?PDryer:PHinoki;}
  static string PremiumSelKey(int c){return c==0?"selectedFoam":c==1?"selectedWater":c==2?"selectedFinish":"selectedBath";}
  static bool PremiumBuyShown(){var t=premiumBoard.Find("Buy");return t!=null&&t.gameObject.activeSelf;}
+ // User decision 2026-10-14: the button's label (46 buy / 52 gift on an own set) and whether it can be pressed (the complete set: not with an own set)
+ static string PremiumBuyLabel(){return PremiumText("Buy/Label");}
+ static bool PremiumBuyActive(){var t=premiumBoard.Find("Buy");var b=t!=null?t.GetComponent<Button>():null;return b!=null&&b.interactable;}
  static string PremiumText(string child){var t=premiumBoard.Find(child);var tm=t!=null?t.GetComponent<TMPro.TMP_Text>():null;return tm!=null?tm.text:"(no "+child+")";}
  /// <summary>The board's word i in its current language (as KH_WashSelectionBoard.W).</summary>
  static string PremiumWord(int i){var b=premiumBoard.GetComponent<UdonBehaviour>();var w=Get<string[]>(b,"words");int k=Get<int>(b,"_lang")*Get<int>(b,"wordCount")+i;return w!=null&&k>=0&&k<w.Length?w[k]:"";}
@@ -161,7 +164,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
   s.Add(WsUntil(PremiumNear,3,()=>"tester within the selector's 6 m"));
   s.Add(WsDo(()=>PremiumChoose(PremiumItemOf(cat))));
   s.Add(WsUntil(PremiumBuyShown,3,()=>"purchase button shown for the unowned set "+cat+" (notice '"+PremiumText("Notice")+"')"));
-  s.Add(WsDo(()=>{WsExpect(PremiumText("Notice").EndsWith(PremiumWord(48)),"notice: price + 'purchase needed' ('"+PremiumText("Notice")+"')");rev=PremiumSel("revision");PremiumSend();}));
+  s.Add(WsDo(()=>{WsExpect(PremiumText("Notice").EndsWith(PremiumWord(48))&&PremiumBuyLabel()==PremiumWord(46)&&PremiumBuyActive(),"notice: price + 'purchase needed', button '"+PremiumWord(46)+"' ('"+PremiumText("Notice")+"', '"+PremiumBuyLabel()+"')");rev=PremiumSel("revision");PremiumSend();}));
   s.Add(PremiumAck("an item of the unowned set "+cat));
   s.Add(WsDo(()=>WsExpect(PremiumCode()==KH_WashSelection.ResultLocked&&PremiumSel(PremiumSelKey(cat))==-1&&PremiumSel("revision")==rev,"owner refuses an item of an unowned set: code 4 Locked, selection and revision unchanged ("+PremiumState()+")")));
   s.Add(WsUntil(()=>PremiumText("Status")==PremiumWord(48),2,()=>"status shows the Locked word ('"+PremiumText("Status")+"')"));
@@ -172,9 +175,11 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
    var foam=PremiumProduct(0);WsExpect(foam.Purchased,"KD_Product_WashFoam.Purchased is still true in Play (it did not survive the domain reload otherwise)");WsExpect(PremiumOwned(0),"ClientSim delivered the pre-Play purchase of "+foam.name+" (OwnedProducts)");}));
   s.Add(WsUntil(PremiumNear,3,()=>"tester within the selector's 6 m"));
   s.Add(WsDo(()=>PremiumChoose(PFoamCannon)));
-  s.Add(WsUntil(()=>!PremiumBuyShown()&&PremiumText("Notice").StartsWith(PremiumWord(47)),3,()=>"owned line, no purchase button ('"+PremiumText("Notice")+"', button "+PremiumBuyShown()+")"));
+  // decision 2026-10-14: an own set keeps the button as "gift" (was: no button)
+  s.Add(WsUntil(()=>PremiumBuyShown()&&PremiumBuyActive()&&PremiumBuyLabel()==PremiumWord(52)&&PremiumText("Notice").StartsWith(PremiumWord(47)),3,()=>"owned line, the gift button ('"+PremiumText("Notice")+"', button "+PremiumBuyShown()+" '"+PremiumBuyLabel()+"')"));
   s.Add(WsDo(PremiumSend));s.Add(PremiumAck("foam cannon (owned before Play)"));
   s.Add(WsDo(()=>WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&PremiumSel("selectedFoam")==PFoamCannon&&PremiumShown()[0]==PFoamCannon,"owned set: foam cannon applied ("+PremiumState()+")")));
+  s.Add(WsDo(()=>PremiumClick("Set4")));s.Add(WsUntil(()=>PremiumBuyShown()&&!PremiumBuyActive()&&PremiumBuyLabel()==PremiumWord(46)&&PremiumText("Notice")==PremiumWord(53),3,()=>"complete-set tab with an own set: button disabled + word 53 ('"+PremiumText("Notice")+"', active "+PremiumBuyActive()+")"));
   s.Add(WsWait(PremiumGap));
   s.Add(WsDo(()=>{if(PremiumOwned(1))throw new WsSkip("the water set is owned already");rev=PremiumSel("revision");PremiumTake(PWateringCan);}));s.Add(PremiumAck("watering can (water set not owned)"));
   s.Add(WsDo(()=>{WsExpect(PremiumCode()==KH_WashSelection.ResultLocked&&PremiumSel("selectedWater")==-1&&PremiumSel("selectedFoam")==PFoamCannon&&PremiumSel("revision")==rev,"another set stays Locked, the foam stays ("+PremiumState()+")");PremiumClear();}));
@@ -186,7 +191,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
   s.Add(WsDo(()=>PremiumChoose(PremiumItemOf(cat3))));
   s.Add(WsUntil(PremiumBuyShown,3,()=>"purchase button shown before the purchase (set "+cat3+")"));
   s.Add(WsDo(()=>PremiumGrant(cat3,true)));
-  s.Add(WsUntil(()=>!PremiumBuyShown()&&PremiumText("Notice").StartsWith(PremiumWord(47)),3,()=>"the board follows the purchase ('"+PremiumText("Notice")+"', button "+PremiumBuyShown()+")"));
+  s.Add(WsUntil(()=>PremiumBuyShown()&&PremiumBuyLabel()==PremiumWord(52)&&PremiumText("Notice").StartsWith(PremiumWord(47)),3,()=>"the board follows the purchase: owned line, the button turns into gift ('"+PremiumText("Notice")+"', button "+PremiumBuyShown()+" '"+PremiumBuyLabel()+"')"));
   s.Add(WsDo(PremiumSend));s.Add(PremiumAck("an item of the set bought in Play"));
   s.Add(WsDo(()=>{WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&PremiumSel(PremiumSelKey(cat3))==PremiumItemOf(cat3),"bought in Play: applied ("+PremiumState()+")");WsNote("purchase = ClientSimStoreManager.PurchaseConfirmed(product, purchasedNow true) during Play");PremiumClear();PremiumRecover();}));
  }

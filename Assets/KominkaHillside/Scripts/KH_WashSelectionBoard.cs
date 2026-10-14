@@ -13,6 +13,9 @@ namespace KominkaHillside
     // (Owned: usable in this instance, no purchase prompt even when someone else bought it / None: the price and [open the purchase page] /
     // Unknown: checking / still out after its owner left: until the wash ends). The Owner's gate decides; this board only reports it.
     // Buying is a separate button that opens the Storefront listing; opening it is never taken as a purchase (Store events bring it back).
+    // User decision 2026-10-14: the button shows in every known state (Owned too: someone else may buy as well), hidden only while Unknown.
+    // A set this player owns turns its button into "gift" (the same Listing; the gift itself is VRChat's page, as KominkaDogRun IMP-PRG-012),
+    // drawn in giftColor (open-only = neutral). Owning any set disables the complete set's button (it would only cost more), with word 53.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WashSelectionBoard : UdonSharpBehaviour
     {
@@ -20,7 +23,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_Language language;
         public string[] languageCodes;
         public string[] words;
-        public int wordCount=52;      // WashPremium/48 / 49 / 54 write the scene value (KH_WashSelectionEditor.WordCount)
+        public int wordCount=54;      // WashPremium/48 / 49 / 54 write the scene value (KH_WashSelectionEditor.WordCount)
         public int[] groups;          // by item id: the tab (0 foam / 1 water / 2 finish / 3 station), -1 = not offered
         public int[] order;           // the offered item ids in display order
         public int[] itemWords;       // by item id: the word holding its name (20 + id for the first 17; new items append words)
@@ -41,10 +44,17 @@ namespace KominkaHillside
         public int allCredits;
         public Button buyButton;
         public TextMeshProUGUI buyLabel;
+        public Image buyImage;        // the purchase button's own Image (54): normalColor to buy, giftColor to gift
+        public Color giftColor;       // 54 writes it (normalColor a little darker: the neutral "open only" colour)
         // Store display state (KD_ShopItem.Instance* plus StoreContinuing) and the category it belongs to; -1 / -2 = not read yet.
         public const int StoreContinuing=3;
         private int _storeState=-1, _storeCategory=-2;
         private string _storeLanguage="?";
+        // This player's own sets (bit c = KD_ShopItem.Owned() of setItems[c]; false before the purchases load), re-read at most every
+        // OwnRecheckSeconds in the tick (Owned() may ask the Store). _Refresh and the Edit-mode checks only read the cached mask.
+        const float OwnRecheckSeconds=1f;
+        private int _ownMask, _shownOwn=-1;
+        private float _ownUntil;
         private int _tab, _page, _chosen=-1, _lang;
         private bool _wasBusy;
         private int _labelKey=-1, _seenRevision=-1;
@@ -81,7 +91,8 @@ namespace KominkaHillside
             int category=Category(_chosen);
             // IMP-DOG-056: the set's state through KD_ShopItem's cache (cheap per tick); the line is rewritten only when it changes
             int store=StoreState(category);
-            if(store!=_storeState||category!=_storeCategory||code!=_storeLanguage){_storeState=store;_storeCategory=category;_storeLanguage=code;ShowStore();}
+            if(Time.time>=_ownUntil){_ownUntil=Time.time+OwnRecheckSeconds;_ownMask=OwnMask();}
+            if(store!=_storeState||category!=_storeCategory||code!=_storeLanguage||_ownMask!=_shownOwn){_storeState=store;_storeCategory=category;_storeLanguage=code;_shownOwn=_ownMask;ShowStore();}
             bool busy=selection!=null&&category>=0&&category<KH_WashSelection.Categories&&selection._CategoryHeld(category);
             if(!_pending&&Time.time>=_resultUntil){if(busy)status.text=W(5);else if(_wasBusy)status.text=W(40);}_wasBusy=busy;
             if(actionButton!=null)actionButton.interactable=!_pending&&selection!=null&&_chosen>=0&&!busy&&!(category==KH_WashSelection.CategoryBath&&IsOut(_chosen));
@@ -122,21 +133,37 @@ namespace KominkaHillside
             if(st==KominkaDogRun.KD_ShopItem.InstanceNone&&selection._RevertPendingFor(category))return StoreContinuing;
             return st;
         }
-        /// <summary>The notice line and the purchase button from the cached state (no Store call: _Refresh and the Edit-mode menus use it).
-        /// A state read for another category (a tab or item just changed) shows "checking" until the next tick.</summary>
+        /// <summary>This player's own sets as a bit mask (KD_ShopItem.Owned: this player only, false until the purchases load).</summary>
+        int OwnMask()
+        {
+            if(selection==null||selection.setItems==null)return 0;
+            int m=0;
+            for(int c=0;c<selection.setItems.Length&&c<4;c++)if(selection.setItems[c]!=null&&selection.setItems[c].Owned())m|=1<<c;
+            return m;
+        }
+        /// <summary>The notice line and the purchase button from the cached state and own mask (no Store call: _Refresh and the Edit-mode
+        /// menus use it). A state read for another category (a tab or item just changed) shows "checking" until the next tick.</summary>
         void ShowStore()
         {
             if(notice==null)return;
             int c=Category(_chosen);
             int st=c>=0&&c==_storeCategory?_storeState:-1;
+            bool buy=st==KominkaDogRun.KD_ShopItem.InstanceOwned||st==KominkaDogRun.KD_ShopItem.InstanceNone||st==StoreContinuing;   // Unknown: never pushed to the purchase page
+            bool allBlocked=_tab==4&&_ownMask!=0;                       // owning any set: the complete set would only cost more
+            bool gift=_tab!=4&&c>=0&&(_ownMask&(1<<c))!=0;              // this player's own set: the same Listing, as a gift
             if(c<0)notice.text=W(8);
+            else if(buy&&allBlocked)notice.text=W(53);
             else if(st==StoreContinuing)notice.text=W(50)+"  ·  "+W(8);
             else if(st==KominkaDogRun.KD_ShopItem.InstanceOwned)notice.text=W(47)+"  ·  "+W(8);
             else if(st==KominkaDogRun.KD_ShopItem.InstanceNone)notice.text=Price(c)+"  ·  "+W(48);
             else notice.text=W(49)+"  ·  "+W(8);
-            bool buy=st==KominkaDogRun.KD_ShopItem.InstanceNone||st==StoreContinuing;   // Unknown: never pushed to the purchase page
-            if(buyButton!=null&&buyButton.gameObject.activeSelf!=buy)buyButton.gameObject.SetActive(buy);
-            if(buyLabel!=null)buyLabel.text=W(46);
+            if(buyButton!=null)
+            {
+                if(buyButton.gameObject.activeSelf!=buy)buyButton.gameObject.SetActive(buy);
+                if(buyButton.interactable==allBlocked)buyButton.interactable=!allBlocked;
+            }
+            if(buyImage!=null)buyImage.color=gift?giftColor:normalColor;
+            if(buyLabel!=null)buyLabel.text=W(gift?52:46);
         }
         /// <summary>The price the purchase button leads to: the complete set on the complete-set tab, else the chosen item's set.</summary>
         string Price(int c)
@@ -150,11 +177,17 @@ namespace KominkaHillside
         /// back through the Store events (KD_ShopItem / KH_WashSelection), never from this press.</summary>
         public void _Buy()
         {
-            string id="";
-            if(_tab==4)id=allListingId;
-            else if(selection!=null&&selection.setItems!=null&&_tab>=0&&_tab<selection.setItems.Length&&selection.setItems[_tab]!=null)id=selection.setItems[_tab].ceListingId;
+            string id=BuyListing();
             if(id==null||id.Length==0)return;
             Click();Store.OpenListing(id);Poke();
+        }
+        /// <summary>The Listing the button opens: this tab's set (buy or gift: the same Listing), the complete set's only while this player owns
+        /// no set ("" = nothing opens; the button is disabled then, this also stops a direct call).</summary>
+        string BuyListing()
+        {
+            if(_tab==4)return _ownMask!=0?"":allListingId;
+            if(selection!=null&&selection.setItems!=null&&_tab>=0&&_tab<selection.setItems.Length&&selection.setItems[_tab]!=null)return selection.setItems[_tab].ceListingId;
+            return "";
         }
         bool IsOut(int id){int c=Category(id);return selection!=null&&c>=0&&selection._Selected(c)==id;}
         bool Listed(int id){int g=Category(id);return g>=0&&(_tab==4||g==_tab);}

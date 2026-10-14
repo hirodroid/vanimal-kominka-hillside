@@ -27,6 +27,9 @@ public static partial class KH_WashSelectionEditor
     // Written only when the button is created (a later hand adjustment stays; 44 checks it stays inside the board, clear of Reset / Take).
     public static readonly Vector2 BuyPos = new Vector2(-56.5f, -296f), BuySize = new Vector2(180f, 56f);
     const float BuyMinGap = 10f;
+    // User decision 2026-10-14: the purchase button turns into "gift" on a set this player owns, drawn in the neutral "open only" colour
+    // (KominkaDogRun's rule: opening a page = grey): Paper a little darker, the only new colour on the board.
+    public static readonly Color GiftColor = new Color(.82f, .81f, .78f, 1f);
 
     [MenuItem(Menu + "54 - Wire Store")]
     public static void WireStore()
@@ -85,7 +88,8 @@ public static partial class KH_WashSelectionEditor
             else log.AppendLine("  " + name + ": setItems / reset unchanged");
 
             bool boardSame = b.words != null && b.words.SequenceEqual(words) && b.languageCodes != null && b.languageCodes.SequenceEqual(codes) && b.wordCount == WordCount
-                && b.allListingId == KDDefs.WashAllListing && b.allCredits == KDDefs.WashAllCredits && b.buyButton != null && b.buyLabel != null;
+                && b.allListingId == KDDefs.WashAllListing && b.allCredits == KDDefs.WashAllCredits && b.buyButton != null && b.buyLabel != null
+                && b.buyImage != null && b.buyImage == b.buyButton.GetComponent<Image>() && b.giftColor == GiftColor;
             if (!boardSame)
             {
                 Undo.RecordObject(b, "Wire Store");
@@ -102,6 +106,7 @@ public static partial class KH_WashSelectionEditor
                     log.AppendLine("  " + name + ": created " + PathOf(btn.transform) + " at " + BuyPos + " size " + BuySize + " -> _Buy (hidden)");
                 }
                 else if (b.buyLabel == null) b.buyLabel = b.buyButton.GetComponentInChildren<TextMeshProUGUI>(true);
+                b.buyImage = b.buyButton.GetComponent<Image>(); b.giftColor = GiftColor;
             }
             if (!boardSame || !BackingBoardWired(b)) { Copy(b); boardWritten++; log.AppendLine("  " + name + ": board words " + words.Length + " (13 x " + WordCount + "), allListingId " + b.allListingId + ", allCredits " + b.allCredits); }
             else log.AppendLine("  " + name + ": board unchanged");
@@ -188,6 +193,8 @@ public static partial class KH_WashSelectionEditor
         if (!back.publicVariables.TryGetVariableValue("wordCount", out v) || !(v is int w) || w != b.wordCount) return false;
         if (!back.publicVariables.TryGetVariableValue("words", out v) || !(v is string[] ws) || b.words == null || !ws.SequenceEqual(b.words)) return false;
         if (!back.publicVariables.TryGetVariableValue("buyButton", out v) || !SameRef(v, b.buyButton)) return false;
+        if (!back.publicVariables.TryGetVariableValue("buyImage", out v) || !SameRef(v, b.buyImage)) return false;
+        if (!back.publicVariables.TryGetVariableValue("giftColor", out v) || !(v is Color gc) || gc != b.giftColor) return false;
         return back.publicVariables.TryGetVariableValue("buyLabel", out v) && SameRef(v, b.buyLabel);
     }
     static Rect BoardRect(RectTransform rt) { var p = rt.anchoredPosition; var s = rt.sizeDelta; return new Rect(p.x - s.x * .5f, p.y - s.y * .5f, s.x, s.y); }
@@ -229,7 +236,9 @@ public static partial class KH_WashSelectionEditor
         string why;
         check(b.buyButton != null && b.buyLabel != null && b.buyButton.transform.parent == b.transform && b.buyLabel.transform.IsChildOf(b.buyButton.transform) && BuyWired(b, out why),
             "purchase button " + st + " calls _Buy on the board's backing (" + (b.buyButton == null ? "null" : PathOf(b.buyButton.transform)) + ")");
-        check(BackingBoardWired(b), "saved backing allListingId / allCredits / words / buyButton / buyLabel " + st);
+        check(b.buyImage != null && b.buyButton != null && b.buyImage == b.buyButton.GetComponent<Image>() && b.giftColor == GiftColor && b.giftColor != b.normalColor,
+            "purchase button image and gift colour " + st + " (giftColor " + b.giftColor + " = " + GiftColor + ", normal " + b.normalColor + ")");
+        check(BackingBoardWired(b), "saved backing allListingId / allCredits / words / buyButton / buyLabel / buyImage / giftColor " + st);
         if (b.buyButton != null && b.actionButton != null && b.resetLabel != null)
         {
             var root = (RectTransform)b.transform; var buy = BoardRect((RectTransform)b.buyButton.transform);
@@ -333,16 +342,19 @@ public static partial class KH_WashSelectionEditor
         }
     }
 
-    /// <summary>The board's store line per state (ja contents; every language for overflow) and the purchase button's visibility, plus the
-    /// two new result words in the status line. Restores the board's language, cached state, status and button.</summary>
+    /// <summary>The board's store line per state x this player's own sets (none / the chosen set / all four) (ja contents; every language
+    /// for overflow): the purchase button's visibility, label (46 buy / 52 gift), colour, interactable, the Listing it opens, word 53 on the
+    /// complete-set tab; plus the new result words in the status line. The own sets are the board's cached mask (_ownMask, what the tick
+    /// reads from KD_ShopItem.Owned): Owned() asks Networking.LocalPlayer / the Store, which Edit mode does not have. Restores everything.</summary>
     static void VerifyStoreBoardText(KH_WashSelectionBoard b, Action<bool, string> check, StringBuilder log)
     {
         const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic;
         var ty = typeof(KH_WashSelectionBoard);
         var fl = ty.GetField("_lang", F); var fs = ty.GetField("_storeState", F); var fc = ty.GetField("_storeCategory", F); var fch = ty.GetField("_chosen", F);
-        var mr = ty.GetMethod("ResultWord", F);
-        object l0 = fl.GetValue(b), s0 = fs.GetValue(b), c0 = fc.GetValue(b);
-        bool buy0 = b.buyButton != null && b.buyButton.gameObject.activeSelf; string status0 = b.status != null ? b.status.text : null;
+        var mr = ty.GetMethod("ResultWord", F); var fo = ty.GetField("_ownMask", F); var ml = ty.GetMethod("BuyListing", F);
+        object l0 = fl.GetValue(b), s0 = fs.GetValue(b), c0 = fc.GetValue(b), o0 = fo.GetValue(b);
+        bool buy0 = b.buyButton != null && b.buyButton.gameObject.activeSelf, inter0 = b.buyButton != null && b.buyButton.interactable; string status0 = b.status != null ? b.status.text : null;
+        Color img0 = b.buyImage != null ? b.buyImage.color : Color.white;
         var words = ReadWords(); int overflow = 0, wrong = 0;
         int[] states = { KDItem.InstanceOwned, KDItem.InstanceNone, KDItem.InstanceUnknown, KH_WashSelectionBoard.StoreContinuing };
         check((int)mr.Invoke(b, new object[] { KH_WashSelection.ResultLocked }) == 48 && (int)mr.Invoke(b, new object[] { KH_WashSelection.ResultPending }) == 49, "board result words: 4 Locked -> 48, 5 Pending -> 49");
@@ -361,29 +373,38 @@ public static partial class KH_WashSelectionEditor
                 {
                     ty.GetMethod("_Tab" + tab).Invoke(b, null);
                     int chosen = (int)fch.GetValue(b); int cat = b.groups != null && chosen >= 0 && chosen < b.groups.Length ? b.groups[chosen] : -1;
+                    foreach (int own in new[] { 0, cat >= 0 ? 1 << cat : 0, 15 }.Distinct())
                     foreach (int s in states)
                     {
-                        fs.SetValue(b, s); fc.SetValue(b, cat); b._Refresh();
+                        fo.SetValue(b, own); fs.SetValue(b, s); fc.SetValue(b, cat); b._Refresh();
                         bool buy = b.buyButton != null && b.buyButton.gameObject.activeSelf;
-                        bool wantBuy = s == KDItem.InstanceNone || s == KH_WashSelectionBoard.StoreContinuing;
+                        // decision 2026-10-14: shown in every known state (Owned too), hidden only while Unknown
+                        bool wantBuy = s == KDItem.InstanceOwned || s == KDItem.InstanceNone || s == KH_WashSelectionBoard.StoreContinuing;
+                        bool blocked = tab == 4 && own != 0, gift = tab != 4 && cat >= 0 && (own & (1 << cat)) != 0;
                         int credits = tab == 4 ? b.allCredits : b.selection != null && b.selection.setItems != null && cat >= 0 && cat < b.selection.setItems.Length && b.selection.setItems[cat] != null ? b.selection.setItems[cat].ceCredits : 0;
-                        string head = s == KDItem.InstanceOwned ? w[47] : s == KDItem.InstanceNone ? (credits > 0 ? credits + " " + w[51] : "") : s == KDItem.InstanceUnknown ? w[49] : w[50];
-                        bool ok = buy == wantBuy && b.notice.text.StartsWith(head) && (!buy || b.buyLabel.text == w[46]);
-                        if (!ok) { wrong++; log.AppendLine("STORE LINE " + words.languages[l].code + " tab " + tab + " state " + s + ": notice '" + b.notice.text + "' buy " + buy + " (want '" + head + "…', buy " + wantBuy + ")"); }
-                        if (l == 0 && tab == 0) log.AppendLine("store line ja tab 0 state " + s + ": '" + b.notice.text + "' buy " + buy);
-                        fits(b.notice, words.languages[l].code + " state " + s);
-                        if (buy) fits(b.buyLabel, words.languages[l].code);
+                        string head = wantBuy && blocked ? w[53] : s == KDItem.InstanceOwned ? w[47] : s == KDItem.InstanceNone ? (credits > 0 ? credits + " " + w[51] : "") : s == KDItem.InstanceUnknown ? w[49] : w[50];
+                        string wantListing = tab == 4 ? (own != 0 ? "" : b.allListingId) : b.selection != null && b.selection.setItems != null && tab < b.selection.setItems.Length && b.selection.setItems[tab] != null ? b.selection.setItems[tab].ceListingId : "";
+                        string listing = (string)ml.Invoke(b, null);
+                        bool ok = buy == wantBuy && b.notice.text.StartsWith(head) && listing == wantListing
+                            && (!buy || (b.buyLabel.text == w[gift ? 52 : 46] && b.buyButton.interactable == !blocked && b.buyImage != null && b.buyImage.color == (gift ? b.giftColor : b.normalColor)));
+                        if (!ok) { wrong++; log.AppendLine("STORE LINE " + words.languages[l].code + " tab " + tab + " own " + own + " state " + s + ": notice '" + b.notice.text + "' buy " + buy + " label '" + (b.buyLabel != null ? b.buyLabel.text : "-") + "' interactable " + (b.buyButton != null && b.buyButton.interactable) + " listing " + listing
+                            + " (want '" + head + "…', buy " + wantBuy + ", label '" + w[gift ? 52 : 46] + "', interactable " + !blocked + ", listing " + wantListing + ")"); }
+                        if (l == 0 && (tab == 0 || tab == 4) && s == KDItem.InstanceOwned) log.AppendLine("store line ja tab " + tab + " own " + own + " Owned: '" + b.notice.text + "' button " + (buy ? "'" + b.buyLabel.text + "'" + (b.buyButton.interactable ? "" : " (disabled)") : "hidden"));
+                        fits(b.notice, words.languages[l].code + " own " + own + " state " + s);
+                        if (buy) fits(b.buyLabel, words.languages[l].code + " own " + own);
                     }
                 }
                 foreach (int k in new[] { 48, 49, 50 }) { b.status.text = w[k]; fits(b.status, words.languages[l].code + " word " + k); }
             }
-            check(wrong == 0, "board store line per state (Owned 47 / None price + 51 + 48 with the purchase button / Unknown 49 / continuing 50), 13 languages x 5 tabs (wrong " + wrong + ")");
+            check(wrong == 0, "board store line and purchase button per state x own sets (Owned 47 / None price + 51 + 48 / continuing 50: button; Unknown 49: no button; own set's tab: 52 gift, giftColor, the same Listing; complete-set tab with any own set: 53, disabled, nothing opens), 13 languages x 5 tabs (wrong " + wrong + ")");
             check(overflow == 0, "Editor overflow of the store words (fully baked labels only; fallback glyphs = device check) = " + overflow);
         }
         finally
         {
-            fl.SetValue(b, l0); fs.SetValue(b, s0); fc.SetValue(b, c0); b._Tab0();
+            fl.SetValue(b, l0); fs.SetValue(b, s0); fc.SetValue(b, c0); fo.SetValue(b, o0); b._Tab0();
             if (b.buyButton != null && b.buyButton.gameObject.activeSelf != buy0) b.buyButton.gameObject.SetActive(buy0);
+            if (b.buyButton != null && b.buyButton.interactable != inter0) b.buyButton.interactable = inter0;
+            if (b.buyImage != null && b.buyImage.color != img0) b.buyImage.color = img0;
             if (b.status != null) b.status.text = status0;
         }
     }
