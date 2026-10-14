@@ -1286,127 +1286,502 @@
       "key": "walk.guide.flat.help"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Header",
       "key": "guide.items.title"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/Subtitle",
       "key": "guide.items.subtitle"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardWalk/Name",
       "key": "KD_TreatPouch.WordWalkTab"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardWalk/Line",
       "key": "guide.items.walk.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardWalk/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTreat/Name",
       "key": "KD_TreatPouch.WordTabTreat"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTreat/Line",
       "key": "guide.items.treat.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTreat/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardAccessory/Name",
       "key": "KD_TreatPouch.WordTabAcc"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardAccessory/Line",
       "key": "guide.items.acc.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardAccessory/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardCall/Name",
       "key": "KD_TreatPouch.WordTabSleep"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardCall/Line",
       "key": "guide.items.call.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardCall/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardToy/Name",
       "key": "KD_TreatPouch.WordTabToy"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardToy/Line",
       "key": "guide.items.toy.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardToy/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTrainer/Name",
       "key": "guide.items.trainer.name"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTrainer/Line",
       "key": "guide.items.trainer.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardTrainer/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardPhoto/Name",
       "key": "guide.items.photo.name"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardPhoto/Line",
       "key": "guide.items.photo.line"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardPhoto/Open",
       "key": "guide.items.open"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
       "path": "Canvas/Paper/CardWash/Name",
       "key": "guide.items.wash.name"
     },
     {
-      "root": "KH_ItemGuideBoard",
+      "root": "KH_ItemGuideBoard_Main",
+      "path": "Canvas/Paper/CardWash/Line",
+      "key": "guide.items.wash.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Header",
+      "key": "guide.items.title"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/Subtitle",
+      "key": "guide.items.subtitle"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardWalk/Name",
+      "key": "KD_TreatPouch.WordWalkTab"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardWalk/Line",
+      "key": "guide.items.walk.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardWalk/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTreat/Name",
+      "key": "KD_TreatPouch.WordTabTreat"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTreat/Line",
+      "key": "guide.items.treat.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTreat/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardAccessory/Name",
+      "key": "KD_TreatPouch.WordTabAcc"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardAccessory/Line",
+      "key": "guide.items.acc.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardAccessory/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardCall/Name",
+      "key": "KD_TreatPouch.WordTabSleep"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardCall/Line",
+      "key": "guide.items.call.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardCall/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardToy/Name",
+      "key": "KD_TreatPouch.WordTabToy"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardToy/Line",
+      "key": "guide.items.toy.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardToy/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTrainer/Name",
+      "key": "guide.items.trainer.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTrainer/Line",
+      "key": "guide.items.trainer.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardTrainer/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardPhoto/Name",
+      "key": "guide.items.photo.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardPhoto/Line",
+      "key": "guide.items.photo.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardPhoto/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardWash/Name",
+      "key": "guide.items.wash.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Hillside",
+      "path": "Canvas/Paper/CardWash/Line",
+      "key": "guide.items.wash.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Header",
+      "key": "guide.items.title"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/Subtitle",
+      "key": "guide.items.subtitle"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardWalk/Name",
+      "key": "KD_TreatPouch.WordWalkTab"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardWalk/Line",
+      "key": "guide.items.walk.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardWalk/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTreat/Name",
+      "key": "KD_TreatPouch.WordTabTreat"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTreat/Line",
+      "key": "guide.items.treat.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTreat/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardAccessory/Name",
+      "key": "KD_TreatPouch.WordTabAcc"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardAccessory/Line",
+      "key": "guide.items.acc.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardAccessory/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardCall/Name",
+      "key": "KD_TreatPouch.WordTabSleep"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardCall/Line",
+      "key": "guide.items.call.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardCall/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardToy/Name",
+      "key": "KD_TreatPouch.WordTabToy"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardToy/Line",
+      "key": "guide.items.toy.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardToy/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTrainer/Name",
+      "key": "guide.items.trainer.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTrainer/Line",
+      "key": "guide.items.trainer.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardTrainer/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardPhoto/Name",
+      "key": "guide.items.photo.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardPhoto/Line",
+      "key": "guide.items.photo.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardPhoto/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardWash/Name",
+      "key": "guide.items.wash.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_River",
+      "path": "Canvas/Paper/CardWash/Line",
+      "key": "guide.items.wash.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Header",
+      "key": "guide.items.title"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/Subtitle",
+      "key": "guide.items.subtitle"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardWalk/Name",
+      "key": "KD_TreatPouch.WordWalkTab"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardWalk/Line",
+      "key": "guide.items.walk.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardWalk/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTreat/Name",
+      "key": "KD_TreatPouch.WordTabTreat"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTreat/Line",
+      "key": "guide.items.treat.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTreat/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardAccessory/Name",
+      "key": "KD_TreatPouch.WordTabAcc"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardAccessory/Line",
+      "key": "guide.items.acc.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardAccessory/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardCall/Name",
+      "key": "KD_TreatPouch.WordTabSleep"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardCall/Line",
+      "key": "guide.items.call.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardCall/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardToy/Name",
+      "key": "KD_TreatPouch.WordTabToy"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardToy/Line",
+      "key": "guide.items.toy.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardToy/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTrainer/Name",
+      "key": "guide.items.trainer.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTrainer/Line",
+      "key": "guide.items.trainer.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardTrainer/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardPhoto/Name",
+      "key": "guide.items.photo.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardPhoto/Line",
+      "key": "guide.items.photo.line"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardPhoto/Open",
+      "key": "guide.items.open"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
+      "path": "Canvas/Paper/CardWash/Name",
+      "key": "guide.items.wash.name"
+    },
+    {
+      "root": "KH_ItemGuideBoard_Upper",
       "path": "Canvas/Paper/CardWash/Line",
       "key": "guide.items.wash.line"
     }

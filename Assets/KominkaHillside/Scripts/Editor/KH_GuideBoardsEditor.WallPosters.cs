@@ -214,7 +214,8 @@ namespace KominkaHillside.Editor
             var list = new List<OtherBoard>();
             var ts = new List<Transform>();
             if (c.root != null) foreach (var b in Boards) { var t = c.root.Find(b.name); if (t != null) ts.Add(t); }
-            foreach (var name in new[] { DogBookStandName, "KH_PhotoBoard", ItemGuideName, WallPostersName })
+            ts.AddRange(ItemBoardTransforms().Where(t => self == null || t != self));
+            foreach (var name in new[] { DogBookStandName, "KH_PhotoBoard", WallPostersName })
             {
                 var go = KD_SceneObjects.Find(name);
                 if (go != null && (self == null || go.transform != self)) ts.Add(go.transform);
@@ -403,7 +404,7 @@ namespace KominkaHillside.Editor
             EnsurePosterImporter(TorinosukeTexturePath, r.log);
             EnsurePosterImporter(GroupTexturePath, r.log);
             var w = ResolveWall(true);
-            ProbeOtherBindings(new[] { WallPostersName, ItemGuideName });
+            ProbeOtherBindings(new[] { WallPostersName });
             var pose = FindWallPose(w, r.log);
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-wall-posters-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
@@ -422,7 +423,7 @@ namespace KominkaHillside.Editor
                 BuildPosters(root, w, pose, r.log);
                 var log = new StringBuilder();
                 KD_ShopSetupEditor.AddGlyphs(WallGlyphText(w.c), log);
-                BindIfComplete(w.c, log, new[] { WallPostersName, ItemGuideName });
+                BindIfComplete(w.c, log);
                 foreach (var line in log.ToString().Split('\n')) if (line.Trim().Length > 0 && !line.StartsWith("  AUTOSIZE")) r.log.Add(line.Trim());
                 EditorSceneManager.MarkSceneDirty(w.c.scene);
                 if (!EditorSceneManager.SaveScene(w.c.scene)) throw new IOException("wall posters scene save failed");
@@ -603,7 +604,7 @@ namespace KominkaHillside.Editor
             var unresolved = new List<string>();
             Action<string, string> probe = (r, p) =>
             {
-                if (ours.Contains(r)) return;
+                if (ours.Contains(r) || r.StartsWith(ItemGuidePrefix)) return;   // the item guide boards are made by Guide/22
                 try { KD_LocalizationEditor.Resolve(new KD_LocalizationEditor.Binding { root = r, path = p }); }
                 catch (Exception e) { unresolved.Add(r + "/" + p + " (" + e.Message + ")"); }
             };
@@ -617,12 +618,12 @@ namespace KominkaHillside.Editor
 
         /// <summary>Configure + Bind (as Guide/1) when every row resolves. While the other IMP-UI-008 board is not built yet (Guide/20 before
         /// Guide/22, or the reverse) the bind is deferred with a WARN: the next of the two binds everything. Verify reports the stale tables meanwhile.</summary>
-        static bool BindIfComplete(Ctx c, StringBuilder log, string[] ours)
+        static bool BindIfComplete(Ctx c, StringBuilder log)
         {
-            var missing = ours.Where(n => KD_SceneObjects.Find(n) == null).ToArray();
+            var missing = ManifestItemRoots().Concat(new[] { WallPostersName }).Where(n => KD_SceneObjects.Find(n) == null).ToArray();
             if (missing.Length > 0)
             {
-                log.AppendLine("WARN localization not bound yet: " + string.Join(", ", missing) + " not built (run " + (missing.Contains(ItemGuideName) ? "Guide/22" : "Guide/20") + " next; it binds everything)");
+                log.AppendLine("WARN localization not bound yet: " + string.Join(", ", missing) + " not built (run " + (missing.Any(n => n.StartsWith(ItemGuidePrefix)) ? "Guide/22" : "Guide/20") + " next; it binds everything)");
                 return false;
             }
             KD_LocalizationEditor.Configure(c.language, c.catalog, log);
@@ -731,7 +732,7 @@ namespace KominkaHillside.Editor
             req(box != null && box.isTrigger && it.gameObject.layer == 0 && box.size.x >= GroupImageM.x && box.size.y >= GroupImageM.y, "the Interact target is a trigger over the whole poster on Default");
             int ii = bk != null && w.c.language.interactTargets != null ? Array.IndexOf(w.c.language.interactTargets, bk) : -1;
             // Guide/20 before Guide/22: the bind waits for the item guide board (BindIfComplete), so the binding lines are WARN until then
-            bool bindPending = KD_SceneObjects.Find(ItemGuideName) == null;
+            bool bindPending = !ItemBoardsBuilt();
             Action<bool, string> bound = bindPending ? (ok, what) => warn(ok, what + " (bind deferred: run Guide/22, which binds everything)") : req;
             bound(ii >= 0 && w.c.language.interactKeys[ii] == GroupInteractKey, "the Interact text is bound to " + GroupInteractKey);
             var udons = root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true);

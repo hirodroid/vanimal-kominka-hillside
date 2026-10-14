@@ -25,7 +25,7 @@
 - 作り: 画像を、案内板と同じ木の板 (KH_RiverWood、Collider なし、Batching Static) に、読むだけの World Space Canvas の RawImage で掛ける。torinosuke を門寄り、グループをその隣 (間 0.20 m)。URL 欄は古民家と同じ `KD_MenuFinishEditor.CopyField` (専用の小さな Canvas に GraphicRaycaster + VRCUiShape + trigger BoxCollider)。グループは Interact の trigger + `KH_GroupPoster` (U#、`BehaviourSyncMode.None`、`Store.OpenGroupPage`)。Interact の文言は `guide.wall.group.interact` (13 言語)。
 - 古民家との違い: 購入プレハブ (透明な枠) の代わりに木の板。lilToon ではなく UI の unlit なので、古民家が Android / iOS で直した白飛び (BUG-ENV-003・ポスターボードの透明材質) の差し替えは要らない。
 
-### 2-2. アイテム案内の看板 `KH_ItemGuideBoard` (Guide/22 Build・Guide/23 Verify)
+### 2-2. アイテム案内の看板 `KH_ItemGuideBoards/KH_ItemGuideBoard_<洗い場>` 4 枚 (Guide/22 Build・Guide/23 Verify)
 
 - 作り: 案内板と同じ屋根つきの立て看板 (`BuildStructure` / `EnsureCanvas`、canvas 1300 × 1180 mm、下端 0.80 m)。見出し「手元メニューでできること」、和紙の紙に副題「札を押すと、手元メニューがその画面でひらきます」、札 8 枚 (2 列 × 4 段、各 580 × 200 mm: 名前 46〜30 mm・説明 2 行 34〜24 mm・「ひらく ▶」)。押せる札は暗い板 + 明るい字 + 角丸、押せない札は和紙の平らな面 (vrc-world-ui「角丸は押せる面だけ」)。
 - 押せる面: 描く Canvas とは別の透明な入力の Canvas `Input` (GraphicRaycaster + VRCUiShape + trigger BoxCollider、Default)。札の Button は `KD_TreatPouch` の backing UdonBehaviour へ `SendCustomEvent` (古民家と同じ。新しい Udon は無い)。KH_GuideBoards の下には置かない (Guide/2 の「読むだけ」の検査に掛かる)。
@@ -42,7 +42,9 @@
 | 洗い場・おさんぽカート | `guide.items.wash.name` | 押せない (手元メニューに入口が無い。道具は洗い場の板、カートは乗り場) |
 
 - 入れないもの: ライブ (裏山は準備中、DES-LIV-001)、古民家の CE 商品 (今回の公開版から外した、IMP-PRG-002)、札の写真と区分の札・公式サイトの URL 欄 (決定: 2026-10-14 ユーザー「不要」)。
-- 探し方 (初回だけ): 地図の看板 `KH_GuideBoards/Map` (39.20, 46.60) にいちばん近い周回の道の線分 (`KH_WalkRoute.nodePositions`、2026-10-14 時点の節点 1 → 2) へ地図を映した反対側。地図の真向かいから道に沿って 0 → ±3 m、道の中心線から 2.4〜4.0 m、表を道へ向け yaw ±0 / ±10°。判定は DogBookStand と同じ (Guide/2 の Placement + 看板どうし + 写真ボード + 犬紹介の看板 + 塀のポスター)。オフラインの見積もり: 真向かい (45.4, 51.8) は犬の待機の輪 (KH_Roam_Dachs (44, 48)) から 3.3 m + 足元が取れず落ち、全規則を満たすのは道に沿って 1〜2.5 m 先の (43.2〜44.5, 52.1〜53.0) 付近、**地図から 約 7〜8 m**。「地図の隣」とは言いにくい距離なので、Guide/23 は地図から 8 m を超えると WARN を出す。
+- 置き場所 (決定: 2026-10-14 ユーザー): **洗い場 4 か所 (主洗い場 + KH_WashStations の Hillside / River / Upper) の選択ボードの隣に 1 枚ずつ**。地図の向かいの 1 枚はなくす (Guide/22 が旧 `KH_ItemGuideBoard` を消す)。カートの乗り場には置かない。
+- 探し方 (初回だけ、洗い場ごと): 洗い場の向き (選択ボードと同じ yaw) のまま、選択ボード (洗い場ローカル x +0.95) の側を外へ 2.0 → 7.0 m (0.25 m 刻み)、前後 0 / +0.25 / -0.25 / +0.5 m、yaw ±0 / ±15°。無ければ反対側。判定 = 案内板の Placement (入口の外の 3 か所では入口だけの規則を外す) + 看板どうし + 選択ボードの足元 0.3 m (固い) + 選択ボードの読む場所・作業域 + 1 m・個人の床の外 0.5 m・犬よけの円 (やわらかい)。全規則を満たす最初の点、無ければ体積が空く最初の点に WARN。以後 x / z / yaw は人のもの。
+- (旧、2026-10-14 の最初の版) 探し方: 地図の看板 `KH_GuideBoards/Map` (39.20, 46.60) にいちばん近い周回の道の線分 (`KH_WalkRoute.nodePositions`、2026-10-14 時点の節点 1 → 2) へ地図を映した反対側。地図の真向かいから道に沿って 0 → ±3 m、道の中心線から 2.4〜4.0 m、表を道へ向け yaw ±0 / ±10°。判定は DogBookStand と同じ (Guide/2 の Placement + 看板どうし + 写真ボード + 犬紹介の看板 + 塀のポスター)。オフラインの見積もり: 真向かい (45.4, 51.8) は犬の待機の輪 (KH_Roam_Dachs (44, 48)) から 3.3 m + 足元が取れず落ち、全規則を満たすのは道に沿って 1〜2.5 m 先の (43.2〜44.5, 52.1〜53.0) 付近、**地図から 約 7〜8 m**。「地図の隣」とは言いにくい距離なので、Guide/23 は地図から 8 m を超えると WARN を出す。
 - 手元メニューの口 (`KD_TreatPouch.Board.cs`、裏山改変): 古民家の `_OpenFromBoard*` / `OpenFromBoard` を裏山のタブと写真の面へ移した。閉じていれば目の前に開き、開いていれば呼び戻してその面にする。自分で開けた印は立てない。寝床の位置指定中は何もしない。ようこそ表示中に押したら、ようこそを目の前へ呼び戻し、[メニューを見る] (`_WelcomeMenu`) で札の面へ続ける。ローカルのみ、同期・保存なし。
 
 ### 2-3. 文言 (13 言語)
@@ -66,7 +68,7 @@
 
 1. compile (`unity-compile.sh`) → `Guide/0 - Create Board Programs` (KH_GroupPoster の Program Asset) → compile `--udon`
 2. `Guide/20 - Build Shop Intro And Poster` (テクスチャの取り込み設定 → 塀の探索 → 作る → 保存 → Guide/21 相当。束縛は後回し。Interact の文言の束縛と ValidateScene は、相手の看板が無い間だけ WARN「bind deferred」になり FAIL にしない)
-3. `Guide/22 - Build Item Guide Board` (地図の向かいの探索 → 作る → 束縛 → 保存 → Guide/23 相当)
+3. `Guide/22 - Build Item Guide Boards` (旧 1 枚を消す → 洗い場 4 か所の隣を探索 → 作る → 束縛 → 保存 → Guide/23 相当)
 4. `Guide/21 - Verify Shop Intro And Poster` (2 の後の束縛で通る) → `Menu/11` → `Menu/22` → `Guide/2` → `Build Size/7 - Apply Mobile Caps` → `Build Size/8` → 保存
 
 ## 5. Edit で証明すること / Play に残すこと
@@ -83,5 +85,5 @@
 ## 6. 既知の注意 (2026-10-14)
 
 - 地点ワープの着地点を置かない円 (Course/80・81) は `KH_GuideBoards` の直下の板だけを数える。犬紹介の看板・写真ボードと同じく、新しい 2 つは入らない (Course/81 は FAIL しない)。着地点が看板・ポスターの前に落ちるかは未確認で、入れるなら Course/80 の拡張は別作業。
-- アイテム案内の探索 (195 点) で全部が固い規則 (体積・高低差 1.2 m 超など) に掛かると、Guide/22 は作りかけの根を消して止まるが、シーンは dirty のまま残る (次の Idle が拒む)。シーンを保存せずに開き直し、`ItemAlongOffsets` / `ItemRoadDistances` を広げて再実行する。
+- アイテム案内の探索 (洗い場ごとに最大 504 点) で全部が固い規則 (体積・高低差 1.2 m 超など) に掛かると、Guide/22 は作りかけの根を消して止まるが、シーンは dirty のまま残る (次の Idle が拒む)。シーンを保存せずに開き直し、`ItemSideTo` / `ItemDepthOffsets` を広げて再実行する。
 - `KH_GroupPoster` の UdonBehaviour は保存時に NetworkID を 1 つ受ける (KH_PortalBoard と同じ)。Scene Layout 系の件数の変化はこれ。
