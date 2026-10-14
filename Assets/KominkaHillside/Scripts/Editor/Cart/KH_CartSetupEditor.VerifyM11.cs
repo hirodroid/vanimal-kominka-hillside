@@ -82,6 +82,7 @@ namespace KominkaHillside.Editor
             string c = "Cart_" + i;
             var seatLocal = seatT != null ? cart.transform.InverseTransformPoint(seatT.position) : Vector3.zero;
             var seatBase = new Vector3(seatLocal.x, 0f, seatLocal.z);
+            var notices = UnityEngine.Object.FindObjectsOfType<KH_TravelNotice>(true);   // BUG-UI-002: 通知板はシーンに 1 枚 (Course/85)
 
             // ---- ドック ----
             var docks = cart.transform.Find(DocksName);
@@ -97,9 +98,11 @@ namespace KominkaHillside.Editor
                 var videos = UnityEngine.Object.FindObjectsOfType<KH_VideoCamera>(true); var photos = UnityEngine.Object.FindObjectsOfType<KD_PhotoViewer>(true);
                 if (videos.Length == 1) RefCheck(v, dso, db, "video", videos[0], c + " dock"); else v.Pend(c + " dock.video: scene has " + videos.Length + " KH_VideoCamera");
                 if (photos.Length == 1) RefCheck(v, dso, db, "photo", photos[0], c + " dock"); else v.Pend(c + " dock.photo: scene has " + photos.Length + " KD_PhotoViewer");
-                var want = new[] { DockMenuLocal(seatBase), DockMonitorLocal(seatBase), DockPhotoLocal(seatBase) };
-                var names = new[] { DockMenuName, DockMonitorName, DockPhotoName }; var fields = new[] { "dockMenu", "dockMonitor", "dockPhoto" };
-                for (int k = 0; k < 3; k++)
+                // BUG-UI-002: 通知板と右前のドック
+                if (notices.Length == 1) RefCheck(v, dso, db, "notice", notices[0], c + " dock"); else v.Req(false, c + " dock.notice: scene has " + notices.Length + " KH_TravelNotice (expected 1; Course/85)");
+                var want = new[] { DockMenuLocal(seatBase), DockMonitorLocal(seatBase), DockPhotoLocal(seatBase), DockNoticeLocal(seatBase) };
+                var names = new[] { DockMenuName, DockMonitorName, DockPhotoName, DockNoticeName }; var fields = new[] { "dockMenu", "dockMonitor", "dockPhoto", "dockNotice" };
+                for (int k = 0; k < want.Length; k++)
                 {
                     var t = docks.Find(names[k]);
                     v.Req(t != null && (cart.transform.InverseTransformPoint(t.position) - want[k]).magnitude < PlacementTolerance, c + " " + names[k] + " at " + want[k].ToString("F2") + " (cart local, ±" + PlacementTolerance + " m)");
@@ -191,6 +194,23 @@ namespace KominkaHillside.Editor
                 {
                     float g = AngularGap(a, b);
                     v.Req(g >= AngularMarginDeg, c + " seen from the eye " + SeatedEyeLocal + ": " + what + " apart by " + g.ToString("F1") + " deg (>= " + AngularMarginDeg + "; " + a + " / " + b + ")");
+                }
+                // BUG-UI-002: 通知板 (右前のドック、板の実寸はシーンの Board) と 既存の 5 枚 (モニター / 操作帯 / Tab / 最小化タブ / 手元メニュー)。読める・押せる距離 0.8〜1.2 m
+                var dtT = docks.Find(DockNoticeName); var tabMinT2 = cart.transform.Find(TabMinimizedName);
+                var nboard = notices.Length == 1 && notices[0].board != null ? notices[0].board.transform as RectTransform : null;
+                if (dtT == null || tabMinT2 == null || nboard == null) v.Req(false, c + " notice dock angular check: " + DockNoticeName + (dtT != null ? " ok" : " missing") + ", " + TabMinimizedName + (tabMinT2 != null ? " ok" : " missing") + ", notice Board " + (nboard != null ? "ok" : "missing"));
+                else
+                {
+                    var nrect = NoticeRect(nboard);
+                    var nbox = Project(LocalPos(dtT), LocalRot(dtT), nrect);
+                    var tmin = Project(LocalPos(tabMinT2), LocalRot(tabMinT2), TabMinimizedRect());
+                    float dist = Vector3.Distance(LocalPos(dtT), SeatedEyeLocal);
+                    v.Req(dist >= 0.8f && dist <= 1.2f, c + " " + DockNoticeName + " " + dist.ToString("F2") + " m from the eye (0.8..1.2; board " + nrect.width.ToString("F2") + "x" + nrect.height.ToString("F2") + " m)");
+                    foreach (var (b, what) in new[] { (mon, "notice vs monitor"), (ctl, "notice vs controls"), (tab, "notice vs tab"), (tmin, "notice vs minimized tab"), (men, "notice vs menu") })
+                    {
+                        float g = AngularGap(nbox, b);
+                        v.Req(g >= AngularMarginDeg, c + " seen from the eye " + SeatedEyeLocal + ": " + what + " apart by " + g.ToString("F1") + " deg (>= " + AngularMarginDeg + "; " + nbox + " / " + b + ")");
+                    }
                 }
             }
             RefCheck(v, seatSo, seatBacking, "controls", controls, c);

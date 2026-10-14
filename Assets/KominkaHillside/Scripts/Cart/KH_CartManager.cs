@@ -411,6 +411,10 @@ namespace KominkaHillside
         /// <summary>M3: そのカートがその場に残っているか (カート上メニューの表示)。</summary>
         public bool _CartParked(int c) { return ValidCart(c) && cartState[c] == CartParked; }
 
+        /// <summary>DES-UI-007: 板の「空きカート：あり / なし」の読み取り (副作用なし。同期変数も判定も変えない)。乗り場 (spot >= 0) は出発・合流と同じ ReclaimCandidate() >= 0、
+        /// 残ったカートのパネル (spot < 0) はそのカートがまだ Parked か。目安の表示で、押したときは従来どおり Can* が最新の条件で判定する。</summary>
+        public bool _CartAvailable(int spot, int cart) { return spot >= 0 ? ReclaimCandidate() >= 0 : _CartParked(cart); }
+
         /// <summary>保留中の要求の結果を、要求したパネル (乗り場か、カート上メニュー) に出す。</summary>
         private void ShowPendingResult(string key)
         {

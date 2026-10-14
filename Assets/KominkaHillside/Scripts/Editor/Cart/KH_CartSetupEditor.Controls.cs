@@ -56,6 +56,14 @@ namespace KominkaHillside.Editor
         public static Vector3 DockMonitorLocal(Vector3 seatBase) { return new Vector3(-0.70f, 1.80f, 1.15f); }
         public static Vector3 DockPhotoLocal(Vector3 seatBase) { return seatBase + new Vector3(-1f, 0f, -1f).normalized * 1.0f + Vector3.up * 1.0f; }
         public static Vector3 ControlsLocal(Vector3 seatBase) { return new Vector3(-0.40f, 1.00f, 0.50f); }
+        // BUG-UI-002 (2026-10-14): 合流・呼び出し・撮影許可の通知板 (KH_TravelNotice、760×380 px @0.001 = 0.76×0.38 m、Course/85) を乗車中に置くドック。
+        // 操作帯 (左前) の鏡像側 = 右前。目から 1.09 m、方位 4.6..45.6°、仰角 -23.2..-3.2°。角度の隙間: モニター 7.1° / 操作帯 22.4° / Tab 23.8° /
+        // 最小化タブ 41.3° / 手元メニュー 54.6°。統括の例 (0.45, 1.05, 0.70) はモニターとの隙間が 4.6° で 5° に届かないので 5 cm 下げた。
+        // 犬: BUG-DOG-014 以降、乗車中の犬は保つ線 (原点から前 1.7 m、揺らぎで +1.7〜+2.1 m) に立つ。右の犬の頭 (0.45, 0.6, 1.7) は目から方位 12.9°・仰角 -17.9° で
+        // 板の矩形の中 = 通知の表示中 (最長 20 秒 + 4 秒) だけ右の犬が板に隠れ得る。読んで押せることを優先して採用 (Codex レビュー、統括判断 2026-10-14。
+        // モニターとの 5° の制約で上へは動かせない。Play で気になれば位置を再検討)。中央・左の犬は方位で外れる
+        public const string DockNoticeName = "Dock_Notice";
+        public static Vector3 DockNoticeLocal(Vector3 seatBase) { return new Vector3(0.45f, 1.00f, 0.70f); }
         /// <summary>面を目へ向ける姿勢: +Z = 目 → 板 (Canvas の表 -Z が目を向く。Runtime のドックと同じ約束)。上下の傾きも含む。</summary>
         public static Quaternion FaceEye(Vector3 local) { return Quaternion.LookRotation(local - SeatedEyeLocal, Vector3.up); }
 
@@ -83,6 +91,14 @@ namespace KominkaHillside.Editor
         public static Rect MenuRect() { return Rect.MinMaxRect(-KD_TreatSetupEditor.PanelWidth * .5f * .001f, -KD_TreatSetupEditor.PanelHeight * .5f * .001f, KD_TreatSetupEditor.PanelWidth * .5f * .001f, KD_TreatSetupEditor.PanelHeight * .5f * .001f); }
         public static Rect ControlsRect() { return Rect.MinMaxRect(-ControlsBoardSize.x * .5f * ControlsScale, -ControlsBoardSize.y * .5f * ControlsScale, ControlsBoardSize.x * .5f * ControlsScale, ControlsBoardSize.y * .5f * ControlsScale); }
         public static Rect TabRect() { return Rect.MinMaxRect((TabPos.x - TabSize.x * .5f) * ControlsScale, (TabPos.y - TabSize.y * .5f) * ControlsScale, (TabPos.x + TabSize.x * .5f) * ControlsScale, (TabPos.y + TabSize.y * .5f) * ControlsScale); }
+        /// <summary>最小化中のタブ (TabMinimized の姿勢に置く 50×50 px の Canvas)。</summary>
+        public static Rect TabMinimizedRect() { return Rect.MinMaxRect(-TabSize.x * .5f * ControlsScale, -TabSize.y * .5f * ControlsScale, TabSize.x * .5f * ControlsScale, TabSize.y * .5f * ControlsScale); }
+        /// <summary>通知板 (BUG-UI-002) の root から見た板の矩形 (m)。シーンの Board の実寸 (rect × scale + 位置) で測る (Course/85 では root の原点・中心ピボット・0.001)。</summary>
+        public static Rect NoticeRect(RectTransform board)
+        {
+            Rect r = board.rect; Vector3 s = board.localScale, o = board.localPosition;
+            return Rect.MinMaxRect(r.xMin * s.x + o.x, r.yMin * s.y + o.y, r.xMax * s.x + o.x, r.yMax * s.y + o.y);
+        }
 
         static Quaternion FaceAway(Vector3 from, Vector3 pos)
         {
@@ -108,12 +124,19 @@ namespace KominkaHillside.Editor
             var dMenu = Dock(DockMenuName, DockMenuLocal(seatBase));
             var dMonitor = Dock(DockMonitorName, DockMonitorLocal(seatBase));
             var dPhoto = Dock(DockPhotoName, DockPhotoLocal(seatBase));
+            var dNotice = Dock(DockNoticeName, DockNoticeLocal(seatBase));   // BUG-UI-002: 通知板 (右前、面は目へ)
+            // 通知板はシーンに 1 枚 (Course/85)。本体の呼び出し元を変えずにここで探す (無い・複数なら null のまま、1 台目だけ WARN)
+            var notices = UnityEngine.Object.FindObjectsOfType<KH_TravelNotice>(true);
+            var notice = notices.Length == 1 ? notices[0] : null;
+            if (notice == null && i == 0) log.AppendLine("WARN KH_TravelNotice count " + notices.Length + " (expected 1; run Course/85); left null on the cart docks");
             dock = EnsureU<KH_CartDock>(docksGo);
             Backing(dock, Networking.SyncType.None);
             var dso = new SerializedObject(dock);
             SetRef(dso, "manager", manager); SetInt(dso, "index", i);
             SetRef(dso, "menu", menu); SetRef(dso, "video", video); SetRef(dso, "photo", photo);
             SetRef(dso, "dockMenu", dMenu); SetRef(dso, "dockMonitor", dMonitor); SetRef(dso, "dockPhoto", dPhoto);
+            var noticeLog = new List<string>(); SetRefIfPresent(dso, "notice", notice, noticeLog); SetRefIfPresent(dso, "dockNotice", dNotice, noticeLog);
+            if (i == 0) foreach (var line in noticeLog) log.AppendLine(line);
             dso.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(dock); EditorUtility.SetDirty(dock);
 

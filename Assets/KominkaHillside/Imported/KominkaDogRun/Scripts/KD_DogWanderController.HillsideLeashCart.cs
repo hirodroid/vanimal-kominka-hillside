@@ -29,20 +29,36 @@ namespace KominkaDogRun
         const float CartStillSpeed = 0.05f;    // m/s: _CartSpeed at or below this = the cart is waiting
         // ---- 2026-10-12 Play fix 2 ("a fixed spot has no walk feel"): the target wanders around the anchor (Owner, local time) ----
         // offset in the cart frame: lateral = amp * (0.6 sin(2pi t/7.3 + 0.6k) + 0.4 sin(2pi t/5.3 + 1.02k + 1.3)), amp 0.6 (0.25 single file)
-        //                           forward = 0.35 + 0.65 * (0.6 sin(2pi t/8.6 + 2.1k) + 0.4 sin(2pi t/6.1 + 2.1k + 2.2))  in [-0.3, +1.0]
+        //                           forward = 0.9 + 0.3 * (0.6 sin(2pi t/8.6 + 2.1k) + 0.4 sin(2pi t/6.1 + 2.1k + 2.2))  in [+0.6, +1.2]
+        //                           (BUG-DOG-014, 2026-10-14: was 0.35 + 0.65 * (...) in [-0.3, +1.0], see the keep line below)
         // k = the dog's order on the holder (slot): neighbours sway sideways nearly together (0.6 rad apart) and take turns ahead
         // (2.1 rad = a third of a turn apart), which is what keeps them from closing in on each other
         const float CartSwayLat = 0.6f, CartSwayLatNarrow = 0.25f;
         const float CartSwayT1 = 7.3f, CartSwayT2 = 5.3f, CartSwayT3 = 8.6f, CartSwayT4 = 6.1f;   // s, all within 5-9
         const float CartSwayLatPhase = 0.6f, CartSwayFwdPhase = 2.1f;   // rad per slot
-        const float CartFwdMid = 0.35f, CartFwdAmp = 0.65f;
+        const float CartFwdMid = 0.9f, CartFwdAmp = 0.3f;
         const float Tau = 6.2831853f;
         const float CartSpacing = 0.55f;       // m: goals of the holder's dogs are kept at least about this far apart
-        const float CartFwdMin = -0.3f;        // m: the goal never falls further behind the anchor than this
+        // ---- BUG-DOG-014 (2026-10-14, user report "the dog drops back into the cart, quite often"): the keep line ----
+        // The anchor (_DogAnchor, DogAhead 0.9) is only 0.30 m past the front bumper (cart body z -0.60..+0.60, x +-0.41). Measured
+        // (BakeMesh, root-local z, 2026-10-14): the body reaches ~0.5 m behind the root (Lab torso ~0.5 / tail tip 0.81, Samoyed 0.46,
+        // Corgi 0.49, Shiba / Dachshund 0.33, Pomeranian 0.19). On a non-Owner's screen (the rider usually is not the dog's Owner)
+        // VRCObjectSync shows the dog late while the cart is drawn from server time (the desk check assumed 0.23 s, not measured):
+        // ~0.3 m further back at 1.3 m/s.
+        // So the root must stay at least 0.60 + 0.5 + 0.3 = 1.4 m ahead of the cart origin (1.71 with the Lab's tail). The old window
+        // (-0.3..+1.0 around the anchor) plus the dawdle (speed x0.6 -> the dog settles ~0.7 m behind its goal) put the root down to
+        // 0.34 m (desk check, issue): inside the body. Now the goals stay at or past CartKeepLine, and a root behind the line is
+        // never slowed (the dawdle and CartMinRatio give way) and catches up at CartKeepGain (corners: the outer side of a turn needs
+        // more than cartSpeed). Lead decision 2026-10-14: the line is 0.8 past the anchor (z 1.7; the sway window still starts at
+        // 0.6, so its lower part is held at the line) and the waiting cart's stand-by spot is on the line too.
+        // Desk check: root >= 1.51 m (straights, 4 m-radius corners, stops / restarts) at 90 / 30 fps, 1-6 dogs.
+        // The goals start at the keep line when the cart starts (2+ dogs: the spacing clamp below); CartBlendTime fades in the sway
+        const float CartKeepLine = 0.8f;       // m past the anchor: the goals never fall behind it, a root behind it is not slowed
+        const float CartKeepGain = 4f;         // 1/s: extra speed per metre a root is behind the keep line (dashSpeed caps it)
         const int CartRelax = 4;               // relaxation rounds of the spacing (desk check: 2 left pairs at 0.3-0.4 m, 4 none under 0.5)
         private Vector3[] _cartGoals, _cartGoalsNext, _cartBases;   // scratch for the spacing (holder's dogs in order), reused
         const float CartNarrowWidth = 0.7f;    // m: slot 0-1 anchors closer than this = the runtime halved them (single file)
-        const float CartBlendTime = 2f;        // s: the wander fades in after the cart starts (no jump from the stand-by spot)
+        const float CartBlendTime = 2f;        // s: the wander fades in after the cart starts (BUG-DOG-014: the keep line holds from the start)
         // "almost stopping": every 15-40 s, for 1.5-2.5 s, speed x0.6 and sway x1.5 at the peak (a sine bump, so no jerk). Never a stop,
         // never a sniff pose (LeashPose reads _cartRiding)
         const float CartHesGapMin = 15f, CartHesGapMax = 40f, CartHesMin = 1.5f, CartHesMax = 2.5f;
@@ -111,11 +127,15 @@ namespace KominkaDogRun
             float d = toAnchor.magnitude;
             if (!moving)
             {
-                // The cart is waiting (start grace, traffic hold, arrived): the old stand-by - walk onto the anchor and stand there.
+                // The cart is waiting (start grace, traffic hold, arrived): the stand-by - walk onto the stand spot and stand there.
                 // StepToward coasts to a stop inside CartArrive. No sniff / LieDown (LeashPose and settling read _cartRiding)
                 _cartBlend = 0f; _cartHesUntil = 0f; _cartHesFactor = 1f; _cartWanderNext = 0f;   // the wander stops; it fades in again on the next start
-                if (d > CartPathFar) LeashGo(anchor, walkSpeed, CartArrive);
-                else CartStep(anchor, CartArrive, walkSpeed);
+                // BUG-DOG-014 (lead decision 2026-10-14, plan A): stand on the keep line, not on the bare anchor (a big dog standing
+                // there had its hindquarters in the front bumper, and every restart started from inside it). _DogAnchor is unchanged
+                Vector3 stand = anchor + fwd * CartKeepLine;   // fwd ~ zero without a heading: the bare anchor, as before
+                float ds = (stand - pos).magnitude;
+                if (ds > CartPathFar) LeashGo(stand, walkSpeed, CartArrive);
+                else CartStep(stand, CartArrive, walkSpeed);
                 return true;
             }
             // Moving cart (2026-10-12 Play fix: the dog used to arrive at the anchor, stop, and start again once it had moved on,
@@ -128,11 +148,23 @@ namespace KominkaDogRun
             if (Time.time >= _cartWanderNext) { _cartWanderOff = CartWander(holderId, order, fwd); _cartWanderNext = Time.time + CartWanderEvery; }
             Vector3 goal = anchor + _cartWanderOff;
             goal.y = pos.y;
+            // BUG-DOG-014 (Codex review): the spacing clamp in CartWander does not cover a single dog, the fade-in after a start
+            // (_cartBlend 0: the goal on the bare anchor) or a turn (the 0.25 s old offset is a world vector). Clamp the goal to the
+            // keep line once more against this decision's anchor and heading (a no-op whenever CartWander's clamp already holds)
+            float goalAhead = Vector3.Dot(goal - anchor, fwd);
+            if (goalAhead < CartKeepLine) goal += fwd * (CartKeepLine - goalAhead);
             toAnchor = goal - pos;
             d = toAnchor.magnitude;
             float dAlong = Vector3.Dot(toAnchor, fwd);
             Vector3 lateral = toAnchor - fwd * dAlong;
             float v = Mathf.Clamp(cartSpeed + CartGain * dAlong, CartMinRatio * cartSpeed, hillsideLeashes.dashSpeed) * _cartHesFactor;
+            // BUG-DOG-014: the keep line (CartKeepLine past the anchor, along the cart). Floor = cartSpeed + CartKeepGain x (how far
+            // the root is behind it): behind the line at least the cart's speed plus a catch-up, whatever the dawdle, the goal or the
+            // slow-down ahead of it say; ahead of it the floor drops below cartSpeed and fades out, so the dawdle still slows the dog
+            // and finds a resting point just ahead of the line (no on/off switch at the line: a switched floor made the speed jump
+            // between decisions, desk check). Arithmetic on this decision's values only
+            float behind = CartKeepLine - Vector3.Dot(pos - anchor, fwd);
+            v = Mathf.Max(v, Mathf.Min(cartSpeed + CartKeepGain * behind, hillsideLeashes.dashSpeed));
             if (d > CartPathFar && dAlong > 0f)
             {
                 // Far behind or off to the side: the NavMesh path to the spot (around obstacles). Return / the teleport above
@@ -226,9 +258,9 @@ namespace KominkaDogRun
                         }
                     }
                     Vector3 g = m + right * px + fwd * pf;
-                    // never more than CartFwdMin behind its own anchor, whatever the push did
+                    // never behind its own keep line (BUG-DOG-014: CartKeepLine past its anchor), whatever the push did
                     float fo = Vector3.Dot(g - _cartBases[k], fwd);
-                    if (fo < CartFwdMin) g += fwd * (CartFwdMin - fo);
+                    if (fo < CartKeepLine) g += fwd * (CartKeepLine - fo);
                     _cartGoalsNext[k] = g;
                 }
                 Vector3[] tmp = _cartGoals; _cartGoals = _cartGoalsNext; _cartGoalsNext = tmp;

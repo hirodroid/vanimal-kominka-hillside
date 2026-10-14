@@ -333,6 +333,7 @@ namespace KominkaHillside.Editor
                 v.Req(dangling == 0, "NetworkIDs: no untyped entries pointing at missing objects (actual " + dangling + ")");
                 if (typed > 0) v.Pend("NetworkIDs: " + typed + " typed entries point at missing objects (not removed automatically; review by hand)");
             }
+            PanelGuideCheck(v, expectedPanels.Concat(expectedCartPanels).ToArray(), language, p.sectionTitleLabel != null ? p.sectionTitleLabel.font : null);   // DES-UI-007 (KH_CartSetupEditor.VerifyPanel.cs)
         }
 
         // ============================================================

@@ -77,15 +77,22 @@ namespace KominkaHillside.Editor
         public const int BodyLayer = 2, ButtonLayer = 0;
         public const VRCStation.Mobility StationMobility = VRCStation.Mobility.Immobilize;
         public const float PanelScale = 0.001f;
-        public static readonly Vector2 BoardSize = new Vector2(760f, 1000f);   // M2: 注意書きの下に写真と 1 行を足して 800 → 1000
+        // DES-UI-007 (2026-10-14): 合流の案内 (HTML B 案) を入れて 760×1000 → 1000×1174。合流の 8 行は 2 列 × 4 段の固定枠 (スクロールなし)。表示名は 2 行 (Codex 後)。
+        // 板の下端は従来どおりパネルの基点の 0.50 m 下に保ち (肘掛けに埋めない)、増えた分は上へ伸ばす (Board の localPosition.y = BoardLift)。
+        public static readonly Vector2 BoardSize = new Vector2(1000f, 1174f);   // M2: 800 → 1000、DES-UI-007: 760×1000 → 1000×1174
+        public const float BoardBottomBelowPivot = 0.5f;   // m。M2 の 1000 の板の下端 (= 0.5 m 下) と同じ
+        public static float BoardLift { get { return BoardSize.y * PanelScale * 0.5f - BoardBottomBelowPivot; } }
         public const string StationPhotoName = "Photo", StationPrName = "PR";
-        public static readonly Vector2 StationPhotoPos = new Vector2(0f, 270f), StationPhotoSize = new Vector2(300f, 145f), StationPrPos = new Vector2(0f, 172f), StationPrSize = new Vector2(700f, 34f);
-        const float RowPitch = 58f, FirstRowY = -10f;
-        // 合流行 700×52: 内側 -338..338 を 表示名 -338..-78 (幅 260) と 行き先・人数 -66..338 (幅 404) に分ける
-        public const string JoinInfoName = "Info";
-        public static readonly Vector2 JoinRowSize = new Vector2(700f, 52f);
-        public static readonly Vector2 JoinNamePos = new Vector2(-208f, 0f), JoinNameSize = new Vector2(260f, 48f);
-        public static readonly Vector2 JoinInfoPos = new Vector2(136f, 0f), JoinInfoSize = new Vector2(404f, 48f);
+        // 下部の右列: 注意書き (上) → 写真 → PR (下)。Verify の「notice, photo, PR の順」は中心の y で見る
+        public static readonly Vector2 StationPhotoPos = new Vector2(320f, -481f), StationPhotoSize = new Vector2(198f, 96f), StationPrPos = new Vector2(320f, -551f), StationPrSize = new Vector2(300f, 36f);
+        // 合流の行 460×56 (2 列 × 4 段、左列の中心 x = -240 / 右列 +240、段の間隔 122、1 段目の上端 = 板の上から 316)。段の中は
+        // 目的地・人数 / 状態 (+0..22)、ボタン (+24..80)、理由か結果 (+82..114)。
+        // ボタンの内側 -218..218 を 表示名 -218..30 (幅 248、右寄せ、18 pt で 2 行。Runtime が目安の幅で改行し、2 行目の末尾は …) と「さんと / 一緒に走る」38..218 (幅 180) に分ける
+        public const float RowPitch = 122f, FirstRowTop = 316f, RowColumnX = 240f, RowButtonOffset = 24f, RowNoteOffset = 82f, RowNoteHeight = 32f, JoinNamePoints = 18f;
+        public const string JoinInfoName = "Info", JoinMetaPrefix = "JoinMeta", JoinStatePrefix = "JoinState", JoinNotePrefix = "JoinNote";
+        public static readonly Vector2 JoinRowSize = new Vector2(460f, 56f);
+        public static readonly Vector2 JoinNamePos = new Vector2(-94f, 0f), JoinNameSize = new Vector2(248f, 52f);
+        public static readonly Vector2 JoinInfoPos = new Vector2(128f, 0f), JoinInfoSize = new Vector2(180f, 52f);
         public const float Smoothness = 0.25f, Metallic = 0f;
         public static readonly string[] CartKeys = {
             "cart.title", "cart.start", "cart.join", "cart.notice", "cart.stop", "cart.accepting", "cart.accepting.on", "cart.accepting.off",
@@ -93,7 +100,16 @@ namespace KominkaHillside.Editor
             "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right",   // M1.1
             "cart.seat.forward", "cart.seat.back",   // M1.1 追加 (座面の前後)
             "cart.result.waiting", "cart.guide", "cart.row.closed", "cart.row.ending", "cart.sign.caption", "cart.station.pr",   // M2
-            "cart.parked" };   // M3
+            "cart.parked",   // M3
+            // DES-UI-007 (2026-10-14): 合流の案内 (HTML B 案)。既存キーの文言は変えない
+            "cart.board.lead", "cart.board.lead2", "cart.board.step1", "cart.board.step1.sub", "cart.board.step2", "cart.board.step2.sub",
+            "cart.board.avail.yes", "cart.board.avail.no", "cart.board.avail.note",
+            "cart.board.join.title", "cart.board.join.count", "cart.board.join.note", "cart.board.join.suffix", "cart.board.join.action",
+            "cart.board.row.dest", "cart.board.row.closedNote", "cart.board.row.endingNote", "cart.board.empty.title", "cart.board.empty.body",
+            "cart.board.start.title", "cart.board.start.note", "cart.board.start.dest", "cart.board.start.destNote", "cart.board.start.button",
+            "cart.board.checking.start", "cart.board.checking.join",
+            "cart.board.result.started", "cart.board.result.joined", "cart.board.result.full", "cart.board.result.closed", "cart.board.result.unavailable",
+            "cart.board.camera", "cart.board.camera.pc", "cart.board.rejoin.title", "cart.board.rejoin.body" };
 
         [Serializable] class BuildReport
         {
@@ -529,7 +545,84 @@ namespace KominkaHillside.Editor
             return model;
         }
 
-        /// <summary>パネル 1 枚 (乗り場: spot = s, cart = -1 / カート上: spot = -1, cart = index)。中身は Board (= content)。カート上は最初は隠す (Parked のとき Runtime が出す)。</summary>
+        /// <summary>DES-UI-007: 板の文字 1 本の置き場 (板の上端からの top と高さ、中心 x、幅、pt、オートサイズの下限 (0 = 固定)、折返し、寄せ、色)。
+        /// parent が空なら Board 直下、"Empty" / "Camera" ならその入れ物 (板と同じ大きさ・位置) の下。key があるものは固定の文言 (guideLabels / guideKeys)。</summary>
+        public sealed class PanelText
+        {
+            public string name, parent = "", key = "";
+            public float x, top, w, h, pt, min;
+            public bool wrap;
+            public TextAlignmentOptions align = TextAlignmentOptions.Left;
+            public Color color = Color.white;
+            public Vector2 Pos { get { return new Vector2(x, BoardSize.y * .5f - top - h * .5f); } }
+            public Vector2 Size { get { return new Vector2(w, h); } }
+        }
+        public const string EmptyName = "Empty", CameraName = "Camera";
+        public static readonly Color TextSub = new Color(.83f, .83f, .78f), TextGold = new Color(.92f, .84f, .66f), TextCream = new Color(1f, .93f, .80f);
+        /// <summary>固定の文言 (言語が変わったときだけ Runtime が書く)。並び = guideLabels / guideKeys。</summary>
+        public static readonly PanelText[] GuideTexts = {
+            new PanelText { name = "Lead",          key = "cart.board.lead",           x = 0f,    top = 66f,   w = 940f, h = 26f, pt = 19f, min = 13f },
+            new PanelText { name = "Lead2",         key = "cart.board.lead2",          x = 0f,    top = 92f,   w = 940f, h = 26f, pt = 19f, min = 13f },
+            new PanelText { name = "Step1",         key = "cart.board.step1",          x = -219f, top = 124f,  w = 418f, h = 26f, pt = 19f, min = 12f },
+            new PanelText { name = "Step1Sub",      key = "cart.board.step1.sub",      x = -219f, top = 150f,  w = 418f, h = 22f, pt = 15f, min = 10f, color = TextSub },
+            new PanelText { name = "Step2",         key = "cart.board.step2",          x = 261f,  top = 124f,  w = 418f, h = 26f, pt = 19f, min = 12f },
+            new PanelText { name = "Step2Sub",      key = "cart.board.step2.sub",      x = 261f,  top = 150f,  w = 418f, h = 22f, pt = 15f, min = 10f, color = TextSub },
+            new PanelText { name = "AvailNote",     key = "cart.board.avail.note",     x = 0f,    top = 222f,  w = 940f, h = 22f, pt = 15f, min = 10f, color = TextSub },
+            new PanelText { name = "JoinTitle",     key = "cart.board.join.title",     x = -220f, top = 258f,  w = 500f, h = 32f, pt = 24f, min = 16f },
+            new PanelText { name = "JoinNote",      key = "cart.board.join.note",      x = 0f,    top = 290f,  w = 940f, h = 22f, pt = 15f, min = 10f, color = TextSub },
+            new PanelText { name = "EmptyTitle",    key = "cart.board.empty.title",    x = 0f,    top = 420f,  w = 860f, h = 30f, pt = 22f, min = 14f, parent = EmptyName, align = TextAlignmentOptions.Center },
+            new PanelText { name = "EmptyBody",     key = "cart.board.empty.body",     x = 0f,    top = 456f,  w = 800f, h = 90f, pt = 17f, min = 12f, parent = EmptyName, align = TextAlignmentOptions.Center, wrap = true, color = TextSub },
+            new PanelText { name = "StartTitle",    key = "cart.board.start.title",    x = -240f, top = 816f,  w = 460f, h = 30f, pt = 24f, min = 16f },
+            new PanelText { name = "StartNote",     key = "cart.board.start.note",     x = -240f, top = 846f,  w = 460f, h = 40f, pt = 15f, min = 10f, wrap = true, color = TextSub },
+            new PanelText { name = "StartDestNote", key = "cart.board.start.destNote", x = -240f, top = 912f,  w = 460f, h = 40f, pt = 14f, min = 10f, wrap = true, color = TextSub },
+            new PanelText { name = "CameraTip",     key = "cart.board.camera",         x = -160f, top = 968f,  w = 620f, h = 22f, pt = 16f, min = 11f, parent = CameraName, color = TextGold },
+            new PanelText { name = "CameraPc",      key = "cart.board.camera.pc",      x = -160f, top = 990f,  w = 620f, h = 22f, pt = 14f, min = 10f, parent = CameraName, color = TextSub },
+            new PanelText { name = "RejoinTitle",   key = "cart.board.rejoin.title",   x = -160f, top = 1018f,  w = 620f, h = 22f, pt = 16f, min = 11f },
+            new PanelText { name = "RejoinBody",    key = "cart.board.rejoin.body",    x = -160f, top = 1040f, w = 620f, h = 60f, pt = 14f, min = 10f, wrap = true, color = TextSub },
+        };
+        /// <summary>状態で変わる文字と、既存の名前の文字 (Title / Notice / Result / PR)。</summary>
+        public static readonly PanelText TitleText  = new PanelText { name = "Title",       x = 0f,    top = 18f,   w = 940f, h = 46f, pt = 32f, min = 0f };
+        public static readonly PanelText AvailText  = new PanelText { name = "Avail",       x = 0f,    top = 192f,  w = 940f, h = 30f, pt = 22f, min = 14f };
+        public static readonly PanelText CountText  = new PanelText { name = "JoinCount",   x = 260f,  top = 262f,  w = 420f, h = 26f, pt = 17f, min = 11f, align = TextAlignmentOptions.Right, color = TextSub };
+        public static readonly PanelText DestText   = new PanelText { name = "StartDest",   x = -240f, top = 888f,  w = 460f, h = 24f, pt = 17f, min = 11f };
+        public static readonly PanelText ResultText = new PanelText { name = "Result",      x = 240f,  top = 894f,  w = 460f, h = 58f, pt = 16f, min = 10f, wrap = true, align = TextAlignmentOptions.Center, color = TextGold };
+        public static readonly PanelText NoticeText = new PanelText { name = "Notice",      x = 320f,  top = 968f,  w = 300f, h = 48f, pt = 14f, min = 10f, wrap = true, color = TextCream };
+        public static readonly PanelText PrText     = new PanelText { name = StationPrName, x = 320f,  top = 1120f, w = 300f, h = 36f, pt = 13f, min = 10f, wrap = true, color = TextCream };
+        /// <summary>行 i の上端 (板の上から) と列の中心 x。i = 0,1 が 1 段目の左・右 (g の順に左→右、上→下)。</summary>
+        public static float RowTop(int i) { return FirstRowTop + (i / 2) * RowPitch; }
+        public static float RowX(int i) { return i % 2 == 0 ? -RowColumnX : RowColumnX; }
+        public static PanelText RowMeta(int i)  { return new PanelText { name = JoinMetaPrefix + i,  x = RowX(i) - 65f,  top = RowTop(i),       w = 330f, h = 22f, pt = 15f, min = 10f, color = TextSub }; }
+        public static PanelText RowState(int i) { return new PanelText { name = JoinStatePrefix + i, x = RowX(i) + 165f, top = RowTop(i),       w = 130f, h = 22f, pt = 15f, min = 10f, align = TextAlignmentOptions.Right, color = TextGold }; }
+        public static PanelText RowNote(int i)  { return new PanelText { name = JoinNotePrefix + i,  x = RowX(i),        top = RowTop(i) + RowNoteOffset, w = 460f, h = RowNoteHeight, pt = 13f, min = 9f, wrap = true, color = TextSub }; }
+        public static Vector2 RowButtonPos(int i) { return new Vector2(RowX(i), BoardSize.y * .5f - (RowTop(i) + RowButtonOffset) - JoinRowSize.y * .5f); }
+        public const float StartButtonTop = 824f;
+        public static readonly Vector2 StartButtonSize = new Vector2(440f, 64f);
+        public static Vector2 StartButtonPos { get { return new Vector2(240f, BoardSize.y * .5f - StartButtonTop - StartButtonSize.y * .5f); } }
+        public static readonly Vector2[] StepNumPos = { new Vector2(-452f, 124f), new Vector2(28f, 124f) };   // (中心 x, 上端) 36×40、30 pt
+        public static readonly float[] RuleTops = { 184f, 250f, 808f, 960f };   // 区切りの細線 (940×2、押せない)
+        public const string RulePrefix = "Rule", StepNumPrefix = "StepNum";
+
+        static TextMeshProUGUI MakePanelText(Transform parent, PanelText spec, TMP_FontAsset font, string text)
+        {
+            var t = MakeText(parent, spec.name, spec.Pos, spec.Size, spec.pt, font, text);
+            t.fontSharedMaterial = font.material;
+            t.alignment = spec.align; t.color = spec.color; t.enableWordWrapping = spec.wrap; t.richText = true;
+            t.overflowMode = TextOverflowModes.Ellipsis;
+            t.enableAutoSizing = spec.min > 0f; t.fontSizeMax = spec.pt; t.fontSizeMin = spec.min > 0f ? spec.min : spec.pt;
+            EditorUtility.SetDirty(t);
+            return t;
+        }
+
+        /// <summary>板と同じ大きさの入れ物 (Graphic なし。中の文字の座標は板と同じ)。</summary>
+        static GameObject PanelGroup(Transform board, string name)
+        {
+            var go = KD_ShopSetupEditor.EnsureUiChild(board, name, Vector2.zero, BoardSize);
+            go.SetActive(true);
+            return go;
+        }
+
+        /// <summary>パネル 1 枚 (乗り場: spot = s, cart = -1 / カート上: spot = -1, cart = index)。中身は Board (= content)。カート上は最初は隠す (Parked のとき Runtime が出す)。
+        /// DES-UI-007: 構成は承認済み HTML B 案 (docs/plans/auto-walk-cart/join-guidance-mock.html)。レイアウトの表は DES-UI-007 の「2026-10-14 Unity 反映」。</summary>
         static KH_CartStationPanel BuildPanel(Transform parent, string name, Vector3 pos, Quaternion rot, int s, int cartIndex, KH_CartManager manager, KD_Language language, TMP_FontAsset font, StringBuilder log, bool visible)
         {
             var go = EnsureChild(parent, name);
@@ -537,12 +630,11 @@ namespace KominkaHillside.Editor
             go.transform.SetPositionAndRotation(pos, rot); go.transform.localScale = Vector3.one;
             var panel = EnsureU<KH_CartStationPanel>(go);
             var backing = Backing(panel, Networking.SyncType.None);
-
-            // Board: KH_TravelNotice (Course/85) と同じ WorldSpace Canvas (scale 0.001、VRCUiShape、BoxCollider trigger、Layer Default)
+            // Board: KH_TravelNotice (Course/85) と同じ WorldSpace Canvas (scale 0.001、VRCUiShape、BoxCollider trigger、Layer Default)。下端を基点の 0.5 m 下に保つため BoardLift だけ上げる
             var boardT = go.transform.Find(BoardName);
             var board = boardT != null ? boardT.gameObject : new GameObject(BoardName, typeof(RectTransform));
             board.transform.SetParent(go.transform, false); board.layer = 0; board.SetActive(true);
-            var brt = (RectTransform)board.transform; brt.sizeDelta = BoardSize; brt.localPosition = Vector3.zero; brt.localRotation = Quaternion.identity; brt.localScale = Vector3.one * PanelScale;
+            var brt = (RectTransform)board.transform; brt.sizeDelta = BoardSize; brt.localPosition = new Vector3(0f, BoardLift, 0f); brt.localRotation = Quaternion.identity; brt.localScale = Vector3.one * PanelScale;
             var canvas = board.GetComponent<Canvas>(); if (canvas == null) canvas = board.AddComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace;
             if (board.GetComponent<GraphicRaycaster>() == null) board.AddComponent<GraphicRaycaster>();
             if (board.GetComponent<VRCUiShape>() == null) board.AddComponent<VRCUiShape>();
@@ -550,23 +642,49 @@ namespace KominkaHillside.Editor
             var bg = board.GetComponent<Image>(); if (bg == null) bg = board.AddComponent<Image>(); bg.color = new Color(.14f, .12f, .11f, .96f); bg.raycastTarget = true;
             KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
 
-            var title = MakeText(board.transform, "Title", new Vector2(0f, 455f), new Vector2(700f, 56f), 32f, font, Ja("cart.title"));
-            var notice = MakeText(board.transform, "Notice", new Vector2(0f, 390f), new Vector2(700f, 70f), 20f, font, Ja(cartIndex >= 0 ? "cart.parked" : "cart.notice"));   // M3: カート上は cart.parked
-            notice.enableWordWrapping = true; notice.enableAutoSizing = true; notice.fontSizeMin = 14f; notice.fontSizeMax = 20f; notice.color = new Color(1f, .93f, .80f);
-            var start = KD_ShopSetupEditor.EnsureButton(board.transform, StartName, new Vector2(0f, 105f), new Vector2(520f, 80f), KD_UiSpriteEditor.ActionNeutral * 1.2f, font, Ja("cart.start"), backing, "_PressStart", log);
+            // ---- 上部: 題・説明・手順。固定の文言は GuideTexts (Empty / Camera の入れ物の中のものを含む) ----
+            var title = MakePanelText(board.transform, TitleText, font, Ja("cart.title"));
+            var emptyGo = PanelGroup(board.transform, EmptyName);
+            var cameraGo = PanelGroup(board.transform, CameraName);
+            var guide = new TextMeshProUGUI[GuideTexts.Length];
+            for (int k = 0; k < GuideTexts.Length; k++)
+            {
+                var spec = GuideTexts[k];
+                var host = spec.parent == EmptyName ? emptyGo.transform : spec.parent == CameraName ? cameraGo.transform : board.transform;
+                guide[k] = MakePanelText(host, spec, font, Ja(spec.key));
+            }
+            for (int k = 0; k < StepNumPos.Length; k++)
+            {
+                var num = MakeText(board.transform, StepNumPrefix + (k + 1), new Vector2(StepNumPos[k].x, BoardSize.y * .5f - StepNumPos[k].y - 20f), new Vector2(36f, 40f), 30f, font, (k + 1).ToString());
+                num.color = TextGold; num.fontSharedMaterial = font.material; EditorUtility.SetDirty(num);
+            }
+            for (int k = 0; k < RuleTops.Length; k++)
+            {
+                var rule = KD_ShopSetupEditor.EnsureUiChild(board.transform, RulePrefix + k, new Vector2(0f, BoardSize.y * .5f - RuleTops[k] - 1f), new Vector2(940f, 2f));
+                var img = rule.GetComponent<Image>(); if (img == null) img = rule.AddComponent<Image>();
+                img.sprite = null; img.color = new Color(1f, 1f, 1f, .16f); img.raycastTarget = false; EditorUtility.SetDirty(img);
+            }
+            // ---- 空きカート・受付の数・自分の目的地 (Runtime が書く。Build は ja の見本) ----
+            var avail = MakePanelText(board.transform, AvailText, font, Ja("cart.board.avail.yes"));
+            var count = MakePanelText(board.transform, CountText, font, "");
+            var dest = MakePanelText(board.transform, DestText, font, Ja("cart.board.start.dest").Replace("{0}", Ja("course.walk.forward")));
+
+            // ---- 新しく出発する (右列: ボタンとその下の結果。人数で動かない) ----
+            var start = KD_ShopSetupEditor.EnsureButton(board.transform, StartName, StartButtonPos, StartButtonSize, KD_UiSpriteEditor.ActionNeutral * 1.2f, font, Ja("cart.board.start.button"), backing, "_PressStart", log);
             var startLabel = start.transform.Find("Label").GetComponent<TextMeshProUGUI>();
             startLabel.fontSize = 26f; startLabel.enableAutoSizing = true; startLabel.fontSizeMin = 14f; startLabel.fontSizeMax = 26f;
             start.SetActive(true);
-            var result = MakeText(board.transform, "Result", new Vector2(0f, 43f), new Vector2(700f, 36f), 20f, font, "");
-            result.enableAutoSizing = true; result.fontSizeMin = 12f; result.fontSizeMax = 20f; result.color = new Color(1f, .82f, .55f);
+            var result = MakePanelText(board.transform, ResultText, font, "");
 
+            // ---- 合流の行 (2 列 × 4 段の固定枠。ボタンの外 (Board 直下) に 目的地・人数 / 状態 / 理由か結果) ----
             var nameFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KH_CourseTravelNameFontEditor.FontPath);
             var rows = new GameObject[MaxGroups]; var rowLabels = new TextMeshProUGUI[MaxGroups]; var rowInfos = new TextMeshProUGUI[MaxGroups];
+            var rowMetas = new TextMeshProUGUI[MaxGroups]; var rowStates = new TextMeshProUGUI[MaxGroups]; var rowNotes = new TextMeshProUGUI[MaxGroups];
             for (int i = 0; i < MaxGroups; i++)
             {
-                // 1 行 = 表示名 (Label、表示名の補助フォント、幅固定 + 省略記号) と 行き先・人数 (Info、共通フォント) の 2 本。
-                // 行き先名はハングル・キリル文字を含むので表示名フォント (KH_DisplayName SDF) に入れない (Codex レビュー 2026-10-11)
-                var row = KD_ShopSetupEditor.EnsureButton(board.transform, JoinPrefix + i, new Vector2(0f, FirstRowY - i * RowPitch), JoinRowSize, KD_UiSpriteEditor.ActionNeutral, font,
+                // ボタン = 表示名 (Label、表示名の補助フォント、幅固定 + 省略記号、右寄せで「さんと」に付ける) と「さんと / 一緒に走る →」(Info、共通フォント) の 2 本。
+                // 行き先名・操作文言はハングル・キリル文字を含むので表示名フォント (KH_DisplayName SDF) に入れない (Codex レビュー 2026-10-11)
+                var row = KD_ShopSetupEditor.EnsureButton(board.transform, JoinPrefix + i, RowButtonPos(i), JoinRowSize, KD_UiSpriteEditor.ActionNeutral, font,
                     "VRChatUser12345", backing, "_PressJoin" + i, log);
                 // 旧構成 (単一ラベル) や想定外の子が残らないよう、Label / Info 以外の子を消す
                 for (int c = row.transform.childCount - 1; c >= 0; c--)
@@ -576,18 +694,29 @@ namespace KominkaHillside.Editor
                 }
                 var label = row.transform.Find("Label").GetComponent<TextMeshProUGUI>();
                 var lrt = label.rectTransform; lrt.anchoredPosition = JoinNamePos; lrt.sizeDelta = JoinNameSize;
-                label.fontSize = 20f; label.alignment = TextAlignmentOptions.Left; label.enableWordWrapping = false; label.overflowMode = TextOverflowModes.Ellipsis; label.enableAutoSizing = false;
+                label.fontSize = JoinNamePoints; label.alignment = TextAlignmentOptions.Right; label.enableWordWrapping = false; label.overflowMode = TextOverflowModes.Ellipsis; label.enableAutoSizing = false;
                 if (nameFont != null) { label.font = nameFont; label.fontSharedMaterial = nameFont.material; }
                 else { label.font = font; label.fontSharedMaterial = font.material; }
                 EditorUtility.SetDirty(label);
-                var info = MakeText(row.transform, JoinInfoName, JoinInfoPos, JoinInfoSize, 20f, font, Ja("course.walk.upper") + " · 2");
-                info.fontSharedMaterial = font.material; info.alignment = TextAlignmentOptions.Left; info.overflowMode = TextOverflowModes.Ellipsis;
-                info.enableAutoSizing = true; info.fontSizeMin = 14f; info.fontSizeMax = 20f;
+                var info = MakeText(row.transform, JoinInfoName, JoinInfoPos, JoinInfoSize, 17f, font, Ja("cart.board.join.suffix") + "\n" + Ja("cart.board.join.action"));
+                info.fontSharedMaterial = font.material; info.alignment = TextAlignmentOptions.Left; info.overflowMode = TextOverflowModes.Ellipsis; info.enableWordWrapping = false;
+                info.enableAutoSizing = true; info.fontSizeMin = 11f; info.fontSizeMax = 17f;
                 EditorUtility.SetDirty(info);
                 row.SetActive(false);
                 rows[i] = row; rowLabels[i] = label; rowInfos[i] = info;
+                rowMetas[i] = MakePanelText(board.transform, RowMeta(i), font, "");
+                rowStates[i] = MakePanelText(board.transform, RowState(i), font, "");
+                rowNotes[i] = MakePanelText(board.transform, RowNote(i), font, "");
             }
             if (s == 0 && cartIndex < 0 && nameFont == null) log.AppendLine("WARN display-name font missing (" + KH_CourseTravelNameFontEditor.FontPath + "); join rows use the shared font");
+
+            // ---- 下部: 撮影カメラ (PC)・別々に出発した後 (左列)、注意書き → 写真 → PR (右列) ----
+            var notice = MakePanelText(board.transform, NoticeText, font, Ja(cartIndex >= 0 ? "cart.parked" : "cart.notice"));   // M3: カート上は cart.parked
+            var photoGo = KD_ShopSetupEditor.EnsureUiChild(board.transform, StationPhotoName, StationPhotoPos, StationPhotoSize);
+            foreach (var g in photoGo.GetComponents<Graphic>()) if (!(g is RawImage)) UnityEngine.Object.DestroyImmediate(g);
+            var photoImg = photoGo.GetComponent<RawImage>(); if (photoImg == null) photoImg = photoGo.AddComponent<RawImage>();
+            photoImg.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(SignOutPath); photoImg.raycastTarget = false; photoImg.color = Color.white; EditorUtility.SetDirty(photoImg);
+            var pr = MakePanelText(board.transform, PrText, font, Ja("cart.station.pr"));
             foreach (var t in new TMP_Text[] { title, notice, startLabel, result }) EditorUtility.SetDirty(t);
 
             var so = new SerializedObject(panel);
@@ -598,21 +727,27 @@ namespace KominkaHillside.Editor
             SetRefIfPresent(so, "content", board, m3Log);
             if ((s == 0 || cartIndex == 0)) foreach (var line in m3Log) log.AppendLine(name + ": " + line);
             SetRef(so, "titleLabel", title); SetRef(so, "noticeLabel", notice); SetRef(so, "startLabel", startLabel); SetRef(so, "resultLabel", result);
-            // M2: 注意書きの下に写真 (背面の掲示と同じ画像) と 1 行 (cart.station.pr)。注意書きが先
-            var photoGo = KD_ShopSetupEditor.EnsureUiChild(board.transform, StationPhotoName, StationPhotoPos, StationPhotoSize);
-            foreach (var g in photoGo.GetComponents<Graphic>()) if (!(g is RawImage)) UnityEngine.Object.DestroyImmediate(g);
-            var photoImg = photoGo.GetComponent<RawImage>(); if (photoImg == null) photoImg = photoGo.AddComponent<RawImage>();
-            photoImg.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(SignOutPath); photoImg.raycastTarget = false; photoImg.color = Color.white; EditorUtility.SetDirty(photoImg);
-            var pr = MakeText(board.transform, StationPrName, StationPrPos, StationPrSize, 20f, font, Ja("cart.station.pr"));
-            pr.enableAutoSizing = true; pr.fontSizeMin = 12f; pr.fontSizeMax = 20f; pr.color = new Color(1f, .93f, .80f); EditorUtility.SetDirty(pr);
             var prLog = new List<string>();
             SetRefIfPresent(so, "prLabel", pr, prLog); SetRefIfPresent(so, "photo", photoImg, prLog);
             if (s == 0 || cartIndex == 0) foreach (var line in prLog) log.AppendLine(line);
             SetRef(so, "startButton", start); SetRefs(so, "joinButtons", rows); SetRefs(so, "joinLabels", rowLabels); SetRefs(so, "joinInfoLabels", rowInfos);
+            // DES-UI-007: 案内の文字・空きカート・受付の数・自分の目的地・0 件の案内・撮影カメラの案内・行ごとの 目的地 / 状態 / 理由か結果
+            SetRefs(so, "guideLabels", guide); SetStrings(so, "guideKeys", GuideTexts.Select(x => x.key).ToArray());
+            SetRef(so, "availLabel", avail); SetRef(so, "joinCountLabel", count); SetRef(so, "startDestLabel", dest);
+            SetRef(so, "emptyState", emptyGo); SetRef(so, "cameraTip", cameraGo);
+            SetRefs(so, "joinMetaLabels", rowMetas); SetRefs(so, "joinStateLabels", rowStates); SetRefs(so, "joinNoteLabels", rowNotes);
             so.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(panel); EditorUtility.SetDirty(panel);
             board.SetActive(visible);
             return panel;
+        }
+
+        static void SetStrings(SerializedObject so, string name, string[] values)
+        {
+            var p = Prop(so, name);
+            if (!p.isArray) throw new InvalidOperationException(so.targetObject.GetType().Name + "." + name + " is not an array");
+            p.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++) p.GetArrayElementAtIndex(i).stringValue = values[i];
         }
 
         // ============================================================

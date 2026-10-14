@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>おさんぽカート｜合流の案内 B案</title>
+<style>
+:root{color-scheme:light;--paper:#eeeae1;--ink:#303b34;--muted:#626a60;--line:#cecfc2;--panel:#242724;--white:#fffaf0;--sub:#d3d4c8;--green:#d3e8ac;--green-ink:#263920;--gold:#ead5a8}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,"Yu Gothic UI",Meiryo,sans-serif}button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default}button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #ba762f;outline-offset:4px}a{color:#3e6441}h1,h2,h3,p{margin:0}.shell{max-width:1320px;padding:30px 32px 60px;margin:auto}.mast{display:flex;justify-content:space-between;align-items:center;gap:24px;border-bottom:1px solid var(--line);padding-bottom:22px}.eyebrow{font-size:11px;letter-spacing:.17em;font-weight:750;color:#6f765f}.mast h1{font-size:24px;font-weight:650;margin:4px 0}.version{font-size:12px;text-align:right;color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding-top:26px}.preview-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:13px;font-size:12px;color:var(--muted)}.preview-heading strong{font-size:14px;color:var(--ink)}.stage{padding:28px 20px;background:linear-gradient(140deg,#bfc3ac,#e0d9c6);display:flex;justify-content:center}.board{width:640px;max-width:100%;background:var(--panel);color:var(--white);padding:28px 30px 23px;border:7px solid #655740;box-shadow:0 10px 22px #373d3320}.board-head{border-bottom:1px solid #ffffff26;padding-bottom:17px}.board-title{display:flex;align-items:center;gap:12px}.cart-icon{width:42px;height:38px;flex-shrink:0;color:var(--gold)}.board h2{font-size:30px;line-height:1.35;letter-spacing:.04em}.board-head>p{font-size:16px;color:var(--sub);margin-top:6px}.steps{display:grid;grid-template-columns:1fr 1.23fr;gap:20px;margin-top:17px}.step{display:flex;gap:9px;align-items:flex-start;font-size:16px;line-height:1.55}.step b{color:var(--gold);font-size:23px;line-height:1.1}.step small{display:block;color:var(--sub);font-size:13px}.join-section{padding-top:18px}.section-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.section-title h3,.start-section h3{font-size:20px}.count{font-size:12px;color:var(--sub)}.section-note{font-size:13px;color:var(--sub);margin:2px 0 9px}.join-list{height:242px;overflow-y:auto;scrollbar-gutter:stable;scrollbar-color:#aab497 #353b35;padding-right:6px}.join-row{padding:11px 0;border-bottom:1px solid #ffffff24}.join-row:first-child{padding-top:0}.row-info{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--sub);margin-bottom:6px}.row-info .state{color:var(--gold);white-space:nowrap}.join-button{width:100%;min-height:52px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-radius:7px;border:1px solid #d4e6b1;background:var(--green);color:var(--green-ink);text-align:left;font-weight:700;font-size:18px;line-height:1.45;overflow-wrap:anywhere}.join-button .arrow{font-size:22px;flex-shrink:0}.join-button:hover:not(:disabled){background:#e7f2ce}.join-button:disabled{background:#363d35;color:#b9c0b5;border-color:#727b69}.unavailable-note{color:var(--sub);font-size:12px;margin-top:5px}.empty{min-height:100%;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:15px 20px;color:var(--sub)}.empty strong{color:var(--white);font-size:18px;margin-bottom:8px}.empty p{font-size:15px}.list-hint{height:22px;font-size:12px;text-align:right;color:var(--sub);padding-top:3px}.start-section{border-top:1px solid #ffffff36;padding-top:14px;margin-top:7px}.start-section>p{font-size:13px;color:var(--sub);margin-top:2px}.destination{font-size:14px;color:var(--sub);margin:9px 0 6px}.start-button{display:block;width:100%;min-height:54px;border:1px solid #d7c6a3;border-radius:7px;color:var(--white);background:#4d483d;font-size:19px;font-weight:700;padding:10px}.start-button:hover:not(:disabled){background:#635b4a}.start-button:disabled{opacity:.55}.status{font-size:14px;line-height:1.5;min-height:58px;padding:11px 0 5px;color:var(--gold)}.board-footer{border-top:1px solid #ffffff26;padding-top:11px}.board-footer p{font-size:12px;color:var(--sub)}.board-footer .rejoin{margin-bottom:8px}.board-footer strong{color:var(--white);font-weight:600}.care{margin-top:8px;font-size:11px!important;color:#b8bdaf!important}.sidebar{align-self:start}.lab-title{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}.controls{margin-top:10px;padding-bottom:20px;border-bottom:1px solid var(--line)}label{display:block;font-size:13px;font-weight:650;margin:13px 0 5px}select{width:100%;padding:10px;border:1px solid #b5bcae;border-radius:5px;background:#fffef9;color:var(--ink);min-height:44px}.lab-button{min-height:43px;width:100%;margin-top:12px;border:1px solid #8f9d85;background:transparent;color:var(--ink);border-radius:5px}.helper{font-size:12px;color:var(--muted);margin-top:10px}.explain{padding:18px 0;border-bottom:1px solid var(--line)}.explain h2{font-size:16px;margin-bottom:8px}.explain p,.explain li{font-size:13px;color:#535d51}.explain ul{padding-left:19px;margin:8px 0}.explain li+li{margin-top:7px}.demo-readout{margin-top:12px;padding:10px 12px;background:#e0e7d5;font-size:13px;min-height:62px}.caption{font-size:12px;color:var(--muted);margin-top:12px}.documents{font-size:12px;margin-top:18px;display:flex;flex-wrap:wrap;gap:12px}.small-label{font-size:11px;color:#777f70}.proposal{margin-top:7px;font-size:12px;color:var(--muted)}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr) 250px;gap:18px}.shell{padding:20px 18px}.stage{padding:20px 10px}.board{padding:22px 20px}.steps{gap:12px}.board h2{font-size:26px}}
+@media(max-width:760px){.layout{display:flex;flex-direction:column}.sidebar{width:100%;order:-1}.controls{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.controls .wide{grid-column:1/-1}.sidebar .explain,.sidebar .documents{display:none}.mast{align-items:flex-start}.version{max-width:120px}.shell{padding:16px 10px 35px}.stage{padding:14px 6px}.board{padding:19px 16px;border-width:5px}.board h2{font-size:25px}.board-head>p{font-size:14px}.steps{grid-template-columns:1fr;gap:9px}.step{font-size:15px}.step small{display:inline;margin-left:6px}.join-list{height:270px}.join-button{font-size:16px}.row-info{font-size:12px}.preview-heading{align-items:flex-start}.section-title h3,.start-section h3{font-size:18px}.mast h1{font-size:20px}}
+.button-copy{display:flex;flex-direction:column;gap:1px;min-width:0}.name-suffix{white-space:nowrap}.action-copy{font-size:14px;white-space:nowrap;font-weight:600}.row-feedback{font-size:14px;line-height:1.5;color:var(--gold);margin-top:8px;overflow-wrap:anywhere}.row-feedback:empty{display:none}
+.availability{padding:13px 0;border-bottom:1px solid #ffffff26;min-height:105px}.availability strong{display:block;font-size:18px;color:var(--green)}.availability[data-empty="true"] strong{color:var(--gold)}.availability p{font-size:12px;color:var(--sub);margin-top:3px}.board-footer .camera-tip{font-size:14px;color:var(--gold);margin-bottom:13px}.camera-tip span{display:block;font-size:12px;color:var(--sub);margin-top:3px}.destination-note{font-size:13px;color:var(--sub);margin-bottom:9px}.row-info>span:first-child{min-width:0}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="mast">
+    <div><p class="eyebrow">KOMINKA HILLSIDE / DES-UI-007</p><h1>みんなで乗る、が伝わる看板。</h1><p class="proposal">B案 · 説明と操作をまとめる / レイアウト検討用HTML</p></div>
+    <p class="version">2026.10.14<br>日本語の検討版<br>Unity未反映</p>
+  </header>
+  <main class="layout">
+    <section aria-label="看板のプレビュー">
+      <div class="preview-heading"><strong>乗り場・残ったカートの共通メニュー</strong><span>ボタンを押して案内を確認</span></div>
+      <div class="stage">
+        <article class="board" aria-labelledby="board-title">
+          <header class="board-head">
+            <div class="board-title">
+              <svg class="cart-icon" viewBox="0 0 48 40" fill="none" aria-hidden="true"><path d="M10 5v20h25V16H16M9 25H5m30 0h6M30 16V6h7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="33" r="4" stroke="currentColor" stroke-width="3"/><circle cx="34" cy="33" r="4" stroke="currentColor" stroke-width="3"/></svg>
+              <h2 id="board-title">おさんぽカート</h2>
+            </div>
+            <p>一人ずつのカートで、一緒におさんぽできます。</p>
+            <p>みんなで乗るときは、出発する人を一人決めてね。</p>
+            <div class="steps">
+              <p class="step"><b>1</b><span>決めた一人が出発<small>下の「新しいグループで出発」</small></span></p>
+              <p class="step"><b>2</b><span>ほかの人は名前を選ぶ<small>名前が出るまで、ここで待ってね</small></span></p>
+            </div>
+          </header>
+          <section class="availability" id="availability" aria-label="カートの空き状況">
+            <strong id="availability-text"></strong>
+            <p id="availability-checked"></p>
+            <p>空き状況は目安です。乗るときに、もう一度確認します。</p>
+          </section>
+          <section class="join-section" aria-labelledby="join-title">
+            <div class="section-title"><h3 id="join-title">一緒に走る</h3><span class="count" id="group-count"></span></div>
+            <p class="section-note">一覧に出るのは各グループの先頭の人です。合流すると、相手の目的地へ進みます。</p>
+            <div class="join-list" id="join-list" tabindex="0" role="region" aria-label="一緒に走る相手の一覧"></div>
+            <p class="list-hint" id="list-hint"></p>
+          </section>
+          <section class="start-section" aria-labelledby="start-title">
+            <h3 id="start-title">新しく出発する</h3>
+            <p>一人で乗る方・最初の一人はこちら。別のグループで出発します。</p>
+            <div class="destination" id="my-destination">自分の目的地：山道から周回（順）</div>
+            <p class="destination-note">犬のお散歩で選んだ目的地と、同じ行き先へ進みます。</p>
+            <button type="button" class="start-button" id="start">新しいグループで出発</button>
+          </section>
+          <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+          <footer class="board-footer">
+            <p class="camera-tip">乗車中は、撮影カメラも見てみてね。<span>PCでは、座席の操作パネルの「撮影モニター」から開けます。</span></p>
+            <p class="rejoin"><strong>別々に出発してしまったら</strong><br>一緒に走る相手を一人決め、その人は乗ったまま。<br>ほかの人は停止して降り、自分が降りたカートのメニューで、その人の名前を選んでね。</p>
+            <p>自動で移動します。VR酔いを感じたら、停止して降りてください。</p>
+            <p class="care">散歩のあとは、お手入れ道具で洗ってあげよう。</p>
+          </footer>
+        </article>
+      </div>
+      <p class="caption">看板の構成・文言・優先順位の提案です。ブラウザーの幅に応じた折返しはHTML用。VR内の寸法・文字サイズ・視距離の合格を示すものではありません。</p>
+    </section>
+    <aside class="sidebar" aria-label="検討用の操作と設計メモ">
+      <p class="lab-title">検討用コントロール · 看板の外</p>
+      <div class="controls">
+        <div><label for="scenario">表示する状態</label><select id="scenario">
+          <option value="open">後続の人：参加先あり</option>
+          <option value="empty">最初の人：参加先なし</option>
+          <option value="mixed">受付停止・到着中</option>
+          <option value="many">多数・長い表示名</option>
+          <option value="full">空いているカートなし</option>
+          <option value="split">別々に出発した後</option>
+        </select></div>
+        <div><label for="outcome">押した後の結果</label><select id="outcome">
+          <option value="ok">成功</option><option value="closed">合流先の受付停止を確認</option><option value="unavailable">合流先を利用できない</option><option value="full">空いているカートなし</option><option value="timeout">応答を確認できない</option>
+        </select></div>
+        <div class="wide"><label for="destination">自分の犬のお散歩の目的地（サンプル）</label><select id="destination"><option>山道から周回（順）</option><option>川辺</option><option>奥の広場</option></select></div>
+        <button type="button" class="lab-button wide" id="reset">この状態を最初から見る</button>
+        <div class="wide demo-readout" id="demo-readout" role="status" aria-live="polite">後続の人として、先に乗った「はな」さんを選んでみてください。</div>
+        <p class="helper wide">人名・人数はサンプルです。押下は模擬動作で、実際の乗車・同期は行いません。成功後はリセットして別の操作を試せます。受付停止・合流先の利用不可は合流ボタンにだけ適用します。</p>
+      </div>
+      <section class="explain"><h2>この配置の狙い</h2><ul><li>参加先を先に見せ、「名前を押す＝一緒に走る」をボタン自体で説明。</li><li>相手がいなくても一覧の場所を残し、次に名前が出ることを予告。</li><li>一覧の高さを固定。人数の変化で出発ボタンを動かさない。</li><li>新規出発は独立した欄へ。お手入れ案内は下部へ。</li></ul></section>
+      <section class="explain"><h2>空き状況の表示</h2><p>空車の案内だけを30秒ごとに更新する案です。初回表示時にも確認します。時刻は前回の確認時刻で、予約や乗車保証ではありません。古い空車表示だけでボタンを止めず、押した時点の条件で判定します。</p><p style="margin-top:8px">このHTMLはサンプルの空き状況を30秒ごとに読み直します。実装では乗り場から回収可能なカート（回収猶予を満たすもの）も含め、残ったカートのパネルはそのカートが使えるかを確認します。合流先の名前・受付状態の更新は遅くしません。</p><p style="margin-top:8px">撮影モニターは現行コードでPC専用です。Quest・スマホ向けには、この案内を出さない想定です。</p></section>
+      <section class="explain"><h2>仕様との境界</h2><p>一人乗り・先に出発した人のグループへ合流・停止後のカートから再参加、という現行の動作を使う案です。自動合流や全員を待つ出発機能は追加しません。</p><p style="margin-top:8px">一覧の固定領域・スクロール、説明文、押下後の案内は提案。実装時は既存の要求結果・グループ世代の照合・受付状態と接続します。先頭が交代すると、一覧の表示名も変わります。</p><p style="margin-top:8px">CartOkは要求受付であり、成功ではありません。同期された割当と保留要求の一致を確認して成功へ進めます。割当確定と着座完了は区別します。700msはHTMLだけの模擬待ち時間です。</p><p style="margin-top:8px">CartClosedの理由は受付停止・参加先の世代変更等を区別します。残ったカートが他人に使われた場合は、別の残ったカートか乗り場へ案内する必要があります。本モックの結果切替は、それらの実判定を行いません。</p></section>
+      <section class="explain"><h2>実装前に決めること</h2><p>看板の実寸、全8行の扱い、長い名前の識別、13言語の文言と枠。暗い面＋明るい文字を継承し、フォントは既存方針に従います。</p><p style="margin-top:8px">初見の複数人が口頭説明なしで同じグループに入れるかを、Unity反映後に実機で確認します。</p></section>
+      <div class="documents"><a href="../../development/issues/DES-UI-007-cart-join-guidance.md">Issue・レビュー記録</a><a href="implementation.md">現行の実装設計</a><a href="usage-flow.html">現行の利用の流れ</a></div>
+    </aside>
+  </main>
+</div>
+<script>
+/* Design prototype only: samples never call Unity or a network service. */
+const $ = id => document.getElementById(id);
+const scenarios = {
+  empty: [],
+  open: [{name:'はな',dest:'山道から周回（順）',count:2,state:'open'}],
+  mixed: [{name:'はな',dest:'山道から周回（順）',count:2,state:'closed'},{name:'こむぎ',dest:'川辺',count:1,state:'ending'},{name:'そら',dest:'山道から周回（逆）',count:1,state:'open'}],
+  many: Array.from({length:8},(_,i)=>({name:i===0?'Kominka_Hillside_Friend_とても長い表示名_01':['こむぎ','そら','まめ','Luna','さくら','Kai','ゆず'][i-1],dest:i%2?'山道から周回（逆）':'山道から周回（順）',count:1,state:'open'})),
+  full: [{name:'はな',dest:'川辺',count:5,state:'open'},{name:'そら',dest:'山道から周回（順）',count:3,state:'open'}],
+  split: [{name:'はな',dest:'山道から周回（順）',count:1,state:'open'},{name:'こむぎ',dest:'山道から周回（順）',count:1,state:'open'}]
+};
+const descriptions = {
+  empty:'最初の人の画面です。一人が出発した後、ほかの人の一覧にその名前が出る想定です。',
+  open:'後続の人として、先に乗った「はな」さんを選んでみてください。',
+  mixed:'名前と選べない理由を残します。受付中の「そら」さんだけに合流できます。',
+  many:'8台に各1人が乗った状態です。名前は省略せず折り返し、一覧をスクロールします。空車がないため乗車は失敗します。',
+  full:'8台とも乗車中。押す前から空車なしと分かる表示です。古い表示だけで操作を止めず、押下時にも空きを確認する想定です。',
+  split:'自分は停止して降りた後の画面です。乗ったままの「はな」さんを選んで合流し直します。'
+};
+let generation=0, busy=false, completed=false, sampleHasCart=true;
+const availabilityRefreshMs=30000;
+let availabilityTimer;
+function refreshAvailability(){
+  const noCart=!sampleHasCart;
+  $('availability').dataset.empty=String(noCart);
+  $('availability-text').textContent=noCart?'空きカート：なし':'空きカート：あり';
+  const time=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  $('availability-checked').textContent=`${time} 確認 · 約30秒ごとに更新`;
+}
+function render(){
+  generation++;busy=false;completed=false;
+  const key=$('scenario').value, groups=scenarios[key];
+  $('status').textContent='';$('demo-readout').textContent=descriptions[key];
+  const noCart=['many','full'].includes(key);
+  sampleHasCart=!noCart;
+  $('outcome').disabled=noCart;
+  if(noCart)$('outcome').value='full';
+  $('my-destination').textContent=`自分の目的地：${$('destination').value}`;
+  refreshAvailability();clearInterval(availabilityTimer);
+  availabilityTimer=setInterval(refreshAvailability,availabilityRefreshMs);
+  $('start').disabled=false;$('join-list').replaceChildren();$('join-list').scrollTop=0;
+  $('group-count').textContent=groups.length?`受付中 ${groups.filter(g=>g.state==='open').length} / 全${groups.length}組`:'';
+  $('list-hint').textContent=groups.length>1?'一覧をスクロールして、ほかの人を見る ↓':'';
+  if(!groups.length){
+    const box=document.createElement('div');box.className='empty';
+    const heading=document.createElement('strong');heading.textContent='一緒に走る相手はまだいません';
+    const p=document.createElement('p');p.textContent='決めた一人は、下の「新しいグループで出発」へ。ほかの人は、その人の名前がここに出るまで待ってね。一人で乗るときも、下から出発できます。';
+    box.append(heading,p);$('join-list').append(box);
+  }
+  for(const group of groups){
+    const row=document.createElement('div');row.className='join-row';
+    const info=document.createElement('div');info.className='row-info';
+    const detail=document.createElement('span');detail.textContent=`目的地：${group.dest} · ${group.count}人`;
+    const state=document.createElement('span');state.className='state';state.textContent={open:'受付中',closed:'受付停止',ending:'到着中'}[group.state];info.append(detail,state);
+    const button=document.createElement('button');button.type='button';button.className='join-button';button.dataset.available=String(group.state==='open');button.disabled=group.state!=='open';
+    const label=document.createElement('span');label.className='button-copy';
+    const name=document.createElement('span');name.textContent=group.name;
+    const suffix=document.createElement('span');suffix.className='name-suffix';suffix.textContent='さんと';name.append(suffix);
+    const action=document.createElement('span');action.className='action-copy';action.textContent='一緒に走る';label.append(name,action);
+    const arrow=document.createElement('span');arrow.className='arrow';arrow.setAttribute('aria-hidden','true');arrow.textContent='→';button.append(label,arrow);
+    button.addEventListener('click',()=>act('join',{...group,row,button}));row.append(info,button);
+    if(group.state!=='open'){
+      const note=document.createElement('p');note.className='unavailable-note';note.textContent=group.state==='closed'?'今は参加できません。一緒に走りたい場合は、先頭の人に受付を開けてもらってください。':'到着中のため参加できません。相手が次に出発するのを待ってください。';row.append(note);
+    }
+    $('join-list').append(row);
+  }
+}
+function lock(on){$('start').disabled=on;document.querySelectorAll('.join-button').forEach(b=>b.disabled=on||b.dataset.available!=='true');}
+function showStatus(text,group){
+  let target=$('status');
+  if(group){
+    target=group.row.querySelector('.row-feedback');
+    if(!target){target=document.createElement('p');target.className='row-feedback';target.setAttribute('role','status');target.setAttribute('aria-live','polite');target.setAttribute('aria-atomic','true');group.row.append(target);}
+  }
+  target.textContent=text;
+  if(group){
+    const list=$('join-list'), area=list.getBoundingClientRect(), result=target.getBoundingClientRect();
+    if(result.bottom>area.bottom)list.scrollTop+=result.bottom-area.bottom;
+  }
+}
+function act(kind,group){
+  if(busy||completed)return;
+  const token=generation;busy=true;lock(true);
+  $('status').textContent='';document.querySelectorAll('.row-feedback').forEach(n=>n.remove());
+  showStatus(kind==='join'?`${group.name}さんへの合流を確認しています…`:'出発を確認しています…',group);
+  const outcome=['many','full'].includes($('scenario').value)?'full':$('outcome').value;
+  setTimeout(()=>{
+    if(token!==generation)return;
+    busy=false;
+    if(outcome==='full'){
+      sampleHasCart=false;
+      showStatus('いまは空いているカートがありません。空くまで待ってから、もう一度お試しください。',group);
+      $('demo-readout').textContent='押した時点では空車なし、という模擬結果です。上部は前回確認時の表示であり、次の30秒更新まで残る想定です。';
+    }
+    else if((outcome==='closed'||outcome==='unavailable')&&kind==='join'){
+      const isClosed=outcome==='closed';
+      group.button.dataset.available='false';
+      group.row.querySelector('.state').textContent=isClosed?'受付停止':'利用不可';
+      const note=document.createElement('p');note.className='unavailable-note';
+      note.textContent=isClosed?'今は参加できません。先頭の人に受付を開けてもらってください。':'この参加先を利用できません。最新の一覧から選び直してください。';group.row.append(note);
+      showStatus(isClosed?'このグループは受付を終了しました。一緒に走りたい相手に、受付を開けてもらってください。':'この参加先を利用できません。一覧を確認して選び直してください。受付停止なら相手に受付を開けてもらってください。',group);
+      const available=document.querySelectorAll('.join-button[data-available="true"]').length;
+      $('group-count').textContent=`受付中 ${available} / 全${scenarios[$('scenario').value].length}組`;
+      $('demo-readout').textContent='選べなくなった相手を一覧にも反映しました。相手の状態が変わった場面は、リセットで再表示できます。';
+    }
+    else if(outcome==='timeout')showStatus('乗車を確認できませんでした。乗れていなければ、もう一度お試しください。',group);
+    else{
+      completed=true;
+      showStatus(kind==='join'?`${group.name}さんのグループに合流しました。自分のカートで一緒に走ります。`:'新しいグループで出発します。ほかの人は、一覧からあなたの名前を選んでね。',group);
+      $('demo-readout').textContent='模擬乗車が完了しました。実際はカートへ着座します。後続の人の画面は「後続の人：参加先あり」で確認できます。';
+    }
+    lock(completed);
+  },700);
+}
+$('start').addEventListener('click',()=>act('start',null));
+$('scenario').addEventListener('change',render);
+$('outcome').addEventListener('change',render);
+$('destination').addEventListener('change',render);
+$('reset').addEventListener('click',render);
+const initialScenario = new URLSearchParams(location.search).get('scenario');
+if(Object.hasOwn(scenarios,initialScenario))$('scenario').value=initialScenario;
+render();
+</script>
+</body>
+</html>

@@ -11,9 +11,11 @@ namespace KominkaHillside
     /// - 手元メニュー (KD_TreatPouch): `menu.transform` を dockMenu の向きにし、`menu.panelRoot` の中心が dockMenu に来るよう root を戻す
     ///   (KD_TreatPouch.PlaceInFront と同じ実測補正: `position += want - panelRoot.position`)。
     /// - 撮影モニター (KH_VideoCamera): `video.monitorRoot.transform` を dockMonitor の姿勢へ (PlaceMonitor と同じく +Z が見る人から板へ)。
+    /// - 合流・呼び出し・撮影許可の通知板 (KH_TravelNotice。BUG-UI-002): `notice.transform` (Board は root の原点) を dockNotice の姿勢へ。
+    ///   乗っている間は通知板自身の置き直し (3 m 規則) を <see cref="KH_TravelNotice._SetDocked"/> で止める (書き手はこちらだけ)。降りたら通知板の規則へ戻す。
     /// - 写真ビューア (KD_PhotoViewer): 自分の PostLateUpdate で毎フレーム頭の前へ置き直す作りなので、ここ (LateUpdate) で動かしても上書きされる。
     ///   頭に付いて動くので乗車中も一緒に動く。ドックへは寄せない (dockPhoto / photo は将来用に配線だけ受ける)。
-    /// - 板が閉じていれば触らない。既存スクリプトは変更しない (transform を外から動かすだけ)。
+    /// - 板が閉じていれば触らない。既存スクリプトは変更しない (transform を外から動かすだけ。通知板だけは上の停止の呼び出しを受ける)。
     /// - ドックの Transform の向き: +Z = 座っている人から板へ向かう方向 (PlaceInFront・PlaceMonitor と同じ約束)。</summary>
     // KD_TreatPouch.LateUpdate (入力から PlaceInFront を呼ぶ) より後に置き場所を確定する (Codex M1.1 レビュー (5)。U# は DefaultExecutionOrder を
     // UdonBehaviour の実行順へ写す — KD_SleepAudio の -100 と同じ仕組み)
@@ -25,13 +27,16 @@ namespace KominkaHillside
         public KH_VideoCamera video;
         public KominkaDogRun.KD_PhotoViewer photo;
         public Transform dockMenu, dockMonitor, dockPhoto;
+        [Tooltip("BUG-UI-002: 合流・呼び出し・撮影許可の通知板 (シーンに 1 枚) と、乗車中に置くドック (カートの右前。Cart/1 が配線する)")]
+        public KH_TravelNotice notice;
+        public Transform dockNotice;
         public KH_CartManager manager;
         public int index;
 
         private bool _riding;
         private bool _started;
-        private GameObject _menuPanel, _monitor;
-        private Transform _menuT, _menuPanelT, _monitorT;
+        private GameObject _menuPanel, _monitor, _noticeBoard;
+        private Transform _menuT, _menuPanelT, _monitorT, _noticeT;
 
         void Start()
         {
@@ -46,6 +51,8 @@ namespace KominkaHillside
             _riding = on;
             if (on) Cache();
             if (on || _started) enabled = on;
+            // 通知板の置き直しを止める / 戻す。ドックが無いカートでは止めない (誰も置かなくなるため)。off はこのカートが止めていたときだけ効く (乗り換え)
+            if (notice != null && dockNotice != null) notice._SetDocked(on, index);
             Debug.Log("[KH_Cart] dock cart=" + index + " riding=" + on);
         }
 
@@ -63,6 +70,9 @@ namespace KominkaHillside
             }
             if (_monitor != null && dockMonitor != null && _monitor.activeSelf)
                 _monitorT.SetPositionAndRotation(dockMonitor.position, dockMonitor.rotation);
+            // 通知板: Board は root の原点 (Course/85) なので root をドックの姿勢へ置けば板の中心がドックに来る。表 (-Z) が座っている人を向く
+            if (_noticeBoard != null && dockNotice != null && _noticeBoard.activeSelf)
+                _noticeT.SetPositionAndRotation(dockNotice.position, dockNotice.rotation);
         }
 
         /// <summary>操作帯の [メニュー]。手元メニューを開く (開いていれば手元へ呼び戻す。次のフレームからドックへ寄る)。</summary>
@@ -96,6 +106,11 @@ namespace KominkaHillside
             {
                 _monitor = video.monitorRoot;
                 if (_monitor != null) _monitorT = _monitor.transform;
+            }
+            if (_noticeBoard == null && notice != null)
+            {
+                _noticeBoard = notice.board;
+                _noticeT = notice.transform;
             }
         }
     }

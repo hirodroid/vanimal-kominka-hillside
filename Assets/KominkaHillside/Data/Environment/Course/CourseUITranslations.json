@@ -563,6 +563,146 @@
         {
           "key": "cart.parked",
           "text": "ここに停めてあります。乗って再開できます"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "一人ずつのカートで、一緒におさんぽできます。"
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "みんなで乗るときは、出発する人を一人決めてね。"
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "決めた一人が出発"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "下の「新しいグループで出発」"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "ほかの人は名前を選ぶ"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "名前が出るまで、ここで待ってね"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "空きカート：あり"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "空きカート：なし"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "約30秒ごとに更新。空き状況は目安です。乗るときに、もう一度確認します。"
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "一緒に走る"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "受付中 {0} / 全{1}組"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "一覧に出るのは各グループの先頭の人です。合流すると、相手の目的地へ進みます。"
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "さんと"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "一緒に走る →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "目的地：{0} · {1}人"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "今は参加できません。一緒に走りたい場合は、先頭の人に受付を開けてもらってください。"
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "到着中のため参加できません。相手が次に出発するのを待ってください。"
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "一緒に走る相手はまだいません"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "決めた一人は、下の「新しいグループで出発」へ。ほかの人は、その人の名前がここに出るまで待ってね。一人で乗るときも、下から出発できます。"
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "新しく出発する"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "一人で乗る方・最初の一人はこちら。別のグループで出発します。"
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "自分の目的地：{0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "犬のお散歩で選んだ目的地と、同じ行き先へ進みます。"
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "新しいグループで出発"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "出発を確認しています…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "合流を確認しています…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "新しいグループで出発します。ほかの人は、一覧からあなたの名前を選んでね。"
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "グループに合流しました。自分のカートで一緒に走ります。"
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "いまは空いているカートがありません。空くまで待ってから、もう一度お試しください。"
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "このグループは受付を終了しました。一緒に走りたい相手に、受付を開けてもらってください。"
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "この参加先を利用できません。一覧を確認して選び直してください。受付停止なら相手に受付を開けてもらってください。"
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "乗車中は、撮影カメラも見てみてね。"
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "PCでは、座席の操作パネルの「撮影モニター」から開けます。"
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "別々に出発してしまったら"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "一緒に走る相手を一人決め、その人は乗ったまま。ほかの人は停止して降り、自分が降りたカートのメニューで、その人の名前を選んでね。"
         }
       ]
     },
@@ -1126,6 +1266,146 @@
         {
           "key": "cart.parked",
           "text": "Parked here. Get on to continue"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Everyone rides their own cart, and you can still walk together."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "To ride as a group, first pick one person to depart."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "The chosen person departs"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Use “Start a new group” below"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Everyone else picks their name"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Wait here until the name appears"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Free carts: yes"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Free carts: none"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Updated about every 30 seconds. This is only a guide; it is checked again when you ride."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Ride together"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Accepting {0} / {1} groups"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "The list shows the leader of each group. If you join, you go to their destination."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "& you"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Ride together →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "To: {0} · {1} riding"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "You can’t join right now. To ride together, ask the leader to open the group."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Arriving, so you can’t join. Wait until they depart again."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "No one to ride with yet"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "The chosen person: use “Start a new group” below. Everyone else: wait until their name appears here. Riding alone? You can also depart below."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Start fresh"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "For riding alone or the first person. You depart as a separate group."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "My destination: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Goes to the same place you chose for the dog walk."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Start a new group"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Checking your departure…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Checking your join…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Starting a new group. Others can pick your name from the list."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Joined the group. You ride together in your own cart."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "No cart is free right now. Wait until one frees up, then try again."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "This group stopped accepting. Ask the person you want to ride with to open it."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "This group isn’t available. Check the list and choose again. If it’s closed, ask them to open it."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "While riding, try the filming camera too."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "On PC, open it with “Camera monitor” on the seat control panel."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "If you departed separately"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Pick one person to ride with; they stay on. Everyone else stops and gets off, then picks that person’s name on the menu of the cart they left."
         }
       ]
     },
@@ -1689,6 +1969,146 @@
         {
           "key": "cart.parked",
           "text": "Тележка стоит здесь. Садитесь, чтобы продолжить"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "У каждого своя тележка, но гулять можно вместе."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Чтобы ехать компанией, выберите одного, кто отправится первым."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "Выбранный отправляется"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Кнопка «Новая группа» ниже"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Остальные выбирают его имя"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Ждите здесь, пока не появится имя"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Свободные тележки: есть"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Свободные тележки: нет"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Обновляется примерно раз в 30 секунд. Это ориентир — при посадке проверим ещё раз."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Ехать вместе"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Приём открыт: {0} / {1} групп"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "В списке — ведущие групп. Присоединившись, вы едете к их цели."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "и вы"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Ехать вместе →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Цель: {0} · {1} чел."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Сейчас присоединиться нельзя. Чтобы ехать вместе, попросите ведущего открыть приём."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Группа прибывает — присоединиться нельзя. Дождитесь следующего отправления."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Пока не с кем ехать"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Выбранный — нажмите «Новая группа» ниже. Остальные — ждите, пока здесь появится его имя. Один? Тоже отправляйтесь снизу."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Новое отправление"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Для одиночной поездки или первого. Вы отправитесь отдельной группой."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Моя цель: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Едет туда же, куда вы выбрали для прогулки с собакой."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Новая группа — в путь"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Проверяем отправление…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Проверяем присоединение…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Отправляемся новой группой. Остальные могут выбрать ваше имя в списке."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Вы в группе. Едете вместе в своей тележке."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Сейчас нет свободных тележек. Подождите и попробуйте снова."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Эта группа закрыла приём. Попросите того, с кем хотите ехать, открыть его."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Эта группа недоступна. Проверьте список и выберите снова. Если приём закрыт, попросите открыть его."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Во время поездки загляните и в камеру съёмки."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "На ПК откройте её кнопкой «Монитор камеры» на панели сиденья."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Если уехали по отдельности"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Выберите одного, с кем ехать, — он остаётся в тележке. Остальные останавливаются, сходят и выбирают его имя в меню своей тележки."
         }
       ]
     },
@@ -2252,6 +2672,146 @@
         {
           "key": "cart.parked",
           "text": "Візок стоїть тут. Сідайте, щоб продовжити"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "У кожного свій візок, але гуляти можна разом."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Щоб їхати компанією, оберіть одного, хто вирушить першим."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "Обраний вирушає"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Кнопка «Нова група» нижче"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Інші обирають його ім’я"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Чекайте тут, доки не з’явиться ім’я"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Вільні візки: є"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Вільні візки: немає"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Оновлюється приблизно раз на 30 секунд. Це орієнтир — під час посадки перевіримо ще раз."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Їхати разом"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Прийом відкрито: {0} / {1} груп"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "У списку — ведучі груп. Приєднавшись, ви їдете до їхньої цілі."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "і ви"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Їхати разом →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Ціль: {0} · {1} осіб"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Зараз приєднатися не можна. Щоб їхати разом, попросіть ведучого відкрити прийом."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Група прибуває — приєднатися не можна. Дочекайтеся наступного відправлення."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Поки нема з ким їхати"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Обраний — натисніть «Нова група» нижче. Інші — чекайте, доки тут з’явиться його ім’я. Самі? Теж вирушайте знизу."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Нове відправлення"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Для поїздки наодинці або першого. Ви вирушите окремою групою."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Моя ціль: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Їде туди ж, куди ви обрали для прогулянки з собакою."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Нова група — в путь"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Перевіряємо відправлення…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Перевіряємо приєднання…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Вирушаємо новою групою. Інші можуть обрати ваше ім’я у списку."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Ви в групі. Їдете разом у своєму візку."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Зараз немає вільних візків. Зачекайте й спробуйте знову."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Ця група закрила прийом. Попросіть того, з ким хочете їхати, відкрити його."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Ця група недоступна. Перевірте список і оберіть знову. Якщо прийом закрито, попросіть відкрити його."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Під час поїздки зазирніть і в камеру зйомки."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "На ПК відкрийте її кнопкою «Монітор камери» на панелі сидіння."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Якщо вирушили окремо"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Оберіть одного, з ким їхати, — він лишається у візку. Інші зупиняються, сходять і обирають його ім’я в меню свого візка."
         }
       ]
     },
@@ -2815,6 +3375,146 @@
         {
           "key": "cart.parked",
           "text": "여기에 세워 두었어요. 타서 다시 출발할 수 있어요"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "한 사람씩 각자 카트를 타고 함께 산책할 수 있어요."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "다 같이 탈 때는 출발할 사람을 한 명 정해 주세요."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "정한 한 명이 출발"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "아래의 「새 그룹으로 출발」"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "다른 사람은 이름을 고르기"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "이름이 나올 때까지 여기서 기다려 주세요"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "빈 카트: 있음"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "빈 카트: 없음"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "약 30초마다 갱신돼요. 참고용이며, 탈 때 한 번 더 확인해요."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "함께 달리기"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "받는 중 {0} / 전체 {1}팀"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "목록에는 각 그룹의 선두만 나와요. 합류하면 상대의 목적지로 가요."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "님과"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "함께 달리기 →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "목적지: {0} · {1}명"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "지금은 참가할 수 없어요. 함께 달리고 싶다면 선두에게 받기를 켜 달라고 해 주세요."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "도착 중이라 참가할 수 없어요. 상대가 다음에 출발할 때까지 기다려 주세요."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "아직 함께 달릴 상대가 없어요"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "정한 한 명은 아래의 「새 그룹으로 출발」로. 다른 사람은 그 사람의 이름이 여기에 나올 때까지 기다려 주세요. 혼자 탈 때도 아래에서 출발할 수 있어요."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "새로 출발하기"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "혼자 타는 분・첫 번째 사람은 여기로. 다른 그룹으로 출발해요."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "내 목적지: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "강아지 산책에서 고른 목적지와 같은 곳으로 가요."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "새 그룹으로 출발"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "출발을 확인하고 있어요…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "합류를 확인하고 있어요…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "새 그룹으로 출발해요. 다른 사람은 목록에서 당신의 이름을 골라 주세요."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "그룹에 합류했어요. 내 카트로 함께 달려요."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "지금은 빈 카트가 없어요. 빌 때까지 기다렸다가 다시 시도해 주세요."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "이 그룹은 받기를 마감했어요. 함께 달리고 싶은 상대에게 받기를 켜 달라고 해 주세요."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "이 참가처는 이용할 수 없어요. 목록을 확인하고 다시 골라 주세요. 받지 않음이면 상대에게 받기를 켜 달라고 해 주세요."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "타고 있는 동안 촬영 카메라도 봐 보세요."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "PC에서는 좌석 조작 패널의 「촬영 모니터」에서 열 수 있어요."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "따로따로 출발해 버렸다면"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "함께 달릴 상대를 한 명 정하고, 그 사람은 탄 채로 있어요. 다른 사람은 정지하고 내린 뒤, 자기가 내린 카트의 메뉴에서 그 사람의 이름을 골라 주세요."
         }
       ]
     },
@@ -3378,6 +4078,146 @@
         {
           "key": "cart.parked",
           "text": "Hier geparkt. Einsteigen und weiterfahren"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Jeder fährt seinen eigenen Wagen, und ihr könnt trotzdem zusammen spazieren."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Wenn ihr zusammen fahrt, bestimmt eine Person, die losfährt."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "Die gewählte Person fährt los"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Unten „Neue Gruppe starten“"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Alle anderen wählen den Namen"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Wartet hier, bis der Name erscheint"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Freie Wagen: ja"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Freie Wagen: keine"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Wird etwa alle 30 Sekunden aktualisiert. Nur ein Richtwert – beim Einsteigen wird erneut geprüft."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Zusammen fahren"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Nimmt an: {0} / {1} Gruppen"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "Die Liste zeigt die Spitze jeder Gruppe. Wer sich anschließt, fährt zu deren Ziel."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "& du"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Zusammen fahren →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Ziel: {0} · {1} Pers."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Gerade nicht möglich. Um mitzufahren, bitte die Spitze, die Gruppe zu öffnen."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Kommt gerade an, daher kein Beitritt. Warte, bis sie wieder losfahren."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Noch niemand zum Mitfahren"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Die gewählte Person: unten „Neue Gruppe starten“. Alle anderen warten, bis ihr Name hier erscheint. Allein? Auch dann unten losfahren."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Neu losfahren"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Für Alleinfahrende oder die erste Person. Du startest als eigene Gruppe."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Mein Ziel: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Fährt zum selben Ziel, das du für den Hundespaziergang gewählt hast."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Neue Gruppe starten"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Abfahrt wird geprüft…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Beitritt wird geprüft…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Neue Gruppe fährt los. Andere können deinen Namen in der Liste wählen."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Der Gruppe beigetreten. Du fährst im eigenen Wagen mit."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Gerade ist kein Wagen frei. Warte kurz und versuche es erneut."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Diese Gruppe nimmt niemanden mehr an. Bitte die Person, mit der du fahren willst, sie zu öffnen."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Diese Gruppe ist nicht verfügbar. Prüfe die Liste und wähle neu. Ist sie geschlossen, bitte um Öffnung."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Schau während der Fahrt auch mal in die Filmkamera."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "Am PC über „Kameramonitor“ im Bedienfeld am Sitz."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Falls ihr getrennt losgefahren seid"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Bestimmt eine Person, mit der ihr fahrt; sie bleibt sitzen. Alle anderen halten an, steigen aus und wählen im Menü ihres Wagens ihren Namen."
         }
       ]
     },
@@ -3941,6 +4781,146 @@
         {
           "key": "cart.parked",
           "text": "停在这里。上车即可继续"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "每人各坐一辆小车，也能一起散步。"
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "大家一起坐时，先决定一个人出发吧。"
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "选好的人先出发"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "下方的“新建小组出发”"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "其他人选择那个人的名字"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "名字出现之前，请在这里等一下"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "空闲小车：有"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "空闲小车：无"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "约每30秒更新。空闲情况仅供参考，上车时会再次确认。"
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "一起走"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "接受中 {0} / 共{1}组"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "列表中显示的是各组的领头人。加入后会前往对方的目的地。"
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "的队伍"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "一起走 →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "目的地：{0} · {1}人"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "现在无法加入。想一起走的话，请让领头人打开接受。"
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "即将到达，无法加入。请等对方下次出发。"
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "还没有可以一起走的人"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "选好的人请点下方的“新建小组出发”。其他人请等那个人的名字出现在这里。一个人坐也可以从下方出发。"
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "重新出发"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "一个人坐或第一个人请点这里。会作为另一个小组出发。"
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "我的目的地：{0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "前往与遛狗时所选目的地相同的地方。"
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "新建小组出发"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "正在确认出发…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "正在确认加入…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "以新小组出发。其他人请在列表中选择你的名字。"
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "已加入小组。用自己的小车一起走。"
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "现在没有空闲的小车。请等有空车后再试一次。"
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "这个小组已停止接受。请让想一起走的人打开接受。"
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "无法加入这个小组。请查看列表重新选择。如果是不接受状态，请让对方打开接受。"
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "乘车时，也看看拍摄相机吧。"
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "PC上可从座位操作面板的“拍摄监视器”打开。"
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "如果已经各自出发了"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "先决定一个要一起走的人，那个人保持乘坐。其他人停车下车，在自己下车的小车菜单里选择那个人的名字。"
         }
       ]
     },
@@ -4504,6 +5484,146 @@
         {
           "key": "cart.parked",
           "text": "Aparcado aquí. Súbete para continuar"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Cada uno va en su propio carrito, y aun así podéis pasear juntos."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Para ir en grupo, decidid primero quién sale."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "La persona elegida sale"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Abajo: «Salir en un grupo nuevo»"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Los demás eligen su nombre"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Esperad aquí hasta que aparezca"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Carritos libres: sí"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Carritos libres: no"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Se actualiza cada 30 segundos aprox. Es orientativo; se vuelve a comprobar al subir."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Ir juntos"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Aceptando {0} / {1} grupos"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "La lista muestra a quien encabeza cada grupo. Al unirte, vas a su destino."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "y tú"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Ir juntos →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Destino: {0} · {1} pers."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Ahora no puedes unirte. Para ir juntos, pide a quien encabeza que abra el grupo."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Está llegando, así que no puedes unirte. Espera a que vuelva a salir."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Aún no hay con quién ir"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Quien sale: usa «Salir en un grupo nuevo» abajo. Los demás: esperad a que aparezca su nombre aquí. ¿Vas solo? También sales desde abajo."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Salir de nuevo"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Para ir solo o para la primera persona. Sales como un grupo aparte."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Mi destino: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Va al mismo destino que elegiste para el paseo del perro."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Salir en un grupo nuevo"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Comprobando la salida…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Comprobando la unión…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Sales en un grupo nuevo. Los demás pueden elegir tu nombre en la lista."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Te uniste al grupo. Vais juntos, cada uno en su carrito."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Ahora no hay carritos libres. Espera a que quede uno y vuelve a intentarlo."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Este grupo dejó de aceptar. Pide a quien quieres acompañar que lo abra."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Este grupo no está disponible. Revisa la lista y elige de nuevo. Si está cerrado, pide que lo abran."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Mientras vas, prueba también la cámara."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "En PC, ábrela con «Monitor de cámara» en el panel del asiento."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Si salisteis por separado"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Elegid a una persona con quien ir; ella sigue montada. Los demás paran, bajan y eligen su nombre en el menú del carrito que dejaron."
         }
       ]
     },
@@ -5067,6 +6187,146 @@
         {
           "key": "cart.parked",
           "text": "Garé ici. Monte pour repartir"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Chacun a son propre chariot, et vous pouvez quand même vous promener ensemble."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Pour rouler en groupe, choisissez d’abord une personne qui part."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "La personne choisie part"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "En bas : « Partir en nouveau groupe »"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Les autres choisissent son nom"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Attendez ici que le nom apparaisse"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Chariots libres : oui"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Chariots libres : aucun"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Mis à jour environ toutes les 30 secondes. C’est indicatif ; on revérifie quand tu montes."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Rouler ensemble"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Ouverts {0} / {1} groupes"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "La liste montre la tête de chaque groupe. En le rejoignant, tu vas vers sa destination."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "et toi"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Rouler ensemble →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Destination : {0} · {1} pers."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Impossible pour l’instant. Pour rouler ensemble, demande à la tête du groupe d’ouvrir."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Le groupe arrive, impossible de le rejoindre. Attends son prochain départ."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Personne avec qui rouler pour l’instant"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "La personne choisie : « Partir en nouveau groupe » en bas. Les autres : attendez que son nom apparaisse ici. Seul ? Pars aussi d’en bas."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Nouveau départ"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Pour rouler seul ou pour la première personne. Tu pars en groupe séparé."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Ma destination : {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Va à la même destination que celle choisie pour la promenade du chien."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Partir en nouveau groupe"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Vérification du départ…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Vérification de l’arrivée dans le groupe…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Départ en nouveau groupe. Les autres peuvent choisir ton nom dans la liste."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Groupe rejoint. Tu roules avec eux dans ton propre chariot."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Aucun chariot libre pour le moment. Attends qu’un se libère, puis réessaie."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Ce groupe n’accepte plus personne. Demande à la personne avec qui tu veux rouler de l’ouvrir."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Ce groupe n’est pas disponible. Vérifie la liste et choisis à nouveau. S’il est fermé, demande qu’on l’ouvre."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Pendant le trajet, essaie aussi la caméra."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "Sur PC, ouvre-la avec « Moniteur caméra » sur le panneau du siège."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Si vous êtes partis séparément"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Choisissez une personne avec qui rouler ; elle reste à bord. Les autres s’arrêtent, descendent et choisissent son nom dans le menu du chariot qu’ils ont quitté."
         }
       ]
     },
@@ -5630,6 +6890,146 @@
         {
           "key": "cart.parked",
           "text": "Estacionado aqui. Suba para continuar"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Cada um anda no seu carrinho, e mesmo assim vocês passeiam juntos."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Para ir em grupo, escolham primeiro uma pessoa para partir."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "A pessoa escolhida parte"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Abaixo: “Partir em um grupo novo”"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Os outros escolhem o nome"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Esperem aqui até o nome aparecer"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Carrinhos livres: sim"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Carrinhos livres: nenhum"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Atualiza a cada 30 segundos, mais ou menos. É só uma referência; confirmamos de novo ao subir."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Ir juntos"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Aceitando {0} / {1} grupos"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "A lista mostra quem lidera cada grupo. Ao entrar, você vai para o destino dele."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "e você"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Ir juntos →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Destino: {0} · {1} pess."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Não dá para entrar agora. Para ir junto, peça a quem lidera para abrir o grupo."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Está chegando, então não dá para entrar. Espere a próxima partida."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Ainda não há com quem ir"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Quem parte: use “Partir em um grupo novo” abaixo. Os outros: esperem o nome aparecer aqui. Sozinho? Também parta por baixo."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Nova partida"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Para ir sozinho ou a primeira pessoa. Você parte em um grupo separado."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Meu destino: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Vai para o mesmo destino escolhido no passeio do cão."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Partir em um grupo novo"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Confirmando a partida…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Confirmando a entrada…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Partindo em um grupo novo. Os outros podem escolher seu nome na lista."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Você entrou no grupo. Vão juntos, cada um no seu carrinho."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Nenhum carrinho livre agora. Espere liberar um e tente de novo."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Este grupo parou de aceitar. Peça a quem você quer acompanhar para abrir."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Este grupo não está disponível. Confira a lista e escolha de novo. Se estiver fechado, peça para abrir."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Durante o passeio, experimente também a câmera."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "No PC, abra pelo “Monitor da câmera” no painel do assento."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Se vocês partiram separados"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Escolham uma pessoa para acompanhar; ela continua no carrinho. Os outros param, descem e escolhem o nome dela no menu do carrinho que deixaram."
         }
       ]
     },
@@ -6193,6 +7593,146 @@
         {
           "key": "cart.parked",
           "text": "Parcheggiato qui. Sali per ripartire"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Ognuno ha il proprio carrello, ma potete passeggiare insieme."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Per andare in gruppo, scegliete prima una persona che parte."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "La persona scelta parte"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Sotto: «Parti con un nuovo gruppo»"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Gli altri scelgono il suo nome"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Aspettate qui finché appare il nome"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Carrelli liberi: sì"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Carrelli liberi: nessuno"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Aggiornato circa ogni 30 secondi. È indicativo: si ricontrolla quando sali."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Andare insieme"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Aperti {0} / {1} gruppi"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "L’elenco mostra chi guida ogni gruppo. Unendoti, vai alla sua destinazione."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "e te"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Andare insieme →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Meta: {0} · {1} pers."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Ora non puoi unirti. Per andare insieme, chiedi a chi guida di aprire il gruppo."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Sta arrivando, non puoi unirti. Aspetta la prossima partenza."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Ancora nessuno con cui andare"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Chi parte: «Parti con un nuovo gruppo» qui sotto. Gli altri: aspettate che il suo nome appaia qui. Da soli? Partite comunque da sotto."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Nuova partenza"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Per andare da soli o per la prima persona. Parti come gruppo separato."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "La mia meta: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Va alla stessa meta scelta per la passeggiata del cane."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Parti con un nuovo gruppo"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Verifica della partenza…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Verifica dell’unione…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Parti con un nuovo gruppo. Gli altri possono scegliere il tuo nome dall’elenco."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Ti sei unito al gruppo. Andate insieme, ognuno nel suo carrello."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Ora non ci sono carrelli liberi. Aspetta che se ne liberi uno e riprova."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Questo gruppo ha chiuso. Chiedi alla persona con cui vuoi andare di riaprirlo."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Questo gruppo non è disponibile. Controlla l’elenco e scegli di nuovo. Se è chiuso, chiedi di aprirlo."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Durante il giro, prova anche la telecamera."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "Su PC, aprila con «Monitor della telecamera» nel pannello del sedile."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Se siete partiti separati"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Scegliete una persona con cui andare: resta a bordo. Gli altri si fermano, scendono e scelgono il suo nome nel menu del carrello lasciato."
         }
       ]
     },
@@ -6756,6 +8296,146 @@
         {
           "key": "cart.parked",
           "text": "Zaparkowany tutaj. Wsiądź, aby jechać dalej"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "Każdy jedzie własnym wózkiem, a mimo to możecie spacerować razem."
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "Aby jechać razem, wybierzcie jedną osobę, która ruszy pierwsza."
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "Wybrana osoba rusza"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "Na dole: „Nowa grupa – ruszaj”"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "Pozostali wybierają jej imię"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "Czekajcie tu, aż pojawi się imię"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "Wolne wózki: są"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "Wolne wózki: brak"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "Odświeżane mniej więcej co 30 sekund. To tylko orientacyjnie – przy wsiadaniu sprawdzimy ponownie."
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "Jedźcie razem"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "Otwarte {0} / {1} grup"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "Lista pokazuje prowadzących grupy. Dołączając, jedziesz do ich celu."
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "i ty"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "Jedźcie razem →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "Cel: {0} · {1} os."
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "Teraz nie można dołączyć. Aby jechać razem, poproś prowadzącego o otwarcie grupy."
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "Grupa dojeżdża, nie można dołączyć. Poczekaj na kolejny wyjazd."
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "Na razie nie ma z kim jechać"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "Wybrana osoba: „Nowa grupa – ruszaj” na dole. Pozostali: czekajcie, aż pojawi się tu jej imię. Sam? Też ruszasz z dołu."
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "Nowy wyjazd"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "Dla jadących samotnie lub pierwszej osoby. Ruszasz jako osobna grupa."
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "Mój cel: {0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "Jedzie do tego samego celu, który wybrano na spacer z psem."
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "Nowa grupa – ruszaj"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "Sprawdzamy wyjazd…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "Sprawdzamy dołączenie…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "Ruszasz jako nowa grupa. Inni mogą wybrać twoje imię z listy."
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "Dołączono do grupy. Jedziesz razem we własnym wózku."
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "Teraz nie ma wolnego wózka. Poczekaj, aż się zwolni, i spróbuj ponownie."
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "Ta grupa przestała przyjmować. Poproś osobę, z którą chcesz jechać, o otwarcie."
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "Ta grupa jest niedostępna. Sprawdź listę i wybierz ponownie. Jeśli jest zamknięta, poproś o otwarcie."
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "Podczas jazdy zajrzyj też do kamery."
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "Na PC otwórz ją przyciskiem „Monitor kamery” na panelu siedzenia."
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "Jeśli ruszyliście osobno"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "Wybierzcie jedną osobę, z którą jedziecie – ona zostaje w wózku. Reszta zatrzymuje się, wysiada i wybiera jej imię w menu swojego wózka."
         }
       ]
     },
@@ -7323,6 +9003,146 @@
         {
           "key": "cart.parked",
           "text": "停在這裡。上車即可繼續"
+        },
+        {
+          "key": "cart.board.lead",
+          "text": "每人各坐一輛小車，也能一起散步。"
+        },
+        {
+          "key": "cart.board.lead2",
+          "text": "大家一起坐時，先決定一個人出發吧。"
+        },
+        {
+          "key": "cart.board.step1",
+          "text": "選好的人先出發"
+        },
+        {
+          "key": "cart.board.step1.sub",
+          "text": "下方的「新建小組出發」"
+        },
+        {
+          "key": "cart.board.step2",
+          "text": "其他人選擇那個人的名字"
+        },
+        {
+          "key": "cart.board.step2.sub",
+          "text": "名字出現之前，請在這裡等一下"
+        },
+        {
+          "key": "cart.board.avail.yes",
+          "text": "空閒小車：有"
+        },
+        {
+          "key": "cart.board.avail.no",
+          "text": "空閒小車：無"
+        },
+        {
+          "key": "cart.board.avail.note",
+          "text": "約每30秒更新。空閒情況僅供參考，上車時會再次確認。"
+        },
+        {
+          "key": "cart.board.join.title",
+          "text": "一起走"
+        },
+        {
+          "key": "cart.board.join.count",
+          "text": "接受中 {0} / 共{1}組"
+        },
+        {
+          "key": "cart.board.join.note",
+          "text": "列表中顯示的是各組的領頭人。加入後會前往對方的目的地。"
+        },
+        {
+          "key": "cart.board.join.suffix",
+          "text": "的隊伍"
+        },
+        {
+          "key": "cart.board.join.action",
+          "text": "一起走 →"
+        },
+        {
+          "key": "cart.board.row.dest",
+          "text": "目的地：{0} · {1}人"
+        },
+        {
+          "key": "cart.board.row.closedNote",
+          "text": "現在無法加入。想一起走的話，請讓領頭人打開接受。"
+        },
+        {
+          "key": "cart.board.row.endingNote",
+          "text": "即將到達，無法加入。請等對方下次出發。"
+        },
+        {
+          "key": "cart.board.empty.title",
+          "text": "還沒有可以一起走的人"
+        },
+        {
+          "key": "cart.board.empty.body",
+          "text": "選好的人請點下方的「新建小組出發」。其他人請等那個人的名字出現在這裡。一個人坐也可以從下方出發。"
+        },
+        {
+          "key": "cart.board.start.title",
+          "text": "重新出發"
+        },
+        {
+          "key": "cart.board.start.note",
+          "text": "一個人坐或第一個人請點這裡。會作為另一個小組出發。"
+        },
+        {
+          "key": "cart.board.start.dest",
+          "text": "我的目的地：{0}"
+        },
+        {
+          "key": "cart.board.start.destNote",
+          "text": "前往與遛狗時所選目的地相同的地方。"
+        },
+        {
+          "key": "cart.board.start.button",
+          "text": "新建小組出發"
+        },
+        {
+          "key": "cart.board.checking.start",
+          "text": "正在確認出發…"
+        },
+        {
+          "key": "cart.board.checking.join",
+          "text": "正在確認加入…"
+        },
+        {
+          "key": "cart.board.result.started",
+          "text": "以新小組出發。其他人請在列表中選擇你的名字。"
+        },
+        {
+          "key": "cart.board.result.joined",
+          "text": "已加入小組。用自己的小車一起走。"
+        },
+        {
+          "key": "cart.board.result.full",
+          "text": "現在沒有空閒的小車。請等有空車後再試一次。"
+        },
+        {
+          "key": "cart.board.result.closed",
+          "text": "這個小組已停止接受。請讓想一起走的人打開接受。"
+        },
+        {
+          "key": "cart.board.result.unavailable",
+          "text": "無法加入這個小組。請查看列表重新選擇。如果是不接受狀態，請讓對方打開接受。"
+        },
+        {
+          "key": "cart.board.camera",
+          "text": "乘車時，也看看拍攝相機吧。"
+        },
+        {
+          "key": "cart.board.camera.pc",
+          "text": "PC上可從座位操作面板的「拍攝監視器」打開。"
+        },
+        {
+          "key": "cart.board.rejoin.title",
+          "text": "如果已經各自出發了"
+        },
+        {
+          "key": "cart.board.rejoin.body",
+          "text": "先決定一個要一起走的人，那個人保持乘坐。其他人停車下車，在自己下車的小車菜單裡選擇那個人的名字。"
         }
       ]
     }

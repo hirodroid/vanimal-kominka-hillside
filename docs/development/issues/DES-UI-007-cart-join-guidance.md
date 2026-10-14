@@ -5,7 +5,7 @@ system: UI
 status: todo
 priority: High
 summary: カートの看板で合流が伝わらず、フレンドがそれぞれ乗車してしまった。みんなで一緒に走るための案内・操作導線を、改善案の相談から見直す
-next: ユーザー指示 (2026-10-14) で Unity 反映を再開してよい状態。承認済みの HTML 案を実装し、実機確認へ (着手はユーザーの「やる」の指示で)
+next: Unity 反映のコードと翻訳は書いた (2026-10-14 Opus D)。統括が compile → Cart/1 → Course/27 → Cart/2 → Course/26 → 保存。その後ユーザーの Play・初見テスト・13 言語の実寸
 updated: 2026-10-14
 ---
 
@@ -145,3 +145,116 @@ M・D・X・Vは修正箇所に限った独立再確認を実施し、各担当�
 
 追加要望を含むHTML案とレビューを了承済みとして、[UI仕様](../../world-ui-spec.md)に参照を記録した。設計検討はここで区切り、Unity反映は保留する。再開のトリガーはユーザーからのUnity反映指示。再開時は上記実装範囲と後続確認を引き継ぐ。
 2026-10-14 ユーザー「カートは実装に入れる状態」— hold を解除 (todo)。実装の着手は別途指示で。
+
+## 2026-10-14 Unity 反映
+
+担当: Opus D (実装)、統括 Fable (Unity 操作・保存・コミット)。承認済み HTML B 案の構成・文言を、乗り場 5 枚と残ったカート 8 枚の共通パネルへ反映した。コードと翻訳表だけを変更しており、Cart/1 は未実行、Unity・Play は **NOT_TESTED**。HTML の待ち時間・模擬判定は持ち込んでいない。
+
+### 実装
+
+- **Runtime `KH_CartStationPanel.cs`**: 上から、題・説明 2 行・手順 1/2 → 空きカート → 「一緒に走る」→「新しく出発する」→ 下部の順に並べた。下部には撮影カメラの案内・別々に出発した後の手順・注意書き・写真・PR を置いた。
+  - 固定の文言 (`guideLabels` / `guideKeys`) は、言語が変わったときだけ書き直す。
+  - 合流の行は、ボタンの中を表示名 (補助フォント、右寄せ) と「さんと / 一緒に走る →」(共通フォント) に分けた。ボタンの外 (Board 直下) に「目的地：… · N人」「状態 (受付中 / 受付停止 / 到着中)」「理由か結果」を置いた。
+  - 行の並びは従来どおり g の順で、状態で並べ替えない。見出しに「受付中 N / 全M組」、0 件のときは行の場所に「一緒に走る相手はまだいません」と説明を出す。
+- **結果の出し先**: 合流は押した行の直下 (`joinNoteLabels`)、出発は出発ボタンの下 (`resultLabel` = `Result`)。押したのが出発か、どのグループ・世代への合流かをパネルが覚え、manager から呼ばれる `_ShowResult(key)` の呼び出し側はそのまま使える。
+  - `CartOk` のときは「確認中」を出す。4 秒で消える保険付きで、manager は返事待ち 2 秒の後に必ず結果を出す。
+  - 成功・満車は新キーで次の行動を添える (`cart.result.*` の文言は変えていない)。
+  - 合流の `CartClosed` は、同じ世代のまま受付を止めていれば「受付を終了しました」、解散・世代変更・到着なら「この参加先を利用できません」に分ける。
+  - 合流先の行が消えた場合、結果は出発ボタンの下へ出す。
+- **空きカート**: `KH_CartManager._CartAvailable(spot, cart)` (読み取りだけ) で判定する。乗り場は `ReclaimCandidate() >= 0`、残ったカートはそのカートがまだ Parked か。同期変数と判定は変えていない。
+  - 書くのは `_Refresh` (状態変化) のたびと、30 秒ごとの遅延イベント `_AvailabilityTick` (仕掛け中フラグで 1 本だけ) のとき。乗り場は常時、残ったカートは表示中だけ仕掛け、隠れたら止めて再表示で再開する。毎フレームの処理は足していない。
+  - 表示は目安で、押したときは従来どおり manager が最新の条件で判定する。
+  - 根拠: `_Refresh` は 1 秒ごとには呼ばれず、変化があったときだけ呼ばれる。`KH_CartManager.cs` の `RefreshPanels(true)` は `ApplyState` と、1 秒ごとの処理の `langChanged || dest != _panelDest || version != _panelVersion` のときだけで、`RefreshPanels(false)` は呼び出し元がない。降車直後の猶予 (各 3 秒) の切れ目は時間で決まり Commit を起こさないので、変化時の書き直しだけでは「なし」が残り続ける (統括の決定 (a)、2026-10-14)。
+- **撮影カメラの案内**: 入れ物 `Camera` (`cameraTip`) を、`KH_CartControls` の撮影モニターと同じ `#if UNITY_ANDROID || UNITY_IOS` で隠す。
+- **Editor**:
+  - `KH_CartSetupEditor.cs` の `BuildPanel` と定数を書き換えた。レイアウトは表 `GuideTexts` / `*Text` / `RowMeta` / `RowState` / `RowNote` に集め、Build と Verify が同じ値を読む。
+  - `CartKeys` に新キー 35 個を追加した。
+  - 新しい partial `KH_CartSetupEditor.VerifyPanel.cs` を作り、`Verify.cs` には `Validate` の末尾に 1 行だけ足した。
+- **スクロールを採らず、固定の 2 列 × 4 段にした**: Cart/2 の既存の検査が `Board.Find("Join"+i)` を直下で探し、行の中身を `Label` + `Info` の 2 つに限っている。さらにボタン以外の raycast 面を NG にするので、ScrollRect の中身にできない。8 行は 2 列 × 4 段の固定枠に収め、出発ボタンの位置は人数で動かない。
+
+### 板のレイアウト (1000×1174、scale 0.001。top = 板の上端から、x = 中心。Codex レビュー後の値)
+
+| 要素 | x | top–bottom | 幅 | pt (下限) | 備考 |
+|---|---|---|---|---|---|
+| Title | 0 | 18–64 | 940 | 32 | cart.title |
+| Lead / Lead2 | 0 | 66–92 / 92–118 | 940 | 19 (13) | 説明 2 行 |
+| StepNum1・Step1・Step1Sub | -452・-219 | 124–164・124–150・150–172 | 36・418 | 30・19・15 | 手順 1 (左) |
+| StepNum2・Step2・Step2Sub | 28・261 | 同上 | 36・418 | 同上 | 手順 2 (右) |
+| Rule0 | 0 | 184 | 940×2 | – | 区切り |
+| Avail / AvailNote | 0 | 192–222 / 222–244 | 940 | 22 (14) / 15 (10) | 空きカート |
+| Rule1 | 0 | 250 | 940×2 | – | |
+| JoinTitle / JoinCount | -220 / 260 | 258–290 / 262–288 | 500 / 420 | 24 / 17 | 「一緒に走る」/ 受付中 N / 全M組 |
+| JoinNote | 0 | 290–312 | 940 | 15 (10) | 先頭の人だけ・相手の目的地へ |
+| 行 i (2 列 × 4 段) | ±240 | 段 k: 316+122k から | 460 | | i = 0,1 が 1 段目の左・右 |
+| JoinMeta i / JoinState i | 列-65 / 列+165 | +0–22 | 330 / 130 | 15 (10) | 目的地・人数 / 状態 |
+| Join i (ボタン) | 列 | +24–80 | 460×56 | 18 / 17 (11) | 表示名 -218..30 (248×52、2 行)・Info 38..218 |
+| JoinNote i | 列 | +82–114 | 460 | 13 (9)、折返し | 理由か結果 |
+| Empty/EmptyTitle・EmptyBody | 0 | 420–450・456–546 | 860・800 | 22・17 (12) | 0 件のときだけ (行の領域 316–796 の中) |
+| Rule2 | 0 | 808 | 940×2 | – | |
+| StartTitle / StartNote | -240 | 816–846 / 846–886 | 460 | 24 / 15 (10) | 左列 |
+| StartDest / StartDestNote | -240 | 888–912 / 912–952 | 460 | 17 (11) / 14 (10) | 自分の目的地 |
+| StartButton | 240 | 824–888 | 440×64 | 26 (14) | 右列。人数で動かない |
+| Result | 240 | 894–952 | 460 | 16 (10)、折返し | 出発の結果 |
+| Rule3 | 0 | 960 | 940×2 | – | |
+| Camera/CameraTip・CameraPc | -160 | 968–990・990–1012 | 620 | 16・14 | PC だけ |
+| RejoinTitle / RejoinBody | -160 | 1018–1040 / 1040–1100 | 620 | 16 / 14 (10) | 別々に出発したら |
+| Notice → Photo → PR | 320 | 968–1016 → 1020–1116 → 1120–1156 | 300 / 198×96 / 300 | 14 / – / 13 | 右列 (Verify の順序を保つ) |
+
+**実寸**: 幅は 0.76 → 1.00 m、高さは 1.00 → 1.174 m。板の下端はパネル基点の 0.50 m 下 (従来と同じ) に保ち、増えた分は上へ伸ばした (`BoardLift` = 0.087 m)。仮形状のアンカー (肘掛け 0.76 m) では、カートの地面から下端 0.81 m・上端 1.98 m (従来 0.81–1.81)。肘掛けの上に 5 cm の余裕がある。実際の値は Cart/2 の info 行 (乗り場の地面から) で確認する。上端が 2.1 m を超えると Cart/2 は PENDING を出す。
+
+### Codex 3 ロールレビューの反映 (2026-10-14)
+
+- **[高] 押下と結果の順序**: Owner 自身では `_Start` / `_Join` の中で Receive → Commit → ApplyState → `_ShowResult` (成功) まで済む。このため、呼び出しの後に出し先を用意すると、成功が古い出し先へ行き、その上を「確認中」で上書きしていた。呼び出しの前に今回の出し先 (グループ・世代) を用意し、呼び出し中に `_ShowResult` を受けたら、戻った後に「確認中」を書かないようにした (`BeginPress` / `EndPress`)。即時の拒否 (CartOk 以外) なら、先に待っている要求の出し先を戻す。
+- **[中]** 出発の即時失敗も `BoardKey` を通し、押下時と要求後で同じ失敗には同じ板の文言を出す。
+- **[中] 長い表示名**: 2 列の固定枠のまま、表示名に 2 行分 (18 pt、248×52) を取った。ラベルは Cart/2 の既存の約束 (折返しなし + 省略記号) を守り、Runtime `_TwoLineName` が字幅の目安 (1 行 12.5 em = 幅の約 9 割。CJK・記号 1 em、M/W/m/w 1.1、ラテン大文字 0.8、他 0.65) で 1 行目を必ず収まる所で改行する。最初の目安 (W 0.85 / 大文字 0.72 / 他 0.6) は Cart/2 の実測で「W だけ」の 1 行目が幅を超えた (NG 2 件) ため引き上げた。W だけなら 1 行目は 11 字で、W が 21.4 px (1.19 em) 以下なら幅 248 の 95 % に収まる。2 行目が長ければ末尾は …。ボタンは 460×56、段の間隔は 122 になり、板は 1174 になった。
+- **[中] Verify**: 行の測定を省く条件が固定の JoinTitle / JoinCount / JoinNote まで除外していたのを直し、番号付きの 1〜7 番だけ省く。
+- **[低] Verify**: client 11 言語の推定は合格と書かない。超過の見込みは PENDING、無ければ「概算で超過なし」の info にし、ja / en の実測の合否と分けた。
+- **[低 仕様差] 前回確認時刻**: HTML の「hh:mm:ss 確認」の表示は Unity では省略し、「約30秒ごとに更新」の説明だけにした。Udon で時計表示を作らない統括の判断で、**ユーザー確認待ち**。
+
+### 新キー (35 個 × 13 言語、`CourseUITranslations.json`、`cart.board.*`)
+
+`cart.guide` (お手入れ道具の案内) が既にあるので、`cart.guide.*` ではなく `cart.board.*` にした。日本語は HTML の文言どおり。他 12 言語は既存の `cart.*` の調子に合わせた **AI 訳で、校正していない**。`{n}` の数は全言語で ja と同じ (node で照合済み)。既存キーの文言は変えていない。状態の語は既存の `cart.accepting.on` / `cart.row.closed` / `cart.row.ending` を使う。
+
+lead, lead2, step1, step1.sub, step2, step2.sub, avail.yes, avail.no, avail.note, join.title, join.count ({0}{1}), join.note, join.suffix, join.action, row.dest ({0}{1}), row.closedNote, row.endingNote, empty.title, empty.body, start.title, start.note, start.dest ({0}), start.destNote, start.button, checking.start, checking.join, result.started, result.joined, result.full, result.closed, result.unavailable, camera, camera.pc, rejoin.title, rejoin.body。
+
+ボタンの中で、表示名は必ず「さんと」より前に来る。他言語は名前の後ろに付く形にした (en「Hana & you / Ride together →」、ko「님과」、zh「的队伍」など)。
+
+### Verify (Cart/2 に追加。`KH_CartSetupEditor.VerifyPanel.cs`)
+
+- 13 枚すべてで次を確かめる。
+  - 板の寸法と持ち上げ。下端が肘掛けアンカー + 0.03 m 以上で、乗り場は地面から 0.3 m 以上。
+  - 文字すべてが表どおりの位置・寸法で、共通フォントを使い、raycast 対象でない。
+  - 行 8 枠の位置。表示名は右寄せ。
+  - 全要素が板の内側にあり、互いに重ならない。0 件の案内は行の領域の中に収まる。
+  - 配線 (proxy と backing): `guideLabels` / `guideKeys` / `availLabel` / `joinCountLabel` / `startDestLabel` / `emptyState` / `cameraTip` / `joinMetaLabels` / `joinStateLabels` / `joinNoteLabels`、`resultLabel` = `Result`。
+- Runtime のソースを読み、次を確かめる。
+  - `cameraTip` を `#if UNITY_ANDROID || UNITY_IOS` で隠している (`KH_CartControls` と同じ分岐)。
+  - 空きの確認が 30 秒の遅延イベント 1 本で、Update がない。
+  - 読み取り API `_CartAvailable` を使っている。
+- 文言: 板が使うキーがすべて `CartKeys` にあり、13 言語で空でなく `{n}` の数が同じ。
+- 枠への収まり (Station_0 と Cart_0/Panel):
+  - ja / en は共通フォントで TMP を実測する (`MeasureLabelFit`)。他 11 言語は VRChat の内蔵フォントで描くので、字幅の目安で推定する (CJK・ハングル 1 em、キリル 0.62、ラテン 0.55 前後、折返しは幅の 90 %)。
+  - 行き先は最長のもの、人数は 8 で埋める。結果と理由はすべての候補文言を測る。最小 pt でも入らなければ NG。
+  - 同じ推定を node で事前に流した結果: 13 言語 × 47 項目で NG 0、オートサイズで収まったもの 5。
+- 既存の検査は壊さないように作った: `Join i` は Board 直下で子は `Label` + `Info` だけ、`Result` / `Title` / `Notice` / `StartButton` も直下にあり、notice > photo > PR の順を保っている。
+
+### 統括が流す順
+
+`bash scripts/unity-compile.sh --udon` → Cart/1 (Build。`ApplyCatalog` で新キーを KD_Language へ。13 枚を作り直す) → Course/27 (新しい字形を焼く。ja / en の既存の文言に無い字は「約」「々」の 2 字だけ (node で照合)) → Cart/2 (期待: CART_OK または OK_PENDING_ASSETS、ng 0) → Course/26 → 保存。
+
+### 後続の確認 (Play・実機。Edit では証明できない)
+
+1. ユーザーの Play / 実機で確かめる。
+   - 乗り場と残ったカートで 1.00×1.174 m の板が読めるか (上端約 1.98 m・下端約 0.81 m、PCVR・Desktop・Quest)。
+   - 2 列 × 4 段の行をレイで押せるか。
+   - 表示名の右寄せと「さんと」のつながりが自然か。
+2. 30 秒更新で次が起きるか。
+   - 空きカートの表示が「あり → 押下で満車 → 次の更新でなし」と動く。
+   - 降車直後 (3 秒の猶予) の「なし」が 30 秒以内に「あり」へ戻る。
+   - 残ったカートのパネルで、隠れて再表示した後も更新が再開する。
+3. 「確認中」→ 成功・失敗の表示位置 (行の直下 / 出発ボタンの下) と、受付停止・利用不可・到着中の理由の行が正しく出るか。
+4. Android / iOS で撮影カメラの案内が出ないか (コンパイル時の分岐なので、Editor では PC 側しか見えない)。
+5. 13 言語の実寸。特に client 言語 (内蔵フォント) の改行・収まりと、AI 訳の自然さ (校正していない)。
+6. 返事待ちの間に別の行や出発を押したとき (CartBusy)、先の要求の結果が元の行に出るか (受け付けられた要求だけ出し先を覚える)。
+7. 行内の理由・結果 (最小 9 pt) と合流の文言 (最小 11 pt) が、Quest / Desktop の実際の距離で読めるか。最長の結果文・受付停止の理由・8 組の表示 (2 列 × 4 段が埋まった状態)・長い表示名の 2 行表示も見る。
+8. 初見の 3 人程度のテスト (上の「後続の確認」3・4)。合流先 0 件・全員未乗車から始め、出発者を指名しない。

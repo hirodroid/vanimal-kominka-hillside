@@ -8,7 +8,8 @@ namespace KominkaHillside
     /// <summary>IMP-WLD-001 段階 3: 合流の通知板 (設計書 §A.4 の T 側・§A.5)。ローカルだけ (同期なし)。シーンに 1 枚。
     ///
     /// 受付箱 (自分の KH_TravelMailbox) が申し込みを受けると <see cref="_Show"/> を呼ぶ。板は目の前 1.1 m・視線の 15° 下に据え、
-    /// 本人が 3 m 以上歩いたら置き直す (歩いていても通り過ぎない)。中身は「(名前) さんが近くに来たいそうです」+ 相手の場所
+    /// 本人が 3 m 以上歩いたら置き直す (歩いていても通り過ぎない)。BUG-UI-002: おさんぽカートの乗車中は KH_CartDock が板をカートの右前のドックへ
+    /// 毎フレーム運ぶので、その間 (<see cref="_SetDocked"/>) はここで置かない (出す・隠す・中身の更新は従来どおりここ)。中身は「(名前) さんが近くに来たいそうです」+ 相手の場所
     /// (最寄りの地点の名前) + 残り秒数、[いいよ] [いまはだめ] [しばらく受けない (10分)] [この人からはこの滞在中は受けない]。
     /// 20 秒の時間切れ・申し込みの取り消し・相手の退出では受付箱が <see cref="_Hide"/> を呼ぶ。手元メニューの「申し込み 1 件」から
     /// <see cref="_Reshow"/> でもう一度出せる。
@@ -53,6 +54,9 @@ namespace KominkaHillside
         private float _chimedAt = -1000f;
         private int _shownGen = -1, _shownKind = -1;   // 描いた世代と種類 (押下と一緒に受付箱へ渡す)
         private float _afterUntil;   // 撮影の [いいよ] の後の 4 秒の表示 (保留は消えているので、保留とは別の状態。§13.6)
+        // BUG-UI-002: 乗車中はカートのドック (KH_CartDock.dockNotice) が毎フレーム置くので、ここは Place() しない (書き手を 1 つにする)。
+        // 値 = ドックしているカートの番号 (-1 = ドックなし)。乗り換えで ApplyState が「新しいカートの on → 古いカートの off」の順に呼んでも外れないよう、番号で持つ
+        private int _dockCart = -1;
 
         void Start()
         {
@@ -67,7 +71,7 @@ namespace KominkaHillside
             _afterUntil = 0f; _shownKind = -1;   // いいよの後の表示の途中なら、ボタンの組を出し直す
             // 音は 1 回。続けて届いても 5 秒は鳴らし直さない (W3 レビュー 15)
             if (chime != null && Time.time - _chimedAt > 5f) { _chimedAt = Time.time; chime.Play(); }
-            Place();
+            PlaceOrOpen();
             Refresh();
         }
 
@@ -90,7 +94,7 @@ namespace KominkaHillside
             if (placeLabel != null) placeLabel.text = TJa(KeyFilmGrantedNote, WordFilmGrantedNote);
             if (countLabel != null) countLabel.text = "";
             if (reasonLabel != null) reasonLabel.text = "";
-            Place();
+            PlaceOrOpen();
         }
 
         public void _FilmYes() { if (_box != null) _box._AnswerFilmYesGen(_shownGen); }
@@ -101,11 +105,20 @@ namespace KominkaHillside
         {
             if (_box == null || _box._IncomingFrom() < 0) return;
             _showing = true;
-            Place();
+            PlaceOrOpen();
             Refresh();
         }
 
         public bool _Showing() { return _showing; }
+
+        /// <summary>BUG-UI-002: カートのドック (KH_CartDock._SetRiding) から。on = このカートに乗った (以後ドックが板を置く)、
+        /// off = 降りた (そのカートがドックしていたときだけ外す)。外した後は従来の 3 m 規則へ戻る (板はその場に残り、
+        /// 最後に Place() した地点から 3 m 以上離れていれば次の Update で目の前へ置き直す)。ローカル専用。冪等。</summary>
+        public void _SetDocked(bool on, int cart)
+        {
+            if (on) _dockCart = cart;
+            else if (_dockCart == cart) _dockCart = -1;
+        }
 
         public void _Yes() { if (_box != null) _box._AnswerYesGen(_shownGen); }
         public void _No() { if (_box != null) _box._AnswerNoGen(_shownGen); }
@@ -120,7 +133,7 @@ namespace KominkaHillside
             bool after = Time.time < _afterUntil;
             if (!after && (_box == null || _box._IncomingFrom() < 0)) { _Hide(); return; }
             VRCPlayerApi lp = Networking.LocalPlayer;
-            if (Utilities.IsValid(lp))
+            if (_dockCart < 0 && Utilities.IsValid(lp))   // 乗車中はドックが置く (BUG-UI-002)
             {
                 Vector3 d = lp.GetPosition() - _placedFrom; d.y = 0f;
                 if (d.magnitude > replaceMeters) Place();
@@ -129,6 +142,13 @@ namespace KominkaHillside
             if (Time.time < _nextRefresh) return;
             _nextRefresh = Time.time + 0.25f;
             Refresh();
+        }
+
+        /// <summary>出す: ドック中は板を出すだけ (位置は KH_CartDock の LateUpdate が同じフレームで決める)、それ以外は目の前へ置く。</summary>
+        private void PlaceOrOpen()
+        {
+            if (_dockCart < 0) { Place(); return; }
+            if (board != null && !board.activeSelf) board.SetActive(true);
         }
 
         private void Place()
