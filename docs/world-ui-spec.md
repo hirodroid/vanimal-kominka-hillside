@@ -433,7 +433,7 @@ Unity反映はユーザーの指定で後日に保留し、再開指示を受け
 
 [IMP-UI-008](development/issues/IMP-UI-008-credits-shop-and-item-boards.md)。作り・置き方・素材の記録の正本は[制作票](plans/2026-10-14-wall-posters-and-item-guide.md)。
 
-- **塀のポスター** `KH_WallPosters`（Guide/20・21）: 古民家の塀の外面、門のポータル（西）と反対の東側。torinosuke（犬モデルの作者）の紹介 0.354 × 0.50 m + URL のコピー欄、VAnimal のグループポスター 0.635 × 0.898 m を並べる（古民家と同じ寸法）。読むだけの RawImage と木の板。URL 欄だけ押せる Canvas、グループは Interact（`KH_GroupPoster`、ローカル、`Store.OpenGroupPage`）。
+- **塀のポスター** `KH_WallPosters`（Guide/20・21）: 古民家の塀の外面、門のポータル（西）と反対の東側。torinosuke（犬モデルの作者）の紹介 + URL のコピー欄（0.60 × 0.044 m）と、VAnimal のグループポスターを並べる。画像はどちらも 0.635 × 0.898 m（2026-10-14 ユーザー「大きさをポスターに合わせて」。古民家の torinosuke は 0.354 × 0.50）。位置はユーザーが動かした所を守る（Guide/20 は探し直さない）。読むだけの RawImage と木の板。URL 欄だけ押せる Canvas、グループは Interact（`KH_GroupPoster`、ローカル、`Store.OpenGroupPage`）。
 - **アイテム案内の看板** `KH_ItemGuideBoard`（Guide/22・23）: 地図の看板の、周回の道を挟んだ向かい。案内板と同じ屋根つきの立て看板に、札 8 枚（さんぽ・おやつ・かざり・呼ぶ・おもちゃ・ばにまるトレーナー・写真と撮影カメラは押すと手元メニューがその面で目の前に開く。洗い場・おさんぽカートは押せない）。押せる札は暗い板 + 角丸、押せない札は和紙の平らな面。入力は透明な別 Canvas（GraphicRaycaster + VRCUiShape + trigger BoxCollider）で、札は `KD_TreatPouch._OpenFromBoard*` を呼ぶ（古民家の IMP-PRG-014 と同じ約束: 自分で開けた印は立てない、ようこそ中は先にようこそ、位置指定中は何もしない）。
 - **クレジット**: 設定の頁の行を古民家の並び（犬モデル → 舞台モデル モサンゴ屋 → 裏山だけの LMArt）に揃えた。古民家は物理の掲示板で見せ、裏山は頁だけ（板を置くかはユーザー判断）。
 - 文言は 15 キー × 13 言語（ja 自作、他 AI 訳・校正なし）。位置・読みやすさ・押した後の動き・グループページが開くかは Play で確認する（NOT_TESTED）。

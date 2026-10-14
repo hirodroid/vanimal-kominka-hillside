@@ -17,10 +17,12 @@
 ### 2-1. 塀のポスター `KH_WallPosters` (Guide/20 Build・Guide/21 Verify)
 
 - 置き場: 古民家の塀 `KH_World/KH_Places/KH_FarKominka/KH_KominkaWall/外壁` (MeshCollider) の外面。門 `KH_GateBlock` の枠で見て、案内板 Kominka のポータル (`PortalAnchor`、門の西) と**反対の東側**。
-- 探し方 (初回だけ): 門の中心から塀に沿って東へ 0〜12 m を 0.1 m 刻み。スポーン側 3 m から塀へレイを撃って面を見つけ、ポスター 2 枚の範囲 (幅 1.35 m・高さ約 1.0 m) を 0.1 m の格子のレイで「塀が後ろにあり、±3 cm で平ら」と確かめる。画像の中心は読む場所の地面から 1.35 m (塀が低ければ 1.20 m まで下げる)。
+- 探し方 (初回だけ): 門の中心から塀に沿って東へ 0〜12 m を 0.1 m 刻み。スポーン側 3 m から塀へレイを撃って面を見つけ、ポスター 2 枚の範囲 (幅 1.59 m・高さ約 1.01 m) を 0.1 m の格子のレイで「塀が後ろにあり、±3 cm で平ら」と確かめる。画像の中心は読む場所の地面から 1.35 m (塀が低ければ 1.20 m まで下げる)。
 - 規則 (固い = 置けない): 塀が覆う / ポータルの側でない / ポスターの体積と読む場所 (前 0.3〜1.5 m) に固い Collider が無い / ほかの看板がポスターの前 0.3 m に立っていない。規則 (やわらかい = WARN、ユーザー判断): 読む場所に看板の足元・ほかの看板の読む場所が重ならない、スポーンから 1.5 m 以上、Kominka のポータルの空間に掛からない、読む人からポスターへの視線を看板が遮らない。
-- 2 区間: 写真ボード `KH_PhotoBoard` (門の東 約 4.8 m、塀から 約 1.4 m 前) の手前と奥。全規則を満たす最初の点を区間ごとにログへ出し、手前を優先。オフラインの見積もり (門の開口の半幅 2.25 m、写真ボードの足元 東 3.4〜6.2 m) では、手前は幅 0.9 m しか空かずポスター (1.35 m) が入らないか写真ボードの足元に読む場所が掛かるので、**奥 (門から東へ 約 7 m) が選ばれる見込み**。塀がそこで平らに続くかは Guide/20 の物理で決まる。
-- 作り: 古民家と同じ寸法の画像を、案内板と同じ木の板 (KH_RiverWood、Collider なし、Batching Static) に、読むだけの World Space Canvas の RawImage で掛ける。torinosuke を門寄り、グループをその隣 (間 0.20 m)。URL 欄は古民家と同じ `KD_MenuFinishEditor.CopyField` (専用の小さな Canvas に GraphicRaycaster + VRCUiShape + trigger BoxCollider)。グループは Interact の trigger + `KH_GroupPoster` (U#、`BehaviourSyncMode.None`、`Store.OpenGroupPage`)。Interact の文言は `guide.wall.group.interact` (13 言語)。
+- 2 区間: 写真ボード `KH_PhotoBoard` (門の東 約 4.8 m、塀から 約 1.4 m 前) の手前と奥。全規則を満たす最初の点を区間ごとにログへ出し、手前を優先。オフラインの見積もり (門の開口の半幅 2.25 m、写真ボードの足元 東 3.4〜6.2 m) では、手前は幅 0.9 m しか空かずポスター (1.59 m) が入らないか写真ボードの足元に読む場所が掛かるので、**奥 (門から東へ 約 7 m) が選ばれる見込み**。塀がそこで平らに続くかは Guide/20 の物理で決まる。
+- 大きさ (2026-10-14 ユーザー「大きさをポスターに合わせて」): torinosuke の画像もグループと同じ 0.635 × 0.898 m (縦横比 1241:1754 のまま拡大。古民家は 0.354 × 0.50)。URL 欄は 1 px = 0.8 mm のまま 750 × 55 px = 0.60 × 0.044 m、28pt (古民家 0.40 × 0.035、22pt)。枠は両方 0.695 m 幅、根のローカル x は torinosuke ±0.447 / グループ ∓0.448 (間 0.20 m)。画像の中心 1.35 m なら上端 1.83 m、torinosuke の枠の下端 0.82 m。
+- 位置は人のもの (2026-10-14 ユーザー決定「配置場所ちょっと移動した」、ユーザーが (51.14, 1.51, 38.99) yaw 158.9 へ移動): 一度できたら Guide/20 は探し直さず、x / z / yaw を守って高さだけ据え直す。そこで破る規則は固いものも WARN (Guide/21 も FAIL にしない)。探し直すには KH_WallPosters を消す。
+- 作り: 画像を、案内板と同じ木の板 (KH_RiverWood、Collider なし、Batching Static) に、読むだけの World Space Canvas の RawImage で掛ける。torinosuke を門寄り、グループをその隣 (間 0.20 m)。URL 欄は古民家と同じ `KD_MenuFinishEditor.CopyField` (専用の小さな Canvas に GraphicRaycaster + VRCUiShape + trigger BoxCollider)。グループは Interact の trigger + `KH_GroupPoster` (U#、`BehaviourSyncMode.None`、`Store.OpenGroupPage`)。Interact の文言は `guide.wall.group.interact` (13 言語)。
 - 古民家との違い: 購入プレハブ (透明な枠) の代わりに木の板。lilToon ではなく UI の unlit なので、古民家が Android / iOS で直した白飛び (BUG-ENV-003・ポスターボードの透明材質) の差し替えは要らない。
 
 ### 2-2. アイテム案内の看板 `KH_ItemGuideBoard` (Guide/22 Build・Guide/23 Verify)
@@ -39,7 +41,7 @@
 | 写真と撮影カメラ | `guide.items.photo.name` | `_OpenFromBoardPhoto` → ヘッダの [写真] と同じ面 (撮影カメラは PC のみ) |
 | 洗い場・おさんぽカート | `guide.items.wash.name` | 押せない (手元メニューに入口が無い。道具は洗い場の板、カートは乗り場) |
 
-- 入れないもの: ライブ (裏山は準備中、DES-LIV-001)、古民家の CE 商品 (今回の公開版から外した、IMP-PRG-002)、札の写真と区分の札・公式サイトの URL 欄 (ユーザー判断の候補。写真は撮影が要る)。
+- 入れないもの: ライブ (裏山は準備中、DES-LIV-001)、古民家の CE 商品 (今回の公開版から外した、IMP-PRG-002)、札の写真と区分の札・公式サイトの URL 欄 (決定: 2026-10-14 ユーザー「不要」)。
 - 探し方 (初回だけ): 地図の看板 `KH_GuideBoards/Map` (39.20, 46.60) にいちばん近い周回の道の線分 (`KH_WalkRoute.nodePositions`、2026-10-14 時点の節点 1 → 2) へ地図を映した反対側。地図の真向かいから道に沿って 0 → ±3 m、道の中心線から 2.4〜4.0 m、表を道へ向け yaw ±0 / ±10°。判定は DogBookStand と同じ (Guide/2 の Placement + 看板どうし + 写真ボード + 犬紹介の看板 + 塀のポスター)。オフラインの見積もり: 真向かい (45.4, 51.8) は犬の待機の輪 (KH_Roam_Dachs (44, 48)) から 3.3 m + 足元が取れず落ち、全規則を満たすのは道に沿って 1〜2.5 m 先の (43.2〜44.5, 52.1〜53.0) 付近、**地図から 約 7〜8 m**。「地図の隣」とは言いにくい距離なので、Guide/23 は地図から 8 m を超えると WARN を出す。
 - 手元メニューの口 (`KD_TreatPouch.Board.cs`、裏山改変): 古民家の `_OpenFromBoard*` / `OpenFromBoard` を裏山のタブと写真の面へ移した。閉じていれば目の前に開き、開いていれば呼び戻してその面にする。自分で開けた印は立てない。寝床の位置指定中は何もしない。ようこそ表示中に押したら、ようこそを目の前へ呼び戻し、[メニューを見る] (`_WelcomeMenu`) で札の面へ続ける。ローカルのみ、同期・保存なし。
 
@@ -51,7 +53,7 @@
 
 | 素材 | 成果物 | 参照元・出所 | 利用条件の根拠と確認日 | 使い方 | 採用前確認 |
 |---|---|---|---|---|---|
-| torinosuke のポスター画像 | `Assets/KominkaHillside/Textures/Posters/KH_TorinosukePoster.png` (1241 × 1754、SHA-256 `7bf7f78a…46b5`) | 古民家 `Assets/_Originals/torinosuke/torinosukenoie.png` と同一 (バイト一致)。犬モデルの作者「TORINOSUKEの家」からユーザーがもらったポスター (古民家 IMP-ENV-023、2026-10-04 ユーザー配置) | **掲示条件は未確認** (古民家 IMP-ENV-023「作者からの掲示条件は不明のまま」)。2026-10-14 時点で裏山でも調べられる記録は無い。古民家では Git 管理外 (`Assets/_Originals/` は .gitignore) | 加工なし (縦横比どおり 0.354 × 0.50 m で表示)。取り込みは PC 2048 / Android・iOS 1024、圧縮 | 未。**コミットしてよいか (古民家は Git に入れていない) と掲示条件はユーザー判断**。判断まで「確認済み」と扱わない |
+| torinosuke のポスター画像 | `Assets/KominkaHillside/Textures/Posters/KH_TorinosukePoster.png` (1241 × 1754、SHA-256 `7bf7f78a…46b5`) | 古民家 `Assets/_Originals/torinosuke/torinosukenoie.png` と同一 (バイト一致)。犬モデルの作者「TORINOSUKEの家」からユーザーがもらったポスター (古民家 IMP-ENV-023、2026-10-04 ユーザー配置) | **ユーザー確認済み (作者の掲示 OK、2026-10-14 ユーザー回答)**。古民家 IMP-ENV-023 の時点 (2026-10-09) では未確認と記録されていた。古民家では Git 管理外 (`Assets/_Originals/` は .gitignore) | 加工なし (縦横比どおり。2026-10-14 ユーザー「大きさをポスターに合わせて」で 0.635 × 0.898 m)。取り込みは PC 2048 / Android・iOS 1024、圧縮 | 作者の掲示 OK をユーザーが確認 (2026-10-14)。裏山のリポジトリへ入れるかは統括のコミット判断 |
 | VAnimal のグループポスター | `Assets/KominkaHillside/Textures/Posters/KH_VAnimalGroupPoster.png` (1587 × 2245、SHA-256 `e6033a61…317b`) | 古民家 `Assets/KominkaDogRun/Data/Panfret/poster.png` と同一 (バイト一致)。古民家の ui-map §10「画像と meta は自作コンテンツとして管理する」(2026-09-07 ユーザー配置) | 自作 (VAnimal の告知物)。生成履歴は古民家の記録に無い (同じフォルダの explain-onboarding.png は imagegen 編集と記録あり。poster.png の作り方は不明)。アバターの人物と犬 (TORINOSUKE のモデル) が写る | 加工なし (0.635 × 0.898 m)。取り込みは同上 | 古民家で公開済みの同じ画像。生成履歴が不明な点は記録に残す |
 | グループページを開く処理 | `Assets/KominkaHillside/Scripts/KH_GroupPoster.cs` | 古民家は MimyLab GroupPageOpener (配布物、Git 管理外)。**コードは写していない** (SDK の `Store.OpenGroupPage` を 1 回呼ぶだけの自作) | SDK の公開 API (VRC.Udon.VRCWrapperModules に `__OpenGroupPage__SystemString__SystemVoid`、2026-10-14 確認) | — | 実クライアントでページが開くかは Play |
 | 板の枠 | 既存の `KH_RiverWood.mat` | 案内板と同じ | 既存の記録のまま | — | — |

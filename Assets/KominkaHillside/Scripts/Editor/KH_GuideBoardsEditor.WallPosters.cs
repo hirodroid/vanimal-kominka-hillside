@@ -31,7 +31,8 @@ namespace KominkaHillside.Editor
     /// ポスター 2 枚の範囲が平らな塀に掛かるか (格子 0.1 m のレイ、±3 cm)、その前に固い Collider が無いか、ほかの看板・写真ボードの足元と読む場所に
     /// 掛からないかで判定する (下の WallRules)。写真ボード KH_PhotoBoard の手前 (門と写真ボードの間) と奥 (写真ボードの先) の 2 区間で
     /// 全規則を満たす最初の点をそれぞれログに出し、手前を優先して置く。どちらも無ければ、固い規則だけ満たす最初の点に置いて破った規則を WARN で出す
-    /// (Guide/21 は FAIL にしない。ユーザーが Play で見て決める)。以後 x / z / yaw は人のもの (固い規則を満たす間は動かさない)。
+    /// (Guide/21 は FAIL にしない。ユーザーが Play で見て決める)。以後 x / z / yaw は人のもの (2026-10-14 ユーザー決定: 人が動かした位置は規則を破っても動かさず、Guide/20・21 は WARN。探し直すには KH_WallPosters を消す)。
+    /// 2026-10-14 ユーザー「大きさをポスターに合わせて」: torinosuke の画像もグループと同じ 0.635 × 0.898 m、URL 欄 0.60 × 0.044 m (28pt)。
     ///
     /// Guide/20 Build Shop Intro And Poster: 保存済みの本番シーンを Temp/kh-guide-boards/before-wall-posters-*.unity へ写してから作る。
     /// Guide/21 Verify Shop Intro And Poster: シーンを変えない。Temp/kh-guide-boards/wall-posters-verify.json、ログ 1 行 WALL_POSTERS_OK / WALL_POSTERS_FAIL。</summary>
@@ -51,10 +52,12 @@ namespace KominkaHillside.Editor
         const int TorinosukeSrcW = 1241, TorinosukeSrcH = 1754, GroupSrcW = 1587, GroupSrcH = 2245;
 
         // ---------------------------------------------------------------- 寸法 (m)。画像は古民家と同じ大きさ
-        static readonly Vector2 TorImageM = new Vector2(0.50f * TorinosukeSrcW / TorinosukeSrcH, 0.50f);   // 0.354 x 0.50 (古民家 KD_AuthorPosterEditor)
+        // 2026-10-14 ユーザー「大きさをポスターに合わせて」: torinosuke もグループポスターと同じ高さ 0.898 m (縦横比はそのまま、0.635 x 0.898)。
+        // 古民家は 0.354 x 0.50 (KD_AuthorPosterEditor)。URL 欄も画像の幅に合わせて広げた (1 px = 0.8 mm は古民家のまま)
+        static readonly Vector2 TorImageM = new Vector2(0.898f * TorinosukeSrcW / TorinosukeSrcH, 0.898f);
         static readonly Vector2 GroupImageM = new Vector2(GroupSrcW * 0.0004f, GroupSrcH * 0.0004f);        // 0.635 x 0.898 (古民家: sprite 100 px/unit x 0.08 x 0.5)
-        static readonly Vector2 UrlPx = new Vector2(500f, 44f);                                             // 古民家と同じ: 1 px = 0.8 mm -> 0.40 x 0.035 m, 22pt
-        const float UrlScale = 0.0008f, UrlPoints = 22f, UrlGap = 0.0075f;
+        static readonly Vector2 UrlPx = new Vector2(750f, 55f);                                             // 1 px = 0.8 mm (古民家と同じ) -> 0.60 x 0.044 m, 28pt (古民家 500 x 44 / 22pt を画像に合わせて拡大)
+        const float UrlScale = 0.0008f, UrlPoints = 28f, UrlGap = 0.0075f;
         const float FrameBorder = 0.03f, PlankDepth = 0.02f, PlankGap = 0.01f, PosterGap = 0.20f;
         /// <summary>画像の中心の高さ (読む場所の地面から)。塀が低ければ順に下げる。立って読む目の高さ 1.5〜1.6、座った VR 約 1.15 の間。</summary>
         static readonly float[] PosterCentreHeights = { 1.35f, 1.30f, 1.25f, 1.20f };
@@ -329,21 +332,29 @@ namespace KominkaHillside.Editor
         /// <summary>+1 / -1: which side of the root (its +X / -X) faces the gate; torinosuke hangs on that side.</summary>
         static float TorSide(WallCtx w, Vector3 pos, Quaternion rot) { return Vector3.Dot(Flat3(w.gate.position - pos), rot * Vector3.right) >= 0f ? 1f : -1f; }
 
+        /// <summary>The image centre height at a human-owned pose: the highest of PosterCentreHeights the wall covers; if none does (the user hung
+        /// them partly off the wall), the height built last time when it is one of them, else the first. Guide/20 and Guide/21 use the same answer.</summary>
+        static float KeptHeight(WallCtx w, Vector3 pos, Quaternion rot, Transform root)
+        {
+            foreach (float h in PosterCentreHeights) if (WallCovers(w, pos, rot, h, out _)) return h;
+            var cv = root != null ? root.Find(TorinosukePosterName + "/" + CanvasName) : null;
+            if (cv != null) foreach (float h in PosterCentreHeights) if (Mathf.Abs(cv.localPosition.y - h) < 0.005f) return h;
+            return PosterCentreHeights[0];
+        }
+
         static WallPose FindWallPose(WallCtx w, List<string> log)
         {
             if (w.existing != null)
             {
+                // 2026-10-14 ユーザー決定 (IMP-UI-008「配置場所ちょっと移動した」): once it exists, x / z / yaw are the user's, as KH_DogBookStand.
+                // Never searched again: rules broken there (hard ones too) are WARN lines. Delete KH_WallPosters to search again.
                 var e = w.existing; float yaw = e.eulerAngles.y; var rot = Quaternion.Euler(0f, yaw, 0f);
-                var kp = e.position; kp.y = Ground(kp + rot * Vector3.back * PosterGroundOut);   // x / z / yaw are the user's; the height is re-seated
-                foreach (float h in PosterCentreHeights)
-                {
-                    if (!WallCovers(w, kp, rot, h, out _)) continue;
-                    var kept = new WallPose { pos = kp, yaw = yaw, h = h, along = Along(w, kp), outward = Outward(w, kp), region = "kept" };
-                    WallRules(w, kept, e, null);
-                    if (kept.hard.Count == 0) { log.Add("kept " + WallPostersName + " at " + kept.At() + (kept.soft.Count > 0 ? " WARN breaks " + string.Join("; ", kept.soft) : " (all rules pass)")); return kept; }
-                    log.Add("current pose breaks " + string.Join("; ", kept.hard) + ": searching again");
-                    break;
-                }
+                var kp = e.position; kp.y = Ground(kp + rot * Vector3.back * PosterGroundOut);   // only the height is re-seated
+                var kept = new WallPose { pos = kp, yaw = yaw, h = KeptHeight(w, kp, rot, e), along = Along(w, kp), outward = Outward(w, kp), region = "kept" };
+                WallRules(w, kept, e, null);
+                var broken = kept.hard.Concat(kept.soft).ToList();
+                log.Add("kept " + WallPostersName + " at " + kept.At() + " (human-owned)" + (broken.Count > 0 ? " WARN breaks " + string.Join("; ", broken) : " (all rules pass)"));
+                return kept;
             }
             float sign = -PortalAlongSign(w);
             float photoAlong = w.photo != null ? Along(w, w.photo.position) * sign : float.PositiveInfinity;
@@ -656,28 +667,26 @@ namespace KominkaHillside.Editor
             req(root.gameObject.activeInHierarchy && root.gameObject.layer == 0, WallPostersName + " active, Default layer");
 
             // ---- place: the wall, the side, the rules ----
-            float h = -1f;
-            foreach (float hh in PosterCentreHeights) if (WallCovers(w, root.position, root.rotation, hh, out _)) { h = hh; break; }
-            req(h > 0f, "the wall covers the posters at the current pose (a flat face behind both frames)");
+            // 2026-10-14 ユーザー決定: the pose is human-owned (the user moved it). Every placement rule broken there, the hard ones too, is a WARN.
+            float h = KeptHeight(w, root.position, root.rotation, root);
+            bool covered = WallCovers(w, root.position, root.rotation, h, out string coverWhy);
+            warn(covered, "the wall covers the posters at the current pose (" + coverWhy + ")");
             float side = TorSide(w, root.position, root.rotation);
             var tor = root.Find(TorinosukePosterName); var grp = root.Find(GroupPosterName);
             req(tor != null && grp != null, WallPostersName + "/" + TorinosukePosterName + " and /" + GroupPosterName);
             if (tor == null || grp == null) { v.status = "WALL_POSTERS_FAIL"; return v; }
-            if (h > 0f)
-            {
-                var canvasT = tor.Find(CanvasName);
-                float builtH = canvasT != null ? canvasT.localPosition.y : -1f;
-                req(Mathf.Abs(builtH - h) < 0.005f, "image centre " + builtH.ToString("F2") + " m = the highest the wall allows (" + h.ToString("F2") + "; moved by hand? run Guide/20)");
-                var pose = new WallPose { pos = root.position, yaw = root.eulerAngles.y, h = h, along = Along(w, root.position), outward = Outward(w, root.position) };
-                var notes = new List<string>();
-                WallRules(w, pose, root, notes);
-                v.notes.AddRange(notes);
-                req(pose.hard.Count == 0, "posters hang on the wall opposite the portal, nothing solid in their volume or where the readers stand, no board right in front" + (pose.hard.Count > 0 ? ": " + string.Join("; ", pose.hard) : ""));
-                foreach (var s in pose.soft) warn(false, "placement rule (USER DECISION: ユーザー依頼の壁面との兼ね合い): " + s);
-                if (pose.soft.Count == 0) req(true, "posters pass the readers' / spawn / portal / sight-line rules");
-                req(Mathf.Abs(Vector3.Distance(root.position, new Vector3(root.position.x, Ground(root.position + root.rotation * Vector3.back * PosterGroundOut), root.position.z))) <= 0.02f,
-                    "root height = the ground " + PosterGroundOut + " m in front of the wall (moved by hand? run Guide/20)");
-            }
+            var canvasT = tor.Find(CanvasName);
+            float builtH = canvasT != null ? canvasT.localPosition.y : -1f;
+            req(Mathf.Abs(builtH - h) < 0.005f, "image centre " + builtH.ToString("F2") + " m = the height Guide/20 picks here (" + h.ToString("F2") + "; run Guide/20 after moving the posters)");
+            var pose = new WallPose { pos = root.position, yaw = root.eulerAngles.y, h = h, along = Along(w, root.position), outward = Outward(w, root.position) };
+            var notes = new List<string>();
+            WallRules(w, pose, root, notes);
+            v.notes.AddRange(notes);
+            foreach (var s in pose.hard) warn(false, "placement rule at the user's pose (was a hard rule in the search; kept as the user placed it): " + s);
+            foreach (var s in pose.soft) warn(false, "placement rule (USER DECISION: ユーザー依頼の壁面との兼ね合い): " + s);
+            if (pose.hard.Count == 0 && pose.soft.Count == 0) req(true, "posters pass every placement rule at the user's pose");
+            req(Mathf.Abs(root.position.y - Ground(root.position + root.rotation * Vector3.back * PosterGroundOut)) <= 0.02f,
+                "root height = the ground " + PosterGroundOut + " m in front of the wall (moved by hand? run Guide/20, which keeps x / z / yaw)");
             req(Mathf.Abs(tor.localPosition.x - TorX(side)) < 0.001f && Mathf.Abs(grp.localPosition.x - GroupX(side)) < 0.001f, "torinosuke toward the gate, the group poster beside it (" + PosterGap + " m apart)");
 
             // ---- frames, images, textures ----
@@ -705,7 +714,7 @@ namespace KominkaHillside.Editor
             var field = urlCanvas != null ? urlCanvas.GetComponentsInChildren<TMP_InputField>(true).FirstOrDefault(f => f.name == "Url") : null;
             req(field != null && field.text == TorinosukeUrl && field.readOnly && field.onFocusSelectAll && !field.richText && field.lineType == TMP_InputField.LineType.SingleLine
                 && field.textViewport != null && field.textViewport.GetComponent<RectMask2D>() != null, "URL field " + TorinosukeUrl + ": read-only, selects all, single line, masked");
-            req(urlCanvas != null && Mathf.Abs(urlCanvas.localScale.x - UrlScale) < 1e-6f && ((RectTransform)urlCanvas).sizeDelta == UrlPx, "URL field 0.40 x 0.035 m (1 px = 0.8 mm, as Kominka)");
+            req(urlCanvas != null && Mathf.Abs(urlCanvas.localScale.x - UrlScale) < 1e-6f && ((RectTransform)urlCanvas).sizeDelta == UrlPx, "URL field " + (UrlW).ToString("F2") + " x " + (UrlH).ToString("F3") + " m (1 px = 0.8 mm, as Kominka)");
             string urlMissing = KD_ShopSetupEditor.MissingGlyphs(TorinosukeUrl);
             req(urlMissing.Length == 0, "URL glyphs in the shared font" + (urlMissing.Length > 0 ? " (missing " + urlMissing + ")" : ""));
 
