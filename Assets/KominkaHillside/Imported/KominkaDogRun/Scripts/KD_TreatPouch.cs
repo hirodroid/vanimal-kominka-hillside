@@ -1068,6 +1068,7 @@ namespace KominkaDogRun
             _introMenuRevision++;
             if (!_welcome) return;
             LeaveWelcome();
+            if (BoardContinuePending()) return;   // 裏山改変 IMP-UI-008: ようこそ中に看板の札を押していたら、その面へ (KD_TreatPouch.Board.cs)
             ApplyTab();
             Redraw();
         }
@@ -1288,11 +1289,15 @@ namespace KominkaDogRun
         }
 
 
-        private void SetTab(int tab)
+        private void SetTab(int tab) { SetTabCore(tab, false); }
+
+        /// <summary>force = 同じタブでも確認の解除・あそぶのホーム復帰まで初期化する (裏山改変 IMP-UI-008: 看板の札から開くとき。
+        /// 古民家の OpenFromBoard → ShowTab と同じ。KD_TreatPouch.Board.cs)。</summary>
+        private void SetTabCore(int tab, bool force)
         {
             _introMenuRevision++;
             if (tab < 0 || tab >= TabCount) return;
-            if (_tab == tab && !_settingsOpen && !_welcome) return;
+            if (!force && _tab == tab && !_settingsOpen && !_welcome) return;
             LeaveWelcome();   // ようこそからタブを押した = 案内を離れた
             _settingsOpen = false;
             _tab = tab;

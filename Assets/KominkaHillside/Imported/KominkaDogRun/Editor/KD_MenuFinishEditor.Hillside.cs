@@ -60,12 +60,14 @@ namespace KominkaDogRun.Editor
         /// key が null の行は翻訳しない固定表記 (ライセンス表示)。**url が空の行は「URL 未確認」**: 入力欄を作らず、Verify 22 が CREDIT_URL_PENDING として数える
         /// (購入元の URL は人が購入履歴で確かめてここへ書く。推測で埋めない)。</summary>
         /// 2026-10-03 ユーザー決定: Allsky と polyperfect は Unity Asset Store 購入でクレジット不要 (行を外した)。LMArt の URL はユーザー記入。
-        /// 2026-10-14 ユーザー指定 (IMP-UI-008)「フォントは不要」: フォント (Noto Serif JP) と OFL の表示の 2 行を外した (フォント資産は残る。残りの構成を古民家に揃える作業は同 Issue)。
+        /// 2026-10-14 IMP-UI-008: 並びを古民家 (犬モデル → 舞台モデル モサンゴ屋 → フォント → OFL → 動画プレイヤー) に揃えた。古民家と共通のモサンゴ屋を犬モデルの次、
+        /// 裏山だけの LMArt をその後 (フォント・OFL・VizVid の行は裏山に無い)。行の束縛 (UILocalizationBindings.json の CreditRows/Name0..2) も同じ順。
+        /// 2026-10-14 ユーザー指定 (IMP-UI-008)「フォントは不要」:フォント (Noto Serif JP) と OFL の表示の 2 行を外した (フォント資産は残る。残りの構成を古民家に揃える作業は同 Issue)。
         public static readonly (string key, string ja, string url)[] HillsideCredits =
         {
             ("credit.dogs", "犬モデル\nTORINOSUKEの家", "https://torinosuke05.booth.pm/items"),
-            ("credit.environment.kit", "舞台モデル\nLMArt Stylized Environment Kit", "https://littlemarsh.booth.pm/items/5987530"),
             ("credit.environment", "舞台モデル\nモサンゴ屋「庭付き古民家」", "https://booth.pm/ja/items/6364620"),
+            ("credit.environment.kit", "舞台モデル\nLMArt Stylized Environment Kit", "https://littlemarsh.booth.pm/items/5987530"),
         };
         const float CreditLeadHeight = 44f, CreditRowPitch = 84f, CreditTopPad = 12f;
         static readonly Vector2 CreditNameSize = new Vector2(420f, 76f);

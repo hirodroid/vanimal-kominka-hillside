@@ -361,19 +361,27 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Guide Boards] BUILT and GUIDE_BOARDS_OK (" + v.lines.Count + " checks, " + v.warned + " WARN) -> " + BuildReportPath + " / " + VerifyReportPath);
         }
 
-        [MenuItem(Menu + "0 - Create Portal Board Program")]
+        /// <summary>Every guide-board U# program that is missing (KH_PortalBoard: IMP-WLD-006; KH_GroupPoster: IMP-UI-008 Guide/20). Existing ones are left
+        /// as they are; one compile for all. The item guide board (Guide/22) has no Udon of its own (its cards call KD_TreatPouch).</summary>
+        [MenuItem(Menu + "0 - Create Board Programs")]
         public static void CreateProgram()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("[KH Guide Boards] Edit mode only (not compiling)");
-            if (AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(PortalProgramPath + ".asset") != null) { Debug.Log("[KH Guide Boards] " + PortalProgramPath + ".asset exists; nothing changed"); return; }
-            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(PortalProgramPath + ".cs");
-            if (script == null) throw new InvalidOperationException(PortalProgramPath + ".cs not imported yet; refresh first");
-            var asset = ScriptableObject.CreateInstance<UdonSharp.UdonSharpProgramAsset>();
-            asset.sourceCsScript = script;
-            AssetDatabase.CreateAsset(asset, PortalProgramPath + ".asset");
+            var created = new List<string>();
+            foreach (var path in new[] { PortalProgramPath, GroupPosterProgramPath })
+            {
+                if (AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(path + ".asset") != null) { Debug.Log("[KH Guide Boards] " + path + ".asset exists; left as is"); continue; }
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path + ".cs");
+                if (script == null) throw new InvalidOperationException(path + ".cs not imported yet; refresh first" + (created.Count > 0 ? " (created before the stop: " + string.Join(", ", created) + ")" : ""));
+                var asset = ScriptableObject.CreateInstance<UdonSharp.UdonSharpProgramAsset>();
+                asset.sourceCsScript = script;
+                AssetDatabase.CreateAsset(asset, path + ".asset");
+                created.Add(path + ".asset");
+            }
+            if (created.Count == 0) { Debug.Log("[KH Guide Boards] every board program exists; nothing changed"); return; }
             AssetDatabase.SaveAssets();
             UdonSharp.UdonSharpProgramAsset.CompileAllCsPrograms(true);
-            Debug.Log("[KH Guide Boards] created " + PortalProgramPath + ".asset. Compile U# (scripts/unity-compile.sh --udon), then Guide/1.");
+            Debug.Log("[KH Guide Boards] created " + string.Join(", ", created) + ". Compile U# (scripts/unity-compile.sh --udon), then Guide/1 / Guide/20.");
         }
 
         static void SceneManagerMove(GameObject go, UnityEngine.SceneManagement.Scene scene)

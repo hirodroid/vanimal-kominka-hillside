@@ -428,3 +428,12 @@ Network IDの保全：unknown
 Unity反映はユーザーの指定で後日に保留し、再開指示を受けて着手する。実寸・スクロール操作・多言語・実機の確認は未実施。現行動作は[カート実装設計](plans/auto-walk-cart/implementation.md)を参照する。
 
 2026-10-14 Unity 反映 (コードと翻訳。Cart/1・Play は未実施): 板 1000×1174 (下端は従来の高さのまま上へ伸ばす)。表示名は 2 行。HTML の「前回確認時刻」の表示は省略し「約30秒ごとに更新」の説明だけ (ユーザー確認待ち)。合流の 8 行は**スクロールせず 2 列 × 4 段の固定枠**とした (既存の Cart/2 の構造検査と両立させるため)。空きカートは状態変化時と 30 秒ごとに書く。撮影カメラの案内は Android / iOS で隠す。文言は `cart.board.*` 35 キー × 13 言語 (ja は HTML のまま、他は AI 訳・未校正)。レイアウト表と後続の確認は [DES-UI-007 の「2026-10-14 Unity 反映」](development/issues/DES-UI-007-cart-join-guidance.md)。
+
+## 塀のポスターとアイテム案内の看板（2026-10-14 / IMP-UI-008、実装・Unity未反映）
+
+[IMP-UI-008](development/issues/IMP-UI-008-credits-shop-and-item-boards.md)。作り・置き方・素材の記録の正本は[制作票](plans/2026-10-14-wall-posters-and-item-guide.md)。
+
+- **塀のポスター** `KH_WallPosters`（Guide/20・21）: 古民家の塀の外面、門のポータル（西）と反対の東側。torinosuke（犬モデルの作者）の紹介 0.354 × 0.50 m + URL のコピー欄、VAnimal のグループポスター 0.635 × 0.898 m を並べる（古民家と同じ寸法）。読むだけの RawImage と木の板。URL 欄だけ押せる Canvas、グループは Interact（`KH_GroupPoster`、ローカル、`Store.OpenGroupPage`）。
+- **アイテム案内の看板** `KH_ItemGuideBoard`（Guide/22・23）: 地図の看板の、周回の道を挟んだ向かい。案内板と同じ屋根つきの立て看板に、札 8 枚（さんぽ・おやつ・かざり・呼ぶ・おもちゃ・ばにまるトレーナー・写真と撮影カメラは押すと手元メニューがその面で目の前に開く。洗い場・おさんぽカートは押せない）。押せる札は暗い板 + 角丸、押せない札は和紙の平らな面。入力は透明な別 Canvas（GraphicRaycaster + VRCUiShape + trigger BoxCollider）で、札は `KD_TreatPouch._OpenFromBoard*` を呼ぶ（古民家の IMP-PRG-014 と同じ約束: 自分で開けた印は立てない、ようこそ中は先にようこそ、位置指定中は何もしない）。
+- **クレジット**: 設定の頁の行を古民家の並び（犬モデル → 舞台モデル モサンゴ屋 → 裏山だけの LMArt）に揃えた。古民家は物理の掲示板で見せ、裏山は頁だけ（板を置くかはユーザー判断）。
+- 文言は 15 キー × 13 言語（ja 自作、他 AI 訳・校正なし）。位置・読みやすさ・押した後の動き・グループページが開くかは Play で確認する（NOT_TESTED）。

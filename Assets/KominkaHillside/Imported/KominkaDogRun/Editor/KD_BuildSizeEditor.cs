@@ -588,6 +588,9 @@ public static class KD_BuildSizeEditor
         c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/", maxSize = 2048, pcCompress = true, why = "our own textures; forces compression on every platform" });
         // 96x96 の UI 円 (KD_UiCircle / KD_UiRound) は非圧縮でも 36 KB。BC7 で縁が荒れる方が損なので圧縮強制の対象から外す (2026-09-24)。
         c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/UI/", maxSize = 2048, pcCompress = false, why = "tiny UI sprites; mobile override only, no forced compression" });
+        // IMP-UI-008 (2026-10-14): the two wall posters (torinosuke 1241x1754, VAnimal group 1587x2245) are 0.5 / 0.9 m tall; 1024 on a phone
+        // is still ~2 px/mm at reading distance. Guide/20 writes the same import (KH_GuideBoardsEditor.EnsurePosterImporter).
+        c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/Posters/", maxSize = 1024, pcCompress = true, why = "wall posters (IMP-UI-008); 1024 on mobile, compressed everywhere" });
         c.Add(new Cap { prefix = "Assets/KominkaHillside/Models/", maxSize = 1024, why = "our own models (leash, collar, walking props)" });
         return c;
     }

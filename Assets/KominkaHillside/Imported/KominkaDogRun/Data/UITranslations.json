@@ -3061,6 +3061,66 @@
           "text": "ポータルを出す・しまう"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "VAnimal のグループページをひらく"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "手元メニューでできること"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "札を押すと、手元メニューがその画面でひらきます"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "ひらく ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "犬をリードでつないで、行き先をえらぶ。地図と移動もここから"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "おやつを出して、手から犬にあげる"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "ボールやディスクを出して、投げて遊ぶ"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "犬を呼んで、好きな場所でポーズをとってもらう"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "かざり・撫でエフェクト・首輪とリードで、犬におめかし"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "ばにまるトレーナー"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "集合写真や、フリスビーの取り方の切り替え (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "写真と撮影カメラ"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "自動で撮れた写真を見る。撮影カメラは PC のみ"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "洗い場・おさんぽカート"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "道具は洗い場の板で、カートは乗り場でえらびます"
+        },
+        {
           "key": "wash.board.pick",
           "text": "犬をえらんでよぶ"
         },
@@ -6830,6 +6890,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Show / hide the portal"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "Open the VAnimal group page"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "What the hand menu can do"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Press a card to open the hand menu on that page"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Open ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Leash the dogs and pick where to go. Map & travel is here too"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Take out a treat and feed a dog from your hand"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Bring out a ball or a disc and throw it"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Call a dog to a spot you like and have it pose"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Dress the dogs: accessories, petting effects, collar and leash"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Group photos and switching the Frisbee catch style (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Photos & video camera"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "See the photos taken for you. Video camera: PC only"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Wash stations & carts"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Pick tools on the wash board and carts at the cart stops"
         },
         {
           "key": "wash.board.pick",
@@ -10603,6 +10723,66 @@
           "text": "Показать / убрать портал"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "Открыть страницу группы VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Что умеет ручное меню"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Нажмите карточку — меню откроется на этой странице"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Открыть"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Возьмите собак на поводок и выберите путь. Здесь же карта"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Достаньте лакомство и дайте собаке с руки"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Достаньте мяч или диск и бросайте"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Позовите собаку в любое место, и она примет позу"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Нарядите собак: украшения, эффекты, ошейник и поводок"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Общее фото и выбор способа ловли фрисби (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Фото и видеокамера"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Смотрите снятые фото. Видеокамера — только на ПК"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Мойка и тележки"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Инструменты — на табличке мойки, тележки — на остановках"
+        },
+        {
           "key": "wash.board.pick",
           "text": "Выберите собаку, чтобы позвать"
         },
@@ -14372,6 +14552,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Показати / прибрати портал"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "Відкрити сторінку групи VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Що вміє ручне меню"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Натисніть картку — меню відкриється на цій сторінці"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Відкрий"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Візьміть собак на повідець і оберіть шлях. Тут і мапа"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Дістаньте ласощі й дайте собаці з руки"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Дістаньте м'яч або диск і кидайте"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Покличте собаку в будь-яке місце, і вона прийме позу"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Причепуріть собак: прикраси, ефекти, нашийник і повідець"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Спільне фото й вибір способу ловлі фрісбі (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Фото й відеокамера"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Переглядайте зняті фото. Відеокамера — лише на ПК"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Мийка та візки"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Інструменти — на табличці мийки, візки — на зупинках"
         },
         {
           "key": "wash.board.pick",
@@ -18145,6 +18385,66 @@
           "text": "포털 열기 / 닫기"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "VAnimal 그룹 페이지 열기"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "손 메뉴로 할 수 있는 것"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "카드를 누르면 손 메뉴가 그 화면으로 열립니다"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "열기 ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "강아지를 리드로 연결하고 갈 곳을 고릅니다. 지도와 이동도 여기서"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "간식을 꺼내 손으로 강아지에게 줍니다"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "공이나 디스크를 꺼내 던지며 놉니다"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "강아지를 불러 원하는 곳에서 포즈를 취하게 합니다"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "장식·쓰다듬기 효과·목줄과 리드로 강아지를 꾸밉니다"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "단체 사진과 프리스비 잡는 방식 바꾸기 (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "사진과 촬영 카메라"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "자동으로 찍힌 사진 보기. 촬영 카메라는 PC 전용"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "세척장·산책 카트"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "도구는 세척장 판에서, 카트는 승강장에서 고릅니다"
+        },
+        {
           "key": "wash.board.pick",
           "text": "부를 강아지를 고르세요"
         },
@@ -21914,6 +22214,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Portal zeigen / ausblenden"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "VAnimal-Gruppenseite öffnen"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Das kann das Handmenü"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Karte drücken: das Handmenü öffnet diese Seite"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Öffnen"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Hunde anleinen und das Ziel wählen. Auch Karte & Reisen"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Ein Leckerli nehmen und aus der Hand füttern"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Ball oder Scheibe holen und werfen"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Einen Hund an einen Ort rufen und posieren lassen"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Hunde schmücken: Accessoires, Effekte, Halsband und Leine"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Gruppenfoto und Frisbee-Fangstil wechseln (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Fotos und Videokamera"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Automatisch gemachte Fotos ansehen. Kamera nur am PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Waschplätze & Wagen"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Werkzeug am Waschplatz-Schild, Wagen an den Haltestellen"
         },
         {
           "key": "wash.board.pick",
@@ -25687,6 +26047,66 @@
           "text": "显示 / 收起传送门"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "打开 VAnimal 群组页面"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "手边菜单能做的事"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "按下卡片，手边菜单会打开到该页面"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "打开 ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "用牵绳牵上狗狗，选择目的地。地图与移动也在这里"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "拿出零食，用手喂给狗狗"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "拿出球或飞盘，丢出去玩"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "把狗狗叫到喜欢的地方，摆个姿势"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "用饰品・抚摸特效・项圈和牵绳打扮狗狗"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "集合合照、切换接飞盘的方式 (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "照片与摄像机"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "查看自动拍下的照片。摄像机仅限 PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "洗澡处・散步车"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "工具在洗澡处的板子上选，车在乘车处选"
+        },
+        {
           "key": "wash.board.pick",
           "text": "选择要呼唤的狗狗"
         },
@@ -29456,6 +29876,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Mostrar / quitar el portal"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "Abrir la página del grupo VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Lo que hace el menú de mano"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Pulsa una tarjeta y el menú se abre en esa página"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Abrir ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Pon la correa a los perros y elige destino. Aquí está el mapa"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Saca un premio y dáselo al perro con la mano"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Saca una pelota o un disco y lánzalo"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Llama a un perro a donde quieras para que pose"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Arregla a los perros: adornos, efectos, collar y correa"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Foto de grupo y cambiar cómo atrapan el frisbi (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Fotos y cámara de vídeo"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Mira las fotos hechas solas. Cámara de vídeo: solo PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Lavaderos y carritos"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Herramientas en el panel del lavadero; carritos en las paradas"
         },
         {
           "key": "wash.board.pick",
@@ -33229,6 +33709,66 @@
           "text": "Afficher / ranger le portail"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "Ouvrir la page du groupe VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Ce que fait le menu à main"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Touchez une carte : le menu s'ouvre sur cette page"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Ouvrir ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Tenez les chiens en laisse et choisissez où aller. Carte ici"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Sortez une friandise et donnez-la à la main"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Sortez une balle ou un disque et lancez"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Appelez un chien où vous voulez pour qu'il pose"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Parez les chiens : accessoires, effets, collier et laisse"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Photo de groupe et style d'attrape du frisbee (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Photos et caméra vidéo"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Voir les photos prises pour vous. Caméra : PC seulement"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Lavoirs et chariots"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Outils sur le panneau du lavoir, chariots aux arrêts"
+        },
+        {
           "key": "wash.board.pick",
           "text": "Choisis un chien à appeler"
         },
@@ -36998,6 +37538,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Mostrar / guardar o portal"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "Abrir a página do grupo VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "O que o menu de mão faz"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Toque num cartão e o menu abre nessa página"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Abrir ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Coloque a guia nos cães e escolha o destino. O mapa fica aqui"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Pegue um petisco e dê ao cão com a mão"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Pegue uma bola ou um disco e jogue"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Chame um cão para onde quiser e ele faz uma pose"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Enfeite os cães: acessórios, efeitos, coleira e guia"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Foto em grupo e trocar o jeito de pegar o frisbee (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Fotos e câmera de vídeo"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Veja as fotos tiradas sozinhas. Câmera: só no PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Lavadouros e carrinhos"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Ferramentas no painel do lavadouro; carrinhos nas paradas"
         },
         {
           "key": "wash.board.pick",
@@ -40771,6 +41371,66 @@
           "text": "Mostra / togli il portale"
         },
         {
+          "key": "guide.wall.group.interact",
+          "text": "Apri la pagina del gruppo VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Cosa fa il menu a mano"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Premi una scheda: il menu si apre su quella pagina"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Apri ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Metti il guinzaglio ai cani e scegli la meta. Qui c'è la mappa"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Prendi uno snack e dallo al cane dalla mano"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Prendi una palla o un disco e lancia"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Chiama un cane dove vuoi e fallo mettere in posa"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Fai belli i cani: accessori, effetti, collare e guinzaglio"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Foto di gruppo e stile di presa del frisbee (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Foto e videocamera"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Guarda le foto scattate da sole. Videocamera: solo PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Lavaggi e carrelli"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Attrezzi sul cartello del lavaggio, carrelli alle fermate"
+        },
+        {
           "key": "wash.board.pick",
           "text": "Scegli un cane da chiamare"
         },
@@ -44540,6 +45200,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "Pokaż / schowaj portal"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "Otwórz stronę grupy VAnimal"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "Co potrafi menu podręczne"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "Naciśnij kartę, a menu otworzy tę stronę"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "Otwórz"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "Weź psy na smycz i wybierz cel. Tu też mapa i podróż"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "Wyjmij smakołyk i daj psu z ręki"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "Wyjmij piłkę lub dysk i rzucaj"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "Zawołaj psa w wybrane miejsce, by zapozował"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "Wystrój psy: ozdoby, efekty, obroża i smycz"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "Wspólne zdjęcie i zmiana stylu łapania frisbee (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "Zdjęcia i kamera wideo"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "Zobacz zdjęcia zrobione same. Kamera tylko na PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "Myjnie i wózki"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "Narzędzia na tablicy myjni, wózki na przystankach"
         },
         {
           "key": "wash.board.pick",
@@ -48315,6 +49035,66 @@
         {
           "key": "guide.kominka.interact",
           "text": "顯示 / 收起傳送門"
+        },
+        {
+          "key": "guide.wall.group.interact",
+          "text": "打開 VAnimal 群組頁面"
+        },
+        {
+          "key": "guide.items.title",
+          "text": "手邊選單能做的事"
+        },
+        {
+          "key": "guide.items.subtitle",
+          "text": "按下卡片，手邊選單會打開到該頁面"
+        },
+        {
+          "key": "guide.items.open",
+          "text": "打開 ▶"
+        },
+        {
+          "key": "guide.items.walk.line",
+          "text": "用牽繩牽上狗狗，選擇目的地。地圖與移動也在這裡"
+        },
+        {
+          "key": "guide.items.treat.line",
+          "text": "拿出零食，用手餵給狗狗"
+        },
+        {
+          "key": "guide.items.toy.line",
+          "text": "拿出球或飛盤，丟出去玩"
+        },
+        {
+          "key": "guide.items.call.line",
+          "text": "把狗狗叫到喜歡的地方，擺個姿勢"
+        },
+        {
+          "key": "guide.items.acc.line",
+          "text": "用飾品・撫摸特效・頸圈和牽繩打扮狗狗"
+        },
+        {
+          "key": "guide.items.trainer.name",
+          "text": "VAnimal Trainer"
+        },
+        {
+          "key": "guide.items.trainer.line",
+          "text": "集合合照、切換接飛盤的方式 (Credits)"
+        },
+        {
+          "key": "guide.items.photo.name",
+          "text": "相片與攝影機"
+        },
+        {
+          "key": "guide.items.photo.line",
+          "text": "查看自動拍下的相片。攝影機只限 PC"
+        },
+        {
+          "key": "guide.items.wash.name",
+          "text": "洗澡處・散步車"
+        },
+        {
+          "key": "guide.items.wash.line",
+          "text": "工具在洗澡處的板子上選，車在乘車處選"
         },
         {
           "key": "wash.board.pick",

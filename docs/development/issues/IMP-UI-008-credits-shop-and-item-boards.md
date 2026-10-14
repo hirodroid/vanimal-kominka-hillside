@@ -5,7 +5,7 @@ system: UI
 status: wip
 priority: Medium
 summary: クレジットを古民家ドッグランに揃え、torinosukeShop 紹介・バニマルのグループポスター・裏山版のアイテム案内とメニューを開くボードを整備する
-next: フォント行の削除は済み (2026-10-14)。残り (クレジットの構成を古民家に揃える・torinosukeShop 紹介・グループポスター・アイテム案内ボード) は古民家ドッグラン C:/work/unity/vcc/KominkaDogRun の読み取り許可待ち (読む範囲: docs/ と Assets/KominkaDogRun/ のクレジット・ポスター・案内ボードの Editor と素材)
+next: "コードと文言は実装済み・Unity 未反映 (2026-10-14 Opus E)。統括が compile → Guide/0 → compile --udon → Guide/20 → Guide/22 → Guide/21 → Menu/11 → Menu/22 → Guide/2 → Build Size/7・8 → 保存。その後ユーザーの判断 (torinosuke 画像のコミット可否と掲示条件・物理のクレジット板の要否・看板の位置) と Play"
 updated: 2026-10-14
 ---
 
@@ -46,6 +46,43 @@ updated: 2026-10-14
 - [DES-UI-005](DES-UI-005-trainer-and-paid-items-purchase-flow.md): トレーナー・課金アイテムの説明と購入導線。該当アイテムを案内する場合は内容を揃える。
 - 参照元プロジェクト: `C:/work/unity/vcc/KominkaDogRun`。作業対象は裏山側とする。
 
+## 古民家の現物と裏山に載せる内容 (2026-10-14 調査)
+
+作りと素材の記録の正本は [塀のポスターとアイテム案内の看板](../../plans/2026-10-14-wall-posters-and-item-guide.md)。ここは対応表だけ。
+
+| 対象 | 古民家ドッグラン (読んだもの) | 裏山に載せる内容 |
+|---|---|---|
+| クレジットの見せ方 | **物理の掲示板** `KD_CreditBoard` (縁側ギャラリー、0.56 × 0.72 m、右のバーでスクロール)。見出し「クレジット」、リード「このワールドで使わせていただいた素材」、上に「スクロールは右のバーで操作」。手元メニューにクレジットの頁は無い (`KD_MenuFinishEditor.BuildCreditRows`、`_OpenCredits` は古民家に無い)。掲示板の真上に犬モデル作者のポスター (IMP-ENV-023) | 設定 → 読む → [クレジット] の頁のまま (IMP-UI-001 の「板は置かない」)。リード `ui.extra.021` は同じ文。ヒントは `ui.extra.036` (Ctrl+C) |
+| クレジットの行と順 | 5 行: 犬モデル TORINOSUKEの家 / 舞台モデル モサンゴ屋「庭付き古民家」/ フォント Noto Serif JP / SIL OFL 1.1 / 動画プレイヤー VizVid。各行は「区分\n名前」の 2 行 + その下に URL のコピー欄 | 3 行: 犬モデル / 舞台モデル モサンゴ屋 / 舞台モデル LMArt (裏山だけ)。**並びを古民家順に直した** (モサンゴ屋を犬の次へ、LMArt を後へ)。名前の書式・URL のコピー欄は同じ。フォント・OFL (ユーザー指定で除外)・VizVid (裏山に無い) は載せない。行は横並び (名前の右に URL) のまま: 頁が横に広く、縦に積むと 3 行でもスクロールが要るため |
+| torinosukeShop の紹介 | 画像 torinosukenoie.png 0.354 × 0.50 m (購入プレハブの枠) + 下に URL `https://torinosuke05.booth.pm/items` のコピー欄 (0.40 × 0.035 m、22pt)。見出しなし | 同じ画像・寸法・URL 欄。枠は木の板 (購入プレハブは持ち込まない)。見出しなし |
+| グループポスター | poster.png 0.635 × 0.898 m。Interact「Open Group」で VRChat のグループページ (grp_45df2c16-…) | 同じ画像・寸法・グループ。Interact の文言は 13 言語 (`guide.wall.group.interact`「VAnimal のグループページをひらく」)。開く処理は自作の `KH_GroupPoster` |
+| 札でメニューを開く板 | 写真の板「犬とのあそびかた」(犬紹介板「庭の犬たち」の右)。札 6 枚 = 写真・名前・説明 2 行・区分 (無料 / ポイント / Credits)、おもちゃ / 呼ぶ / ライブ / かざり / パーティクル / トレーナー。下に公式サイトの URL 欄 | 立て看板「手元メニューでできること」。文字の札 8 枚 = さんぽ / おやつ / かざり / 呼ぶ / おもちゃ / ばにまるトレーナー / 写真と撮影カメラ (押すとその面) + 洗い場・おさんぽカート (押せない)。ライブ (準備中)・CE 商品 (IMP-PRG-002)・写真・区分の札・公式サイト欄は入れない |
+
+依頼文の「犬たちのお気に入り」は古民家の文書・シーンに同名の物が無く、お気に入りを選ぶ犬紹介板「庭の犬たち」の隣の写真の板と読んだ。
+
+## 実装 (2026-10-14、Opus E。コードと文言のみ、Unity 未反映)
+
+- A: `KD_MenuFinishEditor.Hillside.cs` の `HillsideCredits` を古民家の並びへ (モサンゴ屋 → LMArt)、`UILocalizationBindings.json` の CreditRows/Name1・Name2 の鍵を同じ順に。
+- B: `KH_GuideBoardsEditor.WallPosters.cs` (Guide/20 Build・Guide/21 Verify)、`KH_GroupPoster.cs` (U#、None)。テクスチャ 2 枚を `Assets/KominkaHillside/Textures/Posters/` へ (古民家と同一バイト)。`KD_BuildSizeEditor` の上限表に Posters/ = 1024 を追加。
+- C: `KH_GuideBoardsEditor.ItemGuide.cs` (Guide/22 Build・Guide/23 Verify)、`KD_TreatPouch.Board.cs` (`_OpenFromBoard*` 7 個。古民家 IMP-PRG-014 の移植) と `_WelcomeMenu` の 1 行。新しい Udon を持たない (札は KD_TreatPouch を直接呼ぶ。古民家と同じ)。
+- Guide/0 を「0 - Create Board Programs」にし、足りない Program Asset (KH_PortalBoard・KH_GroupPoster) を全部作る。
+- 文言 15 キー × 13 言語 (ja 自作、他 AI 訳・校正なし)、束縛 26 (ラベル 25・Interact 1)。
+- オフラインの C# コンパイル (Unity の csproj から作った一時プロジェクト、Assembly-CSharp と Editor) はエラー 0。Unity・U# のコンパイルは未。
+
+### 配置の候補と規則 (オフラインの見積もり。確定値は Guide/20・22 のログ)
+
+| 物 | 探し方 | 見込み | 破りそうな規則 |
+|---|---|---|---|
+| 塀のポスター `KH_WallPosters` | 門の東 (ポータル = 西の反対) の塀の外面を 0〜12 m、物理で | 門と写真ボードの間は幅 約 0.9 m で入らないか、読む場所が写真ボードの足元に掛かる (WARN)。**写真ボードの先、門から東へ 約 7 m** が全規則を満たす見込み (塀が平らに続けば) | 見込みの点 (55.0, 40.9) はスポーンから約 7.4 m、スポーンの向き (352°) から右へ約 92° (真横の東。門は 162° 後ろ)。スポーンの正面には入らない。道からの見え方はログの notes |
+| アイテム案内 `KH_ItemGuideBoard` | 地図に最も近い周回の線分 (節点 1 → 2) の反対側、地図の真向かいから ±3 m・道から 2.4〜4.0 m | 真向かい (45.4, 51.8) は犬の待機の輪 (Dachs (44, 48)) の 3.3 m に掛かり不可。全規則を満たすのは (43.2〜44.5, 52.1〜53.0) 付近で**地図から 約 7〜8 m** | 「地図の隣」に当たらない距離 (Guide/23 は 8 m 超で WARN)。地面の高低差は Guide/23 の Placement が測る |
+
+### ユーザー判断が要る点
+
+1. torinosuke のポスター画像 (`KH_TorinosukePoster.png`、2 MB) をコミットしてよいか。古民家は Git 管理外 (`Assets/_Originals/`)。作者からの掲示条件も古民家から未確認のまま。
+2. クレジットを古民家のように**物理の板**でも見せるか (古民家は板だけ、裏山は設定の頁だけ)。置くなら塀のポスターの隣が候補。
+3. アイテム案内の看板の位置。地図の真向かいは犬の待機の輪に掛かる。Play で見て、地図からの距離 (約 7〜8 m) で良いか、規則の例外にして近づけるか。
+4. 札の内容: 写真・区分の札 (無料 / ポイント / Credits)・公式サイトの URL 欄を古民家のように足すか。「洗い場・おさんぽカート」を札に含めるか。
+
 ## 完了条件
 
 - [ ] メニュー内のクレジットが古民家ドッグランに揃い、フォントのクレジット掲載が外れている。
@@ -62,3 +99,10 @@ updated: 2026-10-14
 ## 記録
 
 2026-10-14: 統括 (Fable) がメニュー内クレジットからフォント (Noto Serif JP) と OFL 表示の 2 行を外した (`KD_MenuFinishEditor.Hillside.cs` の HillsideCredits 5 → 3 行、`UILocalizationBindings.json` の credit.font の束縛を削除。フォント資産は残す)。Menu/11 → Menu/22 PASS (credit rows 3、no extra rows)。古民家に揃える残りの作業 (構成の照合・torinosukeShop 紹介・グループポスター・アイテム案内ボード) は古民家側の実物を読む必要があり、参照範囲の許可 (CLAUDE.md の規約) をユーザーに確認してから着手する。
+決定: 2026-10-14 ユーザー「unity/vcc 配下はみて OK」— 参照元 C:/work/unity/vcc/KominkaDogRun の読み取りを許可 (読む範囲は unity/vcc 配下に限る)。残りの作業に着手。
+
+2026-10-14 (Opus E、統括の依頼。コードと文言、Unity 未反映): 古民家の現物を読み (上の対応表)、A は行の並びを古民家順に、B は塀の外面へポスター 2 枚 (Guide/20・21)、C はアイテム案内の看板 (Guide/22・23) と手元メニューの口 `_OpenFromBoard*` を実装。完了条件のうち Edit で証明する所 (クレジットの行と束縛 = Menu/22、ポータルと反対側・塀に掛かる・配線・文言の収まり = Guide/21・23) は統括がメニューを流した後に記入する。採用位置・読みやすさ・操作は Play に残す ([制作票 §5](../../plans/2026-10-14-wall-posters-and-item-guide.md))。
+
+2026-10-14 Codex 独立レビュー: 中 2 件を採用。(1) 札から同じタブを開いたときも確認カードの解除・あそぶのホーム復帰をする (`KD_TreatPouch.SetTabCore(tab, force)`、`SetTab` は従来どおり) (2) アイテム案内の足元と写真ボードの足元 (Renderer の外形) の間隔 0.3 m を固い規則に追加 (Guide/22 の探索と Guide/23)。低 1 件 (「ひらく」の幅) は ru / uk / de / pl を 1 語に縮めて解消。
+2026-10-14 統括の Unity 検証: C# 0 / U# 0 → Guide/0 (KH_GroupPoster の Program Asset) → U# 0 → Guide/20 BUILT・Guide/21 WALL_POSTERS_OK 46 (ポスター (56.51, 1.51, 41.06) yaw 158.9 = 門の東 +8.40 m、ポータルの反対側、スポーンから 8.92 m) → Guide/22 BUILT・Guide/23 ITEM_GUIDE_OK 232 (看板 (45.01, 2.97, 52.19) yaw 39.6、道の反対側 4.0 m。WARN 1 = 地図から 8.06 m (<= 8 の目安をわずかに超える。ユーザー判断)) → Menu/11 → 22 PASS (クレジット 3 行、新しい順) → Guide/2 OK → Build Size/7・8 (超過 0) → Codex 独立レビュー (中 2: 同じタブの再初期化、写真ボードの足元の固い判定 → 反映。低 1: 「ひらく」の 4 言語を短縮 → WARN 7 件が消えた) → 保存。
+別件 (今回の変更とは無関係、コミットしない): Build Size/7 を流すと WashPremium / PropFinish / Guide の .png.meta 10 件で iPhone の上限 2048 → 1024 と Android の textureFormat ASTC 6x6 (50) → Automatic (-1) に書き換わった (WashPremium/10 が書いた明示の ASTC 6x6 と Build Size/7 の方針が食い違う)。統括は git checkout で戻した。Android の容量に関わるので、どちらを正とするかは IMP-DOG-055 か Build Size の記録で決める。
