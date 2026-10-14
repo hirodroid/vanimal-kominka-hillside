@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-149 件 — 対応中 15 / 確認待ち 88 / 未着手 11 / 保留 3 / 完了 32
+150 件 — 対応中 15 / 確認待ち 88 / 未着手 12 / 保留 3 / 完了 32
 
 ## 実行キュー
 
@@ -120,6 +120,7 @@
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。10-04 に Quest で真っ黒とユーザーが確認 (iOS も同じらしい)。原因の見立ては材質の金属 1 で、修正は BUG-ENV-001 で行う | todo | BUG-ENV-001 でディスクと顔の材質を金属 0 へ直した後、Quest と iOS で 6 色と顔が見分けられるかを確認する |
 | [IMP-DOG-048](IMP-DOG-048-collar-and-leash-patterns.md) | Medium | 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色 | todo | 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す |
 | [IMP-UI-008](IMP-UI-008-credits-shop-and-item-boards.md) | Medium | クレジットを古民家ドッグランに揃え、torinosukeShop 紹介・バニマルのグループポスター・裏山版のアイテム案内とメニューを開くボードを整備する | todo | 古民家ドッグランのクレジット・紹介とポスター・犬たちのお気に入り隣のボードを確認し、裏山への移植内容と配置案を整理する |
+| [IMP-UI-009](IMP-UI-009-video-camera-pc-only-label.md) | Medium | メニューの撮影カメラに PC のみ利用できることを明記する | todo | メニュー入口に「PCのみ」の注記を追加し、翻訳・表示幅・既存の端末別表示との整合を確認する |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo | Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外 |
 | [BUG-ENV-004](BUG-ENV-004-prop-zfight-photoboard-guideroof.md) | Low | 自作の小物 2 件に同一平面の重なり (写真ボードの仕上げ板 KH_PhotoBoard/Structure/FinishedVisual 219 cm² gap 2 mm、門前の案内板の屋根の棟 Ridge と RoofFront / RoofBack 7 cm² gap 0)。BUG-ENV-003 の走査で見つかった古民家以外の残り | todo | ユーザーが Play でちらつきを見た時に着手。直すなら生成側 (KH_PropFinishEditor の仕上げ板の押し出し、KH_GuideBoardsEditor の屋根の棟の高さ) を 4 mm 離す。ZFight/1 で再確認 |
 | [IMP-DOG-055](IMP-DOG-055-wash-premium-model-and-sound-quality.md) | Low | 洗浄用の有料製品 (道具・台・仕上げ) のモデルと音声を見直してクオリティを上げる (Z ファイトの修正 BUG-DOG-013 とは別件) | todo | 見直す範囲を決める (どの品から・何を基準に)。モデルはラボ 0.3.0 / 0.4.0 の元データ、音は scripts/art/wash-premium-audio.cjs の合成音が現状。まず現状の一覧 (品・三角形数・テクスチャ・音の種類) を作り、ユーザーと優先順を決める |
