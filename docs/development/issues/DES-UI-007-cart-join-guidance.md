@@ -2,7 +2,7 @@
 id: DES-UI-007
 type: DES
 system: UI
-status: todo
+status: wip
 priority: High
 summary: カートの看板で合流が伝わらず、フレンドがそれぞれ乗車してしまった。みんなで一緒に走るための案内・操作導線を、改善案の相談から見直す
 next: Unity 反映のコードと翻訳は書いた (2026-10-14 Opus D)。統括が compile → Cart/1 → Course/27 → Cart/2 → Course/26 → 保存。その後ユーザーの Play・初見テスト・13 言語の実寸
