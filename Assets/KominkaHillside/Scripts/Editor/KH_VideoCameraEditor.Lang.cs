@@ -40,7 +40,8 @@ namespace KominkaHillside.Editor
         {
             var l = new List<KeyValuePair<string, string>>();
             void A(string k, string ja) { l.Add(new KeyValuePair<string, string>(k, ja)); }
-            A(KH_VideoCamera.KeyTitle, KH_VideoCamera.WordTitle); A(KH_VideoCamera.KeyRecall, KH_VideoCamera.WordRecall); A(KH_VideoCamera.KeyPutAway, KH_VideoCamera.WordPutAway);
+            A(KH_VideoCamera.KeyTitle, KH_VideoCamera.WordTitle); A(KH_VideoCamera.KeyEntry, KH_VideoCamera.WordEntry);   // IMP-UI-009: the entry carries "(PCのみ)"
+            A(KH_VideoCamera.KeyRecall, KH_VideoCamera.WordRecall); A(KH_VideoCamera.KeyPutAway, KH_VideoCamera.WordPutAway);
             for (int m = 0; m < KH_VideoCamera.ModeCountAll; m++) A(KH_VideoCamera.ModeKey(m), KH_VideoCamera.ModeWord(m));
             for (int k = 0; k < KH_VideoCamera.PathMoveCount; k++) A(KH_VideoCamera.PathMoveKey(k), KH_VideoCamera.PathMoveWord(k));
             for (int k = 0; k < KH_VideoCamera.OrbitKindCount; k++) A(KH_VideoCamera.OrbitKindKey(k), KH_VideoCamera.OrbitKindWord(k));
@@ -167,7 +168,7 @@ namespace KominkaHillside.Editor
                 Add(mon, PatternPanelName + "/PatternNote" + p, KH_VideoCamera.PatternNoteKey(p), true);
             }
             Add(mon, PatternPanelName + "/" + PatternStopName + "/Label", KH_VideoCamera.KeyPatternStop, true);
-            foreach (var (go, key) in new[] { (v.entryOpen, KH_VideoCamera.KeyTitle), (v.entryRecall, KH_VideoCamera.KeyRecall), (v.entryClose, KH_VideoCamera.KeyPutAway) })
+            foreach (var (go, key) in new[] { (v.entryOpen, KH_VideoCamera.KeyEntry), (v.entryRecall, KH_VideoCamera.KeyRecall), (v.entryClose, KH_VideoCamera.KeyPutAway) })
                 Add(go != null ? go.transform : null, "Label", key, true);
             return l;
         }
@@ -204,7 +205,7 @@ namespace KominkaHillside.Editor
             _w5Catalog = null;
             var cat = Cat();
             var pairs = W5Keys();
-            Check(pairs.Count == 106, "W5: " + pairs.Count + " video.* / film.* keys (106 expected: 104 + video.hide (DES-WLD-004 M1.1) + video.mode.convoy (M2 隊列); change the number here when a text is added)");
+            Check(pairs.Count == 107, "W5: " + pairs.Count + " video.* / film.* keys (107 expected: 104 + video.hide (DES-WLD-004 M1.1) + video.mode.convoy (M2 隊列) + video.open.entry (IMP-UI-009); change the number here when a text is added)");
             var bad = W5CatalogProblems();
             Check(bad.Count == 0, "W5: every key in all " + cat.languages.Length + " languages, the same {0} / {1} count as ja, ja = the code default, no stray key"
                 + (bad.Count > 0 ? " (" + bad.Count + " problems, first: " + string.Join(" | ", bad.Take(3)) + ")" : ""));

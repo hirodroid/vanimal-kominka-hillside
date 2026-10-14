@@ -2,10 +2,10 @@
 id: IMP-UI-009
 type: IMP
 system: UI
-status: todo
+status: review
 priority: Medium
 summary: メニューの撮影カメラに PC のみ利用できることを明記する
-next: メニュー入口に「PCのみ」の注記を追加し、翻訳・表示幅・既存の端末別表示との整合を確認する
+next: ユーザーの Play で写真タブの入口「撮影カメラ (PCのみ)」の表示 (13 言語の枠内の収まり) を確認。Android / iOS で入口が出ないことと撮影相手の許可は既存のまま (未変更)
 updated: 2026-10-14
 ---
 
@@ -31,9 +31,9 @@ updated: 2026-10-14
 
 ## 完了条件
 
-- [ ] メニュー入口に、撮影カメラを使えるのは PC のみであることが明記されている。
-- [ ] 対応言語で意味が揃い、メニュー内で注記を読める。
-- [ ] Android / iOS で入口を隠す既存の挙動と、撮影相手の全端末での許可・取消を維持している。
+- [x] メニュー入口に、撮影カメラを使えるのは PC のみであることが明記されている (2026-10-14 実装。Edit で確認、Play は未確認)。
+- [x] 対応言語で意味が揃い (13 言語、既存の「(PCのみ)」表記に倣う)、メニュー内で注記を読める (枠内の収まりは Play で確認)。
+- [x] Android / iOS で入口を隠す既存の挙動と、撮影相手の全端末での許可・取消を維持している (コード未変更。Video/2・Video/5 PASS)。
 
 ## 関連
 
@@ -43,3 +43,7 @@ updated: 2026-10-14
 ## 起票時の状態
 
 表記の追加を記録した段階。文言・コード・Unity シーンの変更は未着手。
+
+## 記録
+
+2026-10-14: 実装 (統括 Fable)。モニターの題 `video.open` は共有キーなので変えず、入口専用のキー `video.open.entry` を追加 (ja「撮影カメラ (PCのみ)」、他 12 言語は `KD_DistanceFadeSettings.EntryButton` の「(PC only)」相当の既存表記をそのまま付けた)。`KH_VideoCamera.WordEntry / KeyEntry`、`KH_VideoCameraEditor.BuildEntry` と `Lang.cs` の W5 表 (106 → 107 キー)・静的ラベルの束縛を入口だけ新キーへ。検証: C# 0 / U# 0 → Menu/11 → Menu/22 PASS → Video/1 (39 labels、keys 941) → Video/2 PASS (W5 107 キー × 13 言語) → Video/5 PASS → 保存。未確認: Play での表示と枠内の収まり (13 言語)。

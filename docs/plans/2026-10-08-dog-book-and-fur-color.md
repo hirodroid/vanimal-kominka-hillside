@@ -86,6 +86,8 @@ Issue: [DES-DOG-009](../development/issues/DES-DOG-009-instance-owner-fur-color.
 
 2026-10-08 統括が流した結果: C#/U# コンパイル 0。DogBook/2: 125 通りのどれも規則を全部は満たさず (WARN)、体積が空いている最初の点に建てた = 横 3.64 m・後ろ 0・yaw 55 → **看板 (50.91, 2.39, 47.48)**、板は看板の canvas (50.90, 3.62, 47.48)、題は看板の Header「裏山の犬たち」(板の Heading は隠す)。破った規則 2 つ: 周回の戻り道の中心線まで 0.54 m (基準 1.8)、犬の待機の輪の中心まで 2.10 m (基準 3.3、半径 3)。DogBook/5: targets 8 / textures 21 (Corgi 5・Pome 4・Lab 3・Dachs 3・Shiba 4・Samoyed 2)、warn 0。DogBook/3: **FAIL 2 = 上の規則 2 つだけ** (USER DECISION)。それ以外は全部 ok (21 色・13 言語・字形・配線)。シーン保存済み (KH_Dogs/KH_DogBookStand 1 つ)。**ユーザー判断待ち: Play で現物を見て、この場所のまま (規則の例外として Verify の期待に入れる) か、場所を変えるか。**
 
+決定: 2026-10-14 ユーザー「看板の場所も推奨で OK です。例外で」。この場所 (50.91, 2.39, 47.48) yaw 55 のまま採用し、戻り道 0.54 m と待機の輪 2.10 m の 2 規則は例外。同日、統括が `DogBook/3 Verify` を更新: 看板がその場所 (±0.05 m、±1°) にある間だけこの 2 規則を「placement rule exception」として PASS に数え、動かしたら元どおり FAIL にする (`KH_GuideBoardsEditor.DogBookStand.cs` の `StandDecidedPos`)。ほかの規則は例外にしない。
+
 ### 3.5 前の置き方 (2026-10-08 第 1 波、やめた)
 
 おじいさん (49.90, 42.80) の左前 1.58 m、写真ボードの手前 (50.8, 41.5) に板だけを立てていた (高さ 地面 + 1.25 m、表をスポーンへ)。看板が無いときの初回の `DogBook/1` だけが今もこの仮の位置に置く (`KD_DogBookEditor.HillsideBoardXZ`)。

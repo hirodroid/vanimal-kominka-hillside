@@ -67,6 +67,7 @@ namespace KominkaHillside
         // ---- Japanese defaults (W5: the displayed text comes from UITranslations.json through Tx(key, ja); these are used only when the
         // language table has no such key, and Video/2 checks that they equal the table's ja) ----
         public const string WordTitle = "撮影カメラ";
+        public const string WordEntry = "撮影カメラ (PCのみ)";   // IMP-UI-009 (2026-10-14): the photo page's entry button only (the monitor title stays WordTitle)
         public const string WordRecall = "モニターを呼ぶ";
         public const string WordPutAway = "しまう";
         public const string WordModeDog = "犬追従";
@@ -94,7 +95,7 @@ namespace KominkaHillside
         public const string WordPhotoCamOn = "VRChatカメラ: 映しています";
         public const string WordPhotoCamOff = "VRChatカメラ: 出ていません";
         // ---- W5: the UITranslations.json keys of the texts above (13 languages; design §7.3 "2026-10-08 W5 実装メモ") ----
-        public const string KeyTitle = "video.open", KeyRecall = "video.recall", KeyPutAway = "video.close";
+        public const string KeyTitle = "video.open", KeyEntry = "video.open.entry", KeyRecall = "video.recall", KeyPutAway = "video.close";
         public const string KeySnap = "video.snap", KeyOn = "video.on", KeyOff = "video.off", KeyFilming = "video.filming", KeyLost = "video.lost";
         public const string KeyNoSpot = "video.nospot", KeyFade = "video.fade", KeyRtFailed = "video.rtfailed", KeySnapNote = "video.snap.note";
         public const string KeyPhotoCamOn = "video.photocam.on", KeyPhotoCamOff = "video.photocam.off";

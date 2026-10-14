@@ -27,7 +27,9 @@
 
 ## 3. 現在地
 
-**2026-10-14 移植商品の除外:** 古民家から移植した CE アイテムは今回の公開対象から外す決定済みとユーザーが再確認。[IMP-PRG-002](issues/IMP-PRG-002-exclude-imported-ce-items.md) を起票した。下記の CE 台帳作成時の「B の裏山用 ID が要る」は履歴で、現在は ID 作成待ちではなく除外の実装待ち。トレーナーと裏山の洗浄商品は維持する。
+**2026-10-14 まとめ実装 (統括 Fable、実装 Opus A〜D、Codex 独立レビュー 3 本):** [BUG-DOG-014](issues/BUG-DOG-014-cart-dog-clipping.md) カート散歩の犬の後退・めり込み (保つ線 0.8 m、待機も線の上。原因は目標の窓 [-0.3, +1.0] と立ち止まりかけの減速で、FPS 最適化ではない)、[BUG-UI-002](issues/BUG-UI-002-cart-notice-dialog-follow.md) 乗車中の通知板をカートの右前へドック、[DES-UI-007](issues/DES-UI-007-cart-join-guidance.md) 承認済み HTML B 案を乗り場 5 + 残ったカート 8 の看板へ反映 (cart.board.* 35 キー × 13 言語、空きカートの 30 秒更新)、[IMP-PRG-002](issues/IMP-PRG-002-exclude-imported-ce-items.md) 移植 CE 6 商品の除外 (UdonProduct を刺さない。シーンの参照 0)、[IMP-UI-009](issues/IMP-UI-009-video-camera-pc-only-label.md) 撮影カメラ入口の「(PCのみ)」、[IMP-UI-008](issues/IMP-UI-008-credits-shop-and-item-boards.md) クレジットのフォント行削除 (残りは古民家側の読み取り許可待ち)、[DES-DOG-009](issues/DES-DOG-009-instance-owner-fur-color.md) DogBook/3 の例外 2 規則、[IMP-DOG-055](issues/IMP-DOG-055-wash-premium-model-and-sound-quality.md) 現状の一覧と優先順の案 (承認待ち)。BUG-ENV-004 は条件 (Play でちらつき) 未達で保留。検証は Edit (C#/U# 0、Menu/11・22・4・4a・3b・6e・6g・6h・20・25、Cart/1・2・3、Course/26・27、Video/1・2・5、DogBook/3、Guide/2) で、ハーネスは回していない (乗車・Store は ClientSim で再現できず、カートの犬を見る群も無い)。既存の別件: Menu/6f の首輪 (b) 5 組と胸の品 9 件、Menu/25 のミニチュア 12 姿勢は IMP-DOG-050 の首輪作り直し後の再実測待ち。**残るのはユーザーの Play / 実機 (各 Issue の未確認の項目)。**
+
+**2026-10-14 移植商品の除外:** 古民家から移植した CE アイテムは今回の公開対象から外す決定済みとユーザーが再確認。[IMP-PRG-002](issues/IMP-PRG-002-exclude-imported-ce-items.md) を起票した。下記の CE 台帳作成時の「B の裏山用 ID が要る」は履歴。**同日、除外をコードへ反映** (6 アセット = 13 行の行・キーは残し、UdonProduct を刺さず、かざり・撫でFX の一覧から外し、購入画面を開かない。Menu/4a が検査)。残り: 統括の Unity 適用 (compile → Menu/4 → 6e → 6g → 検査 → 保存)、看板 A 4 枚目の「Credits のかざり」の文言削除 (翻訳担当)、古民家で買った人の入室・途中参加の実機 2 人確認。トレーナーと裏山の洗浄商品は維持する。
 
 **2026-10-14 取り下げ:** 犬を傾けて置く IMP-DOG-033 はユーザー決定で不採用とし、実装予定から外した ([仕様 §7](../game-design.md#7-初期範囲の境界))。以下の 10-03 時点の初期公開範囲・着手順にある 033 は履歴であり、現在の予定には含めない。手の高さへ自由に置く IMP-DOG-032 は維持する。
 

@@ -3281,6 +3281,10 @@
           "text": "撮影カメラ"
         },
         {
+          "key": "video.open.entry",
+          "text": "撮影カメラ (PCのみ)"
+        },
+        {
           "key": "video.recall",
           "text": "モニターを呼ぶ"
         },
@@ -7046,6 +7050,10 @@
         {
           "key": "video.open",
           "text": "Video camera"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Video camera (PC only)"
         },
         {
           "key": "video.recall",
@@ -10815,6 +10823,10 @@
           "text": "Видеокамера"
         },
         {
+          "key": "video.open.entry",
+          "text": "Видеокамера (только PC)"
+        },
+        {
           "key": "video.recall",
           "text": "Позвать экран"
         },
@@ -14580,6 +14592,10 @@
         {
           "key": "video.open",
           "text": "Відеокамера"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Відеокамера (лише PC)"
         },
         {
           "key": "video.recall",
@@ -18349,6 +18365,10 @@
           "text": "촬영 카메라"
         },
         {
+          "key": "video.open.entry",
+          "text": "촬영 카메라 (PC 전용)"
+        },
+        {
           "key": "video.recall",
           "text": "모니터 부르기"
         },
@@ -22114,6 +22134,10 @@
         {
           "key": "video.open",
           "text": "Videokamera"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Videokamera (nur PC)"
         },
         {
           "key": "video.recall",
@@ -25883,6 +25907,10 @@
           "text": "摄像机"
         },
         {
+          "key": "video.open.entry",
+          "text": "摄像机 (仅 PC)"
+        },
+        {
           "key": "video.recall",
           "text": "叫来屏幕"
         },
@@ -29648,6 +29676,10 @@
         {
           "key": "video.open",
           "text": "Cámara de vídeo"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Cámara de vídeo (solo PC)"
         },
         {
           "key": "video.recall",
@@ -33417,6 +33449,10 @@
           "text": "Caméra vidéo"
         },
         {
+          "key": "video.open.entry",
+          "text": "Caméra vidéo (PC uniquement)"
+        },
+        {
           "key": "video.recall",
           "text": "Rappeler écran"
         },
@@ -37182,6 +37218,10 @@
         {
           "key": "video.open",
           "text": "Câmera de vídeo"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Câmera de vídeo (só PC)"
         },
         {
           "key": "video.recall",
@@ -40951,6 +40991,10 @@
           "text": "Videocamera"
         },
         {
+          "key": "video.open.entry",
+          "text": "Videocamera (solo PC)"
+        },
+        {
           "key": "video.recall",
           "text": "Richiama monitor"
         },
@@ -44716,6 +44760,10 @@
         {
           "key": "video.open",
           "text": "Kamera wideo"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "Kamera wideo (tylko PC)"
         },
         {
           "key": "video.recall",
@@ -48487,6 +48535,10 @@
         {
           "key": "video.open",
           "text": "攝影機"
+        },
+        {
+          "key": "video.open.entry",
+          "text": "攝影機 (僅限 PC)"
         },
         {
           "key": "video.recall",

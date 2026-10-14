@@ -624,7 +624,7 @@ namespace KominkaHillside.Editor
         static GameObject[] BuildEntry(Ctx c, UdonBehaviour target, List<string> log)
         {
             var page = c.photoPage.transform;
-            var open = Btn(page, EntryOpenName, EntryOpenPos, EntryOpenSize, Ja(KH_VideoCamera.KeyTitle), c.font, target, nameof(KH_VideoCamera._Open), log);
+            var open = Btn(page, EntryOpenName, EntryOpenPos, EntryOpenSize, Ja(KH_VideoCamera.KeyEntry), c.font, target, nameof(KH_VideoCamera._Open), log);   // IMP-UI-009: "(PCのみ)" on the entry only
             var recall = Btn(page, EntryRecallName, EntryRecallPos, EntryRecallSize, Ja(KH_VideoCamera.KeyRecall), c.font, target, nameof(KH_VideoCamera._Recall), log);
             var close = Btn(page, EntryCloseName, EntryClosePos, EntryCloseSize, Ja(KH_VideoCamera.KeyPutAway), c.font, target, nameof(KH_VideoCamera._Close), log);
             // Every run (also after Photo/1 rebuilt the page): the buttons are found or created by name (EnsureButton), then placed just before the

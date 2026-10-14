@@ -24,7 +24,9 @@ namespace KominkaHillside.Editor
     /// yaw を Asobikata と同じ → ±10° → ±20° の順に試す (統括の指示 2026-10-08)。各点を案内板の置き場所の規則 (Guide/2 の Placement) と
     /// 「看板の体積・読む人の場所に固い Collider が無い・地面の段差」で判定し、**全部を満たす最初の点**を採る。無ければ、体積が空いている最初の点
     /// (= 指定どおりの 3.64 m・背面 0・同じ yaw から順に) に置き、破った規則を WARN で出す (DogBook/3 Verify は FAIL にする。ユーザーが Play で見て決める)。
-    /// 体積の空いた点が 1 つも無ければ例外 (何も変えない)。</summary>
+    /// 体積の空いた点が 1 つも無ければ例外 (何も変えない)。
+    /// 2026-10-14 ユーザー決定 (DES-DOG-009): 置いた場所 (50.91, 2.39, 47.48) yaw 55 をそのまま採用し、戻り道 0.54 m と待機の輪 2.10 m の 2 規則は例外。
+    /// Verify はその場所にある間だけこの 2 規則を例外 (PASS) と数える (StandDecidedPos)。</summary>
     public static partial class KH_GuideBoardsEditor
     {
         public const string DogBookStandName = "KH_DogBookStand";
@@ -43,6 +45,9 @@ namespace KominkaHillside.Editor
         static readonly float[] StandYawOffsets = { 0f, 10f, -10f, 20f, -20f };
         /// <summary>DogBook/3 Verify の範囲: Asobikata の中心からの水平距離と、yaw の差。</summary>
         public const float StandAsobMin = 3.4f, StandAsobMax = 6.0f, StandYawMaxDiff = 20.5f;
+        /// <summary>DES-DOG-009 決定 2026-10-14: この場所 (x / z と yaw) にある間、戻り道と待機の輪の 2 規則は Verify の例外 (本文の VerifyDogBookStand)。</summary>
+        public static readonly Vector3 StandDecidedPos = new Vector3(50.91f, 2.39f, 47.48f);
+        public const float StandDecidedYaw = 55f, StandDecidedTol = 0.05f, StandDecidedYawTol = 1f;
         /// <summary>ほかの案内板の足元 (柱 + 屋根の出) とのすき間 (案内板は Collider を持たないので、物理では見えない)。</summary>
         const float StandBoardGap = 0.3f;
 
@@ -290,8 +295,19 @@ namespace KominkaHillside.Editor
             List<string> hard, soft;
             StandRules(b, stand, c, out hard, out soft);
             check(hard.Count == 0, "stand volume / readers' area clear, footprint apart from the guide boards" + (hard.Count > 0 ? " (" + string.Join("; ", hard) + ")" : ""));
-            foreach (var x in soft) check(false, "placement rule (USER DECISION: 2026-10-08 指定の場所との兼ね合い。設計書 §3): " + x);
+            // DES-DOG-009 決定 2026-10-14 ユーザー「看板の場所も推奨で OK。例外で」: 遊び方の隣・広場側 (50.91, 2.39, 47.48) yaw 55 のまま。周回の戻り道 (0.54 m、基準 1.8) と
+            // 犬の待機の輪 (2.10 m、基準 3.3) の 2 規則だけ例外。看板がその場所 (±StandDecidedTol m、±StandDecidedYawTol°) にある間だけ PASS (例外) と数え、
+            // 動かしたら (DogBook/2 で探し直したら) 元どおり FAIL にする。ほかの規則は例外にしない
+            bool atDecided = Flat(stand.position - StandDecidedPos) <= StandDecidedTol && Mathf.Abs(Mathf.DeltaAngle(stand.eulerAngles.y, StandDecidedYaw)) <= StandDecidedYawTol;
+            int excepted = 0;
+            foreach (var x in soft)
+            {
+                bool exception = atDecided && (x.Contains("the loop's centre line") || x.Contains("dog roam centres"));
+                if (exception) { excepted++; check(true, "placement rule exception (DES-DOG-009 決定 2026-10-14、遊び方の隣・広場側のまま): " + x); }
+                else check(false, "placement rule (USER DECISION: 2026-10-08 指定の場所との兼ね合い。設計書 §3): " + x);
+            }
             if (soft.Count == 0) check(true, "stand passes the guide boards' placement rules (route, roam, spawn, fixtures, gate, wash, other boards)");
+            else if (soft.Count == excepted) check(true, "stand passes the remaining placement rules (the 2 decided exceptions aside)");
 
             // ---- パネルが看板の canvas にある ----
             check(panel.parent == stand, "panel KD_DogBook is a child of " + DogBookStandName);

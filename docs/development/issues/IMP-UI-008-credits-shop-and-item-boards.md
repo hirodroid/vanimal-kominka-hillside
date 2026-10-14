@@ -2,10 +2,10 @@
 id: IMP-UI-008
 type: IMP
 system: UI
-status: todo
+status: wip
 priority: Medium
 summary: クレジットを古民家ドッグランに揃え、torinosukeShop 紹介・バニマルのグループポスター・裏山版のアイテム案内とメニューを開くボードを整備する
-next: 古民家ドッグランのクレジット・紹介とポスター・犬たちのお気に入り隣のボードを確認し、裏山への移植内容と配置案を整理する
+next: フォント行の削除は済み (2026-10-14)。残り (クレジットの構成を古民家に揃える・torinosukeShop 紹介・グループポスター・アイテム案内ボード) は古民家ドッグラン C:/work/unity/vcc/KominkaDogRun の読み取り許可待ち (読む範囲: docs/ と Assets/KominkaDogRun/ のクレジット・ポスター・案内ボードの Editor と素材)
 updated: 2026-10-14
 ---
 
@@ -58,3 +58,7 @@ updated: 2026-10-14
 ## 起票時の状態
 
 依頼を記録した段階。参照元の実物確認・素材の移植・文言制作・Unity での配置は未着手。
+
+## 記録
+
+2026-10-14: 統括 (Fable) がメニュー内クレジットからフォント (Noto Serif JP) と OFL 表示の 2 行を外した (`KD_MenuFinishEditor.Hillside.cs` の HillsideCredits 5 → 3 行、`UILocalizationBindings.json` の credit.font の束縛を削除。フォント資産は残す)。Menu/11 → Menu/22 PASS (credit rows 3、no extra rows)。古民家に揃える残りの作業 (構成の照合・torinosukeShop 紹介・グループポスター・アイテム案内ボード) は古民家側の実物を読む必要があり、参照範囲の許可 (CLAUDE.md の規約) をユーザーに確認してから着手する。
