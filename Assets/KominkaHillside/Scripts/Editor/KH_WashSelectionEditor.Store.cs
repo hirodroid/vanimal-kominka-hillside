@@ -236,6 +236,7 @@ public static partial class KH_WashSelectionEditor
         string why;
         check(b.buyButton != null && b.buyLabel != null && b.buyButton.transform.parent == b.transform && b.buyLabel.transform.IsChildOf(b.buyButton.transform) && BuyWired(b, out why),
             "purchase button " + st + " calls _Buy on the board's backing (" + (b.buyButton == null ? "null" : PathOf(b.buyButton.transform)) + ")");
+        check(b.debugGiftElapsedOverride < 0f && !b.debugNoStoreOpen, "no gift / store debug override " + st + " (debugGiftElapsedOverride " + b.debugGiftElapsedOverride + ", debugNoStoreOpen " + b.debugNoStoreOpen + ")");
         check(b.buyImage != null && b.buyButton != null && b.buyImage == b.buyButton.GetComponent<Image>() && b.giftColor == GiftColor && b.giftColor != b.normalColor,
             "purchase button image and gift colour " + st + " (giftColor " + b.giftColor + " = " + GiftColor + ", normal " + b.normalColor + ")");
         check(BackingBoardWired(b), "saved backing allListingId / allCredits / words / buyButton / buyLabel / buyImage / giftColor " + st);
@@ -343,16 +344,18 @@ public static partial class KH_WashSelectionEditor
     }
 
     /// <summary>The board's store line per state x this player's own sets (none / the chosen set / all four) (ja contents; every language
-    /// for overflow): the purchase button's visibility, label (46 buy / 52 gift), colour, interactable, the Listing it opens, word 53 on the
-    /// complete-set tab; plus the new result words in the status line. The own sets are the board's cached mask (_ownMask, what the tick
+    /// for overflow): the purchase button's visibility, label (46 buy / 52 gift), colour, the Listing it opens; the buy button opens on one
+    /// press, a gift button (own set's tab, or the complete-set tab with any own set) on the second press within GiftConfirmSeconds (the
+    /// first: caution 53, label 54; expiry and a tab change disarm it; time through debugGiftElapsedOverride); plus the new result words. The own sets are the board's cached mask (_ownMask, what the tick
     /// reads from KD_ShopItem.Owned): Owned() asks Networking.LocalPlayer / the Store, which Edit mode does not have. Restores everything.</summary>
     static void VerifyStoreBoardText(KH_WashSelectionBoard b, Action<bool, string> check, StringBuilder log)
     {
         const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic;
         var ty = typeof(KH_WashSelectionBoard);
         var fl = ty.GetField("_lang", F); var fs = ty.GetField("_storeState", F); var fc = ty.GetField("_storeCategory", F); var fch = ty.GetField("_chosen", F);
-        var mr = ty.GetMethod("ResultWord", F); var fo = ty.GetField("_ownMask", F); var ml = ty.GetMethod("BuyListing", F);
-        object l0 = fl.GetValue(b), s0 = fs.GetValue(b), c0 = fc.GetValue(b), o0 = fo.GetValue(b);
+        var mr = ty.GetMethod("ResultWord", F); var fo = ty.GetField("_ownMask", F); var ml = ty.GetMethod("BuyListing", F); var mp = ty.GetMethod("BuyPress", F); var fa = ty.GetField("_giftArmed", F);
+        object l0 = fl.GetValue(b), s0 = fs.GetValue(b), c0 = fc.GetValue(b), o0 = fo.GetValue(b), a0 = fa.GetValue(b); float g0 = b.debugGiftElapsedOverride;
+        int pressWrong = 0;
         bool buy0 = b.buyButton != null && b.buyButton.gameObject.activeSelf, inter0 = b.buyButton != null && b.buyButton.interactable; string status0 = b.status != null ? b.status.text : null;
         Color img0 = b.buyImage != null ? b.buyImage.color : Color.white;
         var words = ReadWords(); int overflow = 0, wrong = 0;
@@ -380,28 +383,59 @@ public static partial class KH_WashSelectionEditor
                         bool buy = b.buyButton != null && b.buyButton.gameObject.activeSelf;
                         // decision 2026-10-14: shown in every known state (Owned too), hidden only while Unknown
                         bool wantBuy = s == KDItem.InstanceOwned || s == KDItem.InstanceNone || s == KH_WashSelectionBoard.StoreContinuing;
-                        bool blocked = tab == 4 && own != 0, gift = tab != 4 && cat >= 0 && (own & (1 << cat)) != 0;
+                        // decision 2026-10-14 (second): the complete set stays possible as a gift (no disabled button any more)
+                        bool gift = wantBuy && (tab == 4 ? own != 0 : cat >= 0 && (own & (1 << cat)) != 0);
                         int credits = tab == 4 ? b.allCredits : b.selection != null && b.selection.setItems != null && cat >= 0 && cat < b.selection.setItems.Length && b.selection.setItems[cat] != null ? b.selection.setItems[cat].ceCredits : 0;
-                        string head = wantBuy && blocked ? w[53] : s == KDItem.InstanceOwned ? w[47] : s == KDItem.InstanceNone ? (credits > 0 ? credits + " " + w[51] : "") : s == KDItem.InstanceUnknown ? w[49] : w[50];
-                        string wantListing = tab == 4 ? (own != 0 ? "" : b.allListingId) : b.selection != null && b.selection.setItems != null && tab < b.selection.setItems.Length && b.selection.setItems[tab] != null ? b.selection.setItems[tab].ceListingId : "";
+                        string head = s == KDItem.InstanceOwned ? w[47] : s == KDItem.InstanceNone ? (credits > 0 ? credits + " " + w[51] : "") : s == KDItem.InstanceUnknown ? w[49] : w[50];
+                        string wantListing = tab == 4 ? b.allListingId : b.selection != null && b.selection.setItems != null && tab < b.selection.setItems.Length && b.selection.setItems[tab] != null ? b.selection.setItems[tab].ceListingId : "";
                         string listing = (string)ml.Invoke(b, null);
-                        bool ok = buy == wantBuy && b.notice.text.StartsWith(head) && listing == wantListing
-                            && (!buy || (b.buyLabel.text == w[gift ? 52 : 46] && b.buyButton.interactable == !blocked && b.buyImage != null && b.buyImage.color == (gift ? b.giftColor : b.normalColor)));
+                        Func<int, bool> shows = label => b.buyLabel.text == w[label] && b.buyButton.interactable && b.buyImage != null && b.buyImage.color == (gift ? b.giftColor : b.normalColor);
+                        bool ok = buy == wantBuy && b.notice.text.StartsWith(head) && listing == wantListing && (!buy || shows(gift ? 52 : 46));
                         if (!ok) { wrong++; log.AppendLine("STORE LINE " + words.languages[l].code + " tab " + tab + " own " + own + " state " + s + ": notice '" + b.notice.text + "' buy " + buy + " label '" + (b.buyLabel != null ? b.buyLabel.text : "-") + "' interactable " + (b.buyButton != null && b.buyButton.interactable) + " listing " + listing
-                            + " (want '" + head + "…', buy " + wantBuy + ", label '" + w[gift ? 52 : 46] + "', interactable " + !blocked + ", listing " + wantListing + ")"); }
-                        if (l == 0 && (tab == 0 || tab == 4) && s == KDItem.InstanceOwned) log.AppendLine("store line ja tab " + tab + " own " + own + " Owned: '" + b.notice.text + "' button " + (buy ? "'" + b.buyLabel.text + "'" + (b.buyButton.interactable ? "" : " (disabled)") : "hidden"));
+                            + " (want '" + head + "…', buy " + wantBuy + ", label '" + w[gift ? 52 : 46] + "', listing " + wantListing + ")"); }
+                        if (l == 0 && (tab == 0 || tab == 4) && s == KDItem.InstanceOwned) log.AppendLine("store line ja tab " + tab + " own " + own + " Owned: '" + b.notice.text + "' button " + (buy ? "'" + b.buyLabel.text + "'" : "hidden"));
                         fits(b.notice, words.languages[l].code + " own " + own + " state " + s);
                         if (buy) fits(b.buyLabel, words.languages[l].code + " own " + own);
+                        if (!wantBuy) continue;
+                        // the presses (BuyPress = _Buy without Store.OpenListing)
+                        Func<string> press = () => (string)mp.Invoke(b, null);
+                        string why = null;
+                        b.debugGiftElapsedOverride = 0f;
+                        if (!gift)
+                        {
+                            string r = press();
+                            if (r != wantListing || (bool)fa.GetValue(b)) why = "buy: one press opens " + wantListing + " (got '" + r + "')";
+                        }
+                        else
+                        {
+                            string r1 = press();
+                            bool armed1 = r1 == "" && (bool)fa.GetValue(b) && b.notice.text == w[53] && shows(54);
+                            fits(b.notice, words.languages[l].code + " caution 53"); fits(b.buyLabel, words.languages[l].code + " label 54");
+                            string r2 = press();
+                            bool open2 = r2 == wantListing && !(bool)fa.GetValue(b) && b.notice.text.StartsWith(head) && shows(52);
+                            string r3 = press();
+                            b.debugGiftElapsedOverride = KH_WashSelectionBoard.GiftConfirmSeconds; b._Refresh();
+                            bool expired = r3 == "" && b.notice.text.StartsWith(head) && shows(52);
+                            string r4 = press();   // after the expiry: arms again, opens nothing
+                            bool rearm = r4 == "" && (bool)fa.GetValue(b);
+                            b.debugGiftElapsedOverride = 0f;
+                            ty.GetMethod("_Tab" + tab).Invoke(b, null); bool tabbed = !(bool)fa.GetValue(b);
+                            fo.SetValue(b, own); fs.SetValue(b, s); fc.SetValue(b, cat); b._Refresh();
+                            if (!(armed1 && open2 && expired && rearm && tabbed)) why = "gift: 1st press arms (53, 54, nothing opens) " + armed1 + ", 2nd within " + KH_WashSelectionBoard.GiftConfirmSeconds + " s opens " + wantListing + " " + open2 + " (got '" + r2 + "'), expiry back to 52 " + expired + ", re-arms after expiry " + rearm + ", a tab change disarms " + tabbed;
+                        }
+                        b.debugGiftElapsedOverride = -1f; fa.SetValue(b, false);
+                        if (why != null) { pressWrong++; log.AppendLine("PRESS " + words.languages[l].code + " tab " + tab + " own " + own + " state " + s + ": " + why); }
                     }
                 }
                 foreach (int k in new[] { 48, 49, 50 }) { b.status.text = w[k]; fits(b.status, words.languages[l].code + " word " + k); }
             }
-            check(wrong == 0, "board store line and purchase button per state x own sets (Owned 47 / None price + 51 + 48 / continuing 50: button; Unknown 49: no button; own set's tab: 52 gift, giftColor, the same Listing; complete-set tab with any own set: 53, disabled, nothing opens), 13 languages x 5 tabs (wrong " + wrong + ")");
+            check(wrong == 0, "board store line and purchase button per state x own sets (Owned 47 / None price + 51 + 48 / continuing 50: button; Unknown 49: no button; own set's tab and the complete-set tab with any own set: 52 gift, giftColor, the same Listing; the button always enabled), 13 languages x 5 tabs (wrong " + wrong + ")");
+            check(pressWrong == 0, "presses: buy (46) opens its Listing at once; gift (52) arms first (caution 53, label 54, nothing opens), opens the same Listing (the complete set's on its tab) on a second press within " + KH_WashSelectionBoard.GiftConfirmSeconds + " s, back to 52 after it, disarmed by a tab change; 13 languages x 5 tabs x own x state (wrong " + pressWrong + ")");
             check(overflow == 0, "Editor overflow of the store words (fully baked labels only; fallback glyphs = device check) = " + overflow);
         }
         finally
         {
-            fl.SetValue(b, l0); fs.SetValue(b, s0); fc.SetValue(b, c0); fo.SetValue(b, o0); b._Tab0();
+            fl.SetValue(b, l0); fs.SetValue(b, s0); fc.SetValue(b, c0); fo.SetValue(b, o0); fa.SetValue(b, a0); b.debugGiftElapsedOverride = g0; b._Tab0();
             if (b.buyButton != null && b.buyButton.gameObject.activeSelf != buy0) b.buyButton.gameObject.SetActive(buy0);
             if (b.buyButton != null && b.buyButton.interactable != inter0) b.buyButton.interactable = inter0;
             if (b.buyImage != null && b.buyImage.color != img0) b.buyImage.color = img0;

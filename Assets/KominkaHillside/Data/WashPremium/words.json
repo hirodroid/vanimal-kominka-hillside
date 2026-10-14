@@ -56,7 +56,8 @@
         "今の洗いが終わるまで利用できます",
         "C",
         "ギフトする",
-        "セットを 1 つでも持っていると、全部入りは買えません"
+        "すでに持っているセットがあります。自分用には買わないでください (ギフト用)",
+        "確認してひらく"
       ]
     },
     {
@@ -115,7 +116,8 @@
         "Available until this wash ends",
         "C",
         "Gift",
-        "Owning any set means the complete set can't be bought"
+        "You already own a set. Don't buy this for yourself (gift only)",
+        "Confirm & open"
       ]
     },
     {
@@ -174,7 +176,8 @@
         "지금 세척이 끝날 때까지 사용할 수 있어요",
         "C",
         "선물하기",
-        "세트를 하나라도 가지고 있으면 전체 세트는 살 수 없어요"
+        "이미 가진 세트가 있어요. 본인용으로 사지 마세요 (선물용)",
+        "확인하고 열기"
       ]
     },
     {
@@ -233,7 +236,8 @@
         "可使用到本次清洗结束",
         "C",
         "赠送",
-        "拥有任意一个套装时，无法购买全部套装"
+        "你已拥有套装。请勿为自己购买（仅限赠送）",
+        "确认并打开"
       ]
     },
     {
@@ -292,7 +296,8 @@
         "可使用至本次清洗結束",
         "C",
         "贈送",
-        "擁有任何一個套裝時，無法購買全部套裝"
+        "你已擁有套裝。請勿為自己購買（僅限贈送）",
+        "確認並開啟"
       ]
     },
     {
@@ -351,7 +356,8 @@
         "Доступно до конца этого мытья",
         "C",
         "Подарить",
-        "Если у вас есть хоть один набор, полный купить нельзя"
+        "У вас уже есть набор. Не покупайте для себя (только подарок)",
+        "Да, открыть"
       ]
     },
     {
@@ -410,7 +416,8 @@
         "Доступно до кінця цього миття",
         "C",
         "Подарувати",
-        "Якщо у вас є хоч один набір, повний купити не можна"
+        "У вас уже є набір. Не купуйте для себе (лише подарунок)",
+        "Так, відкрити"
       ]
     },
     {
@@ -469,7 +476,8 @@
         "Verfügbar bis zum Ende dieser Wäsche",
         "C",
         "Schenken",
-        "Mit einem eigenen Set ist das Komplettset nicht kaufbar"
+        "Du besitzt schon ein Set. Nicht für dich selbst kaufen (nur Geschenk)",
+        "Ja, öffnen"
       ]
     },
     {
@@ -528,7 +536,8 @@
         "Disponible hasta que termine este lavado",
         "C",
         "Regalar",
-        "Si tienes algún set, no puedes comprar el completo"
+        "Ya tienes un set. No lo compres para ti (solo regalo)",
+        "Sí, abrir"
       ]
     },
     {
@@ -587,7 +596,8 @@
         "Disponible jusqu'à la fin de ce lavage",
         "C",
         "Offrir",
-        "Avec un set déjà acquis, le pack complet est indisponible"
+        "Vous avez déjà un set. Ne l'achetez pas pour vous (cadeau)",
+        "Oui, ouvrir"
       ]
     },
     {
@@ -646,7 +656,8 @@
         "Disponível até o fim desta lavagem",
         "C",
         "Presentear",
-        "Com algum conjunto, não é possível comprar o completo"
+        "Você já tem um conjunto. Não compre para você (só presente)",
+        "Sim, abrir"
       ]
     },
     {
@@ -705,7 +716,8 @@
         "Disponibile fino alla fine di questo lavaggio",
         "C",
         "Regala",
-        "Se hai già un set, non puoi comprare quello completo"
+        "Hai già un set. Non comprarlo per te (solo regalo)",
+        "Sì, apri"
       ]
     },
     {
@@ -764,7 +776,8 @@
         "Dostępne do końca tego mycia",
         "C",
         "Podaruj",
-        "Mając dowolny zestaw, nie kupisz pełnego"
+        "Masz już zestaw. Nie kupuj dla siebie (tylko prezent)",
+        "Tak, otwórz"
       ]
     }
   ]

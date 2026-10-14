@@ -15,7 +15,10 @@ namespace KominkaHillside
     // Buying is a separate button that opens the Storefront listing; opening it is never taken as a purchase (Store events bring it back).
     // User decision 2026-10-14: the button shows in every known state (Owned too: someone else may buy as well), hidden only while Unknown.
     // A set this player owns turns its button into "gift" (the same Listing; the gift itself is VRChat's page, as KominkaDogRun IMP-PRG-012),
-    // drawn in giftColor (open-only = neutral). Owning any set disables the complete set's button (it would only cost more), with word 53.
+    // drawn in giftColor (open-only = neutral). Second decision the same day: owning any set turns the complete set's button into gift too
+    // (it stays possible to give it). A gift button takes two presses: the first opens nothing, shows the caution (53: you own a set, do not
+    // buy this for yourself) and relabels it 54 (confirm and open) for GiftConfirmSeconds; the second within that opens the Listing. Expiry
+    // or a tab change disarms it. The buy button (46) opens on the first press as before.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WashSelectionBoard : UdonSharpBehaviour
     {
@@ -23,7 +26,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_Language language;
         public string[] languageCodes;
         public string[] words;
-        public int wordCount=54;      // WashPremium/48 / 49 / 54 write the scene value (KH_WashSelectionEditor.WordCount)
+        public int wordCount=55;      // WashPremium/48 / 49 / 54 write the scene value (KH_WashSelectionEditor.WordCount)
         public int[] groups;          // by item id: the tab (0 foam / 1 water / 2 finish / 3 station), -1 = not offered
         public int[] order;           // the offered item ids in display order
         public int[] itemWords;       // by item id: the word holding its name (20 + id for the first 17; new items append words)
@@ -55,6 +58,15 @@ namespace KominkaHillside
         const float OwnRecheckSeconds=1f;
         private int _ownMask, _shownOwn=-1;
         private float _ownUntil;
+        // The gift button's confirmation (local): armed by its first press, open on a second press within GiftConfirmSeconds.
+        public const float GiftConfirmSeconds=8f;
+        private bool _giftArmed;
+        private float _giftArmedAt=-100f;
+        // Checks only: >= 0 replaces the seconds since the gift button was armed (WashPremium/44); true = _Buy records the Listing it would
+        // open (_lastListing) without Store.OpenListing (the ClientSim harness: no Store page there). 44 checks both at rest.
+        public float debugGiftElapsedOverride=-1f;
+        public bool debugNoStoreOpen;
+        private string _lastListing="";
         private int _tab, _page, _chosen=-1, _lang;
         private bool _wasBusy;
         private int _labelKey=-1, _seenRevision=-1;
@@ -78,7 +90,7 @@ namespace KominkaHillside
         void Poke(){_farUntil=0f;}
         public void _Tick()
         {
-            if(!_pending&&Time.time<_farUntil&&Time.time>=_resultUntil){SendCustomEventDelayedSeconds(nameof(_Tick),NearTickSeconds);return;}
+            if(!_pending&&!_giftArmed&&Time.time<_farUntil&&Time.time>=_resultUntil){SendCustomEventDelayedSeconds(nameof(_Tick),NearTickSeconds);return;}
             string code=language!=null?language.CurrentLanguage:"ja";
             if(code!=_language){_language=code;_lang=0;for(int i=0;languageCodes!=null&&i<languageCodes.Length;i++)if(languageCodes[i]==code)_lang=i;_Refresh();}
             if(_pending&&selection!=null)
@@ -93,6 +105,7 @@ namespace KominkaHillside
             int store=StoreState(category);
             if(Time.time>=_ownUntil){_ownUntil=Time.time+OwnRecheckSeconds;_ownMask=OwnMask();}
             if(store!=_storeState||category!=_storeCategory||code!=_storeLanguage||_ownMask!=_shownOwn){_storeState=store;_storeCategory=category;_storeLanguage=code;_shownOwn=_ownMask;ShowStore();}
+            if(_giftArmed&&!GiftArmed()){_giftArmed=false;ShowStore();}   // the confirmation ran out: back to 52 without the caution
             bool busy=selection!=null&&category>=0&&category<KH_WashSelection.Categories&&selection._CategoryHeld(category);
             if(!_pending&&Time.time>=_resultUntil){if(busy)status.text=W(5);else if(_wasBusy)status.text=W(40);}_wasBusy=busy;
             if(actionButton!=null)actionButton.interactable=!_pending&&selection!=null&&_chosen>=0&&!busy&&!(category==KH_WashSelection.CategoryBath&&IsOut(_chosen));
@@ -143,16 +156,38 @@ namespace KominkaHillside
         }
         /// <summary>The notice line and the purchase button from the cached state and own mask (no Store call: _Refresh and the Edit-mode
         /// menus use it). A state read for another category (a tab or item just changed) shows "checking" until the next tick.</summary>
+        /// <summary>The button is shown: the chosen item's set is known here (Owned / None / continuing; Unknown never pushes to the page).</summary>
+        bool BuyShown()
+        {
+            int c=Category(_chosen);
+            int st=c>=0&&c==_storeCategory?_storeState:-1;
+            return st==KominkaDogRun.KD_ShopItem.InstanceOwned||st==KominkaDogRun.KD_ShopItem.InstanceNone||st==StoreContinuing;
+        }
+        /// <summary>The shown button is a gift button: this tab's set is this player's own, or (complete-set tab) any set is.</summary>
+        bool GiftNow()
+        {
+            if(!BuyShown())return false;
+            if(_tab==4)return _ownMask!=0;
+            int c=Category(_chosen);
+            return c>=0&&(_ownMask&(1<<c))!=0;
+        }
+        bool GiftArmed()
+        {
+            if(!_giftArmed)return false;
+            float e=debugGiftElapsedOverride>=0f?debugGiftElapsedOverride:Time.time-_giftArmedAt;
+            return e<GiftConfirmSeconds;
+        }
         void ShowStore()
         {
             if(notice==null)return;
             int c=Category(_chosen);
             int st=c>=0&&c==_storeCategory?_storeState:-1;
-            bool buy=st==KominkaDogRun.KD_ShopItem.InstanceOwned||st==KominkaDogRun.KD_ShopItem.InstanceNone||st==StoreContinuing;   // Unknown: never pushed to the purchase page
-            bool allBlocked=_tab==4&&_ownMask!=0;                       // owning any set: the complete set would only cost more
-            bool gift=_tab!=4&&c>=0&&(_ownMask&(1<<c))!=0;              // this player's own set: the same Listing, as a gift
+            bool buy=BuyShown();
+            bool gift=GiftNow();
+            if(!gift)_giftArmed=false;
+            bool armed=gift&&GiftArmed();
             if(c<0)notice.text=W(8);
-            else if(buy&&allBlocked)notice.text=W(53);
+            else if(armed)notice.text=W(53);   // the caution, only between the two presses
             else if(st==StoreContinuing)notice.text=W(50)+"  ·  "+W(8);
             else if(st==KominkaDogRun.KD_ShopItem.InstanceOwned)notice.text=W(47)+"  ·  "+W(8);
             else if(st==KominkaDogRun.KD_ShopItem.InstanceNone)notice.text=Price(c)+"  ·  "+W(48);
@@ -160,10 +195,10 @@ namespace KominkaHillside
             if(buyButton!=null)
             {
                 if(buyButton.gameObject.activeSelf!=buy)buyButton.gameObject.SetActive(buy);
-                if(buyButton.interactable==allBlocked)buyButton.interactable=!allBlocked;
+                if(!buyButton.interactable)buyButton.interactable=true;
             }
             if(buyImage!=null)buyImage.color=gift?giftColor:normalColor;
-            if(buyLabel!=null)buyLabel.text=W(gift?52:46);
+            if(buyLabel!=null)buyLabel.text=W(armed?54:gift?52:46);
         }
         /// <summary>The price the purchase button leads to: the complete set on the complete-set tab, else the chosen item's set.</summary>
         string Price(int c)
@@ -177,22 +212,36 @@ namespace KominkaHillside
         /// back through the Store events (KD_ShopItem / KH_WashSelection), never from this press.</summary>
         public void _Buy()
         {
-            string id=BuyListing();
-            if(id==null||id.Length==0)return;
-            Click();Store.OpenListing(id);Poke();
+            string id=BuyPress();
+            Click();Poke();
+            if(id.Length==0)return;
+            _lastListing=id;
+            if(!debugNoStoreOpen)Store.OpenListing(id);
         }
-        /// <summary>The Listing the button opens: this tab's set (buy or gift: the same Listing), the complete set's only while this player owns
-        /// no set ("" = nothing opens; the button is disabled then, this also stops a direct call).</summary>
+        /// <summary>One press of the purchase button: the Listing to open now, or "" (nothing to open, or a gift button's first press, which
+        /// only arms it: caution 53, label 54). A gift button's second press within GiftConfirmSeconds opens and disarms.</summary>
+        string BuyPress()
+        {
+            string id=BuyListing();
+            if(id==null||id.Length==0)return "";
+            if(GiftNow())
+            {
+                if(!GiftArmed()){_giftArmed=true;_giftArmedAt=Time.time;ShowStore();return "";}
+                _giftArmed=false;ShowStore();
+            }
+            return id;
+        }
+        /// <summary>The Listing the button opens: this tab's set (buy or gift: the same Listing), the complete set's on its tab.</summary>
         string BuyListing()
         {
-            if(_tab==4)return _ownMask!=0?"":allListingId;
+            if(_tab==4)return allListingId;
             if(selection!=null&&selection.setItems!=null&&_tab>=0&&_tab<selection.setItems.Length&&selection.setItems[_tab]!=null)return selection.setItems[_tab].ceListingId;
             return "";
         }
         bool IsOut(int id){int c=Category(id);return selection!=null&&c>=0&&selection._Selected(c)==id;}
         bool Listed(int id){int g=Category(id);return g>=0&&(_tab==4||g==_tab);}
         public void _Tab0(){Tab(0);}public void _Tab1(){Tab(1);}public void _Tab2(){Tab(2);}public void _Tab3(){Tab(3);}public void _Tab4(){Tab(4);}
-        void Tab(int i){_tab=i;_page=0;_chosen=-1;Click();_Refresh();Poke();}
+        void Tab(int i){_tab=i;_page=0;_chosen=-1;_giftArmed=false;Click();_Refresh();Poke();}
         public void _Item0(){Pick(0);}public void _Item1(){Pick(1);}public void _Item2(){Pick(2);}public void _Item3(){Pick(3);}public void _Item4(){Pick(4);}public void _Item5(){Pick(5);}
         void Pick(int slot){if(_visible[slot]<0)return;_chosen=_visible[slot];Click();RefreshItems();Poke();}
         public void _Next(){_page++;_chosen=-1;Click();_Refresh();Poke();}

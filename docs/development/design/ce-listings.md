@@ -67,7 +67,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 | C-2 | VAnimal｜あらいばセット 水 | Permanent / 500C | `prod_fd26e530-34dc-4eee-a186-20d1573987f3` | `prod_e0938881-138f-4c44-b7df-08bb969b76da` | `KD_Product_WashWater.asset` | `wash.water_set` | じょうろ、ホース、水鉄砲 |
 | C-3 | VAnimal｜あらいばセット 仕上げ | Permanent / 500C | `prod_c23c31d2-ef0e-45b4-ab3f-f5abf5f041f8` | `prod_f78351ab-9cdc-4a43-997d-073fea2c2381` | `KD_Product_WashFinish.asset` | `wash.finish_set` | ドライヤー、柄タオル |
 | C-4 | VAnimal｜あらいばセット 洗い場 | Permanent / 500C | `prod_396c89c7-3bd9-46d3-93af-28983d95feb7` | `prod_0632ffa5-a39e-4459-8ca3-5648c1d43356` | `KD_Product_WashStation.asset` | `wash.station_set` | 檜の洗い台、プール |
-| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) | `prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e` | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定)。**個別のセットを 1 つでも持つ人にはボードの購入ボタンが非活性** (§4-6) |
+| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) | `prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e` | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定)。**個別のセットを 1 つでも持つ人にはボードのボタンがギフト用 (注意を 1 回挟む 2 段)** (§4-6) |
 
 リスティング画像 (1024×1024、価格なし、犬なし) は [artifacts/wash-listings/2026-10-13-v05/](../../../artifacts/wash-listings/2026-10-13-v05/README.md) の 5 枚 (9 品の再設計版)。それ以前の撮影分 ([2026-10-13](../../../artifacts/wash-listings/2026-10-13/README.md)、[2026-10-08](../../../artifacts/wash-listings/2026-10-08/README.md)) は保全で、Storefront には使わない。
 
@@ -117,7 +117,7 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 | 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める。**決定: 2026-10-14 ユーザー「案 1」。Storefront で 1 つの Listing に 4 Product を追加できたことを実測** (同じ Product を C-1〜C-4 の各 Listing にも入れた状態で成立するかは、4 つの Listing を作った時点で確かめる) | IMP-DOG-056 (決定済み。Row の拡張 = Listing だけの項目は 056 §1) |
 | 4-3 | **インスタンス共有の所有判定** | 既存 CE は購入者本人の `Store` 判定だけ。洗い場は「誰か 1 人が所有」+「洗い終わりまで継続」+「所有者 0 で無料に戻る」。所有者の退室・途中参加・洗いの終わりの判定が要る。`KH_WashSelection` には購入判定が無い (IMP-DOG-043 は購入なしで先行導入) | IMP-DOG-056 |
 | 4-4 | 裏山の Listing 名の接尾 | 古民家と同名の Listing を 2 つ作ると Storefront で見分けにくい。「｜裏山」などを付けるかはユーザー | DES-UI-005 |
-| 4-6 | 全部入りと個別の重複購入 | **決定: 2026-10-14 ユーザー。個別のセットを 1 つでも持っている人には全部入りの購入ボタンを非活性にする** (高くなるだけで中身は同じ)。ギフトは古民家 IMP-PRG-012 と同じで、買う前も買った後も Listing を開ける (所有セットのボタンは「ギフトする」)。副作用: 全部入りをギフトできるのはセットを持たない人だけ | IMP-DOG-056 (実装済み) |
+| 4-6 | 全部入りと個別の重複購入 | **決定: 2026-10-14 ユーザー (2 回)。個別のセットを 1 つでも持っている人には全部入りを「ギフトだけのボタン」にし、開く前に「すでに持っているセットがあります。自分用には買わないでください (ギフト用)」の注意を 1 回挟む** (1 回目の押下で注意、8 秒内の 2 回目で Listing)。初回の「非活性」は撤回 (ギフトはできるようにしたい)。ギフトは古民家 IMP-PRG-012 と同じで、買う前も買った後も Listing を開ける。所有セットのボタンも同じ 2 段の「ギフトする」 | IMP-DOG-056 (実装済み) |
 | 4-5 | 画像の価格表記・犬なしの既定 | 古民家の既定 (1024×1024、価格なし) を踏襲。C の 5 枚は撮影済み | — |
 
 ## 記録

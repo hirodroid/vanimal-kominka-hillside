@@ -30,6 +30,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  static bool PremiumBuyShown(){var t=premiumBoard.Find("Buy");return t!=null&&t.gameObject.activeSelf;}
  // User decision 2026-10-14: the button's label (46 buy / 52 gift on an own set) and whether it can be pressed (the complete set: not with an own set)
  static string PremiumBuyLabel(){return PremiumText("Buy/Label");}
+ static UdonBehaviour PremiumBoardUb(){return premiumBoard.GetComponent<UdonBehaviour>();}
  static bool PremiumBuyActive(){var t=premiumBoard.Find("Buy");var b=t!=null?t.GetComponent<Button>():null;return b!=null&&b.interactable;}
  static string PremiumText(string child){var t=premiumBoard.Find(child);var tm=t!=null?t.GetComponent<TMPro.TMP_Text>():null;return tm!=null?tm.text:"(no "+child+")";}
  /// <summary>The board's word i in its current language (as KH_WashSelectionBoard.W).</summary>
@@ -57,7 +58,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  static Func<double,bool> PremiumAck(string what){return WsUntil(()=>PremiumSel("localResultSerial")!=premiumSerial,5,()=>"owner reply to "+what+" ("+PremiumState()+")");}
  const double PremiumGap=.45;
  static void PremiumHold(int item,int v){PremiumSlotTool(item).SetProgramVariable("debugHeldOverride",v);}
- static void PremiumRecover(){if(premiumTools==null)return;foreach(var u in premiumTools)if(u!=null){u.SendCustomEvent("_onDrop");u.SetProgramVariable("debugHeldOverride",0);}if(premiumSelection!=null)premiumSelection.SetProgramVariable("_receivedState",premiumReceived);premiumTools=null;premiumSelection=null;premiumWater=null;premiumBoard=null;}
+ static void PremiumRecover(){if(premiumTools==null)return;foreach(var u in premiumTools)if(u!=null){u.SendCustomEvent("_onDrop");u.SetProgramVariable("debugHeldOverride",0);}if(premiumSelection!=null)premiumSelection.SetProgramVariable("_receivedState",premiumReceived);if(premiumBoard!=null){var bu=premiumBoard.GetComponent<UdonBehaviour>();if(bu!=null)bu.SetProgramVariable("debugNoStoreOpen",false);}premiumTools=null;premiumSelection=null;premiumWater=null;premiumBoard=null;}
  static void MakeWashPremiumCases(){if(WsGroup("premium")||WsGroup("premium-store"))PremiumStoreCases();   // IMP-DOG-056: first, before any PremiumBind owns the sets
  wsReport.notCovered.Add("Premium (IMP-DOG-046/047: foam / water / finish + platform): UI persistent listeners and local Owner request/ack exercised; holding is injected with debugHeldOverride, Pickup/Use events are injected. Physical grip, a tool held on another client (two-client network), late join with three tools out, sound quality and Quest rendering remain NOT_TESTED. The water pistol (one shot) and the hose (hold to spray) inputs are P-pistol-shot / P-hose-hold (group premium-water); another player's burst is the direct _OnShot call, not a received state.");
  if(WsGroup("premium")||WsGroup("premium-input"))PremiumInputCases();if(WsGroup("premium")||WsGroup("premium-other"))PremiumOtherCases();if(WsGroup("premium")||WsGroup("premium-other")||WsGroup("premium-free"))PremiumFreeCases();
@@ -179,7 +180,12 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
   s.Add(WsUntil(()=>PremiumBuyShown()&&PremiumBuyActive()&&PremiumBuyLabel()==PremiumWord(52)&&PremiumText("Notice").StartsWith(PremiumWord(47)),3,()=>"owned line, the gift button ('"+PremiumText("Notice")+"', button "+PremiumBuyShown()+" '"+PremiumBuyLabel()+"')"));
   s.Add(WsDo(PremiumSend));s.Add(PremiumAck("foam cannon (owned before Play)"));
   s.Add(WsDo(()=>WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&PremiumSel("selectedFoam")==PFoamCannon&&PremiumShown()[0]==PFoamCannon,"owned set: foam cannon applied ("+PremiumState()+")")));
-  s.Add(WsDo(()=>PremiumClick("Set4")));s.Add(WsUntil(()=>PremiumBuyShown()&&!PremiumBuyActive()&&PremiumBuyLabel()==PremiumWord(46)&&PremiumText("Notice")==PremiumWord(53),3,()=>"complete-set tab with an own set: button disabled + word 53 ('"+PremiumText("Notice")+"', active "+PremiumBuyActive()+")"));
+  // decision 2026-10-14 (second): the complete set with an own set = a gift button in two presses (caution 53 + label 54, then it opens). The board
+  // records the Listing instead of Store.OpenListing (debugNoStoreOpen: no Store page in ClientSim; a failed Store call could halt the board).
+  s.Add(WsDo(()=>{PremiumBoardUb().SetProgramVariable("debugNoStoreOpen",true);PremiumBoardUb().SetProgramVariable("_lastListing","");PremiumClick("Set4");}));
+  s.Add(WsUntil(()=>PremiumBuyShown()&&PremiumBuyActive()&&PremiumBuyLabel()==PremiumWord(52),3,()=>"complete-set tab with an own set: an enabled gift button ('"+PremiumBuyLabel()+"', active "+PremiumBuyActive()+")"));
+  s.Add(WsDo(()=>{PremiumClick("Buy");WsExpect(PremiumText("Notice")==PremiumWord(53)&&PremiumBuyLabel()==PremiumWord(54)&&Get<string>(PremiumBoardUb(),"_lastListing")=="","1st press: caution 53, label 54, nothing opened ('"+PremiumText("Notice")+"', '"+PremiumBuyLabel()+"', opened '"+Get<string>(PremiumBoardUb(),"_lastListing")+"')");
+   PremiumClick("Buy");WsExpect(Get<string>(PremiumBoardUb(),"_lastListing")==Get<string>(PremiumBoardUb(),"allListingId")&&PremiumBuyLabel()==PremiumWord(52),"2nd press within 8 s opens the complete set's Listing, back to 52 (opened '"+Get<string>(PremiumBoardUb(),"_lastListing")+"')");PremiumBoardUb().SetProgramVariable("debugNoStoreOpen",false);}));
   s.Add(WsWait(PremiumGap));
   s.Add(WsDo(()=>{if(PremiumOwned(1))throw new WsSkip("the water set is owned already");rev=PremiumSel("revision");PremiumTake(PWateringCan);}));s.Add(PremiumAck("watering can (water set not owned)"));
   s.Add(WsDo(()=>{WsExpect(PremiumCode()==KH_WashSelection.ResultLocked&&PremiumSel("selectedWater")==-1&&PremiumSel("selectedFoam")==PFoamCannon&&PremiumSel("revision")==rev,"another set stays Locked, the foam stays ("+PremiumState()+")");PremiumClear();}));

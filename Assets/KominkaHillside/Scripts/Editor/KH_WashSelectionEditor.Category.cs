@@ -21,9 +21,10 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  public static readonly Vector3 TrayCentre=new Vector3(-.975f,.82f,-.04f),TrayLocal=new Vector3(-.975f,.785f,.03f),TrayScale=new Vector3(.73f,.03f,.42f),PostLocal=new Vector3(-.975f,.38f,.03f);
  // 42 + word 42 "held tools stay out" (Q2) + 43..45 the names of items 17..19 + 46..51 the purchase words of IMP-DOG-056 (46 open the purchase
  // page, 47 usable in this instance, 48 purchase needed here (Locked), 49 checking purchases (Pending), 50 usable until this wash ends, 51 the
- // credits suffix "C") + 52 / 53 (user decision 2026-10-14: 52 "gift" on an owned set's button, 53 owning any set blocks the complete set).
+ // credits suffix "C") + 52..54 (user decisions 2026-10-14: 52 "gift" on the button of an own set / of the complete set when any set is
+ // owned, 53 the caution between the gift button's two presses (was: the complete set is blocked), 54 the armed gift button "confirm and open").
  // 48 / 49 / 54 write words + wordCount to the boards; 44 checks 13 x WordCount.
- public const int WordCount=54;
+ public const int WordCount=55;
  // By item id (same length as Names): the word holding its name. Explicit, not 20 + id: words 37.. are other texts, so a new item
  // (id 17+) appends its name to every language in words.json (index WordCount, then WordCount += 1) and that index here.
  public static readonly int[] ItemWords={20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,43,44,45};   // 17 WaterPistol, 18 Hose, 19 PoolBath: AI-written names (13 languages)
