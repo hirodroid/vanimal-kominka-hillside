@@ -38,6 +38,14 @@ namespace KominkaHillside.Editor
         static void VerifyInto(Action<bool, string> Check, Action<string> Warn)
         {
             var scene = EditorSceneManager.GetActiveScene();
+            // BUG-WLD-002: the reference and the independent video camera have separate settings.
+            var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
+            var reference = descriptor != null && descriptor.ReferenceCamera != null
+                ? descriptor.ReferenceCamera.GetComponent<Camera>() : null;
+            Check(reference != null, "scene descriptor reference camera assigned");
+            if (reference != null)
+                Check(Mathf.Approximately(reference.nearClipPlane, 0.01f) && reference.farClipPlane >= 2200f,
+                    "reference camera near 0.01 / far >= 2200 (actual " + reference.nearClipPlane + " / " + reference.farClipPlane + ")");
             _w5Catalog = null;   // W5: read UITranslations.json afresh (Ja / VerifyLanguage)
             foreach (var p in Programs) Check(AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(p + ".asset") != null, "program asset " + p + ".asset");
             var root = SceneRoot(scene, SystemName, out int n);

@@ -252,10 +252,10 @@ namespace KominkaHillside.Editor
                 foreach(float side in new[]{-1.72f,1.72f}){var rail=b.AddComponent<BoxCollider>();rail.center=new Vector3(0,.55f,side);rail.size=new Vector3(10.2f,1.1f,.2f);}
             }
             OpenConnections(root.transform);BuildLandscape(root.transform);MoveBackdrop();
-            // Reference camera far plane must include the expanded landscape. Near remains as authored.
+            // BUG-WLD-002: allow close contact with dogs while retaining the expanded landscape.
             var descriptor=UnityEngine.Object.FindObjectOfType<VRC.SDK3.Components.VRCSceneDescriptor>();
             if(descriptor!=null&&descriptor.ReferenceCamera!=null)
-            {var camera=descriptor.ReferenceCamera.GetComponent<Camera>();if(camera!=null){camera.farClipPlane=Mathf.Max(camera.farClipPlane,2200);EditorUtility.SetDirty(camera);}}
+            {var camera=descriptor.ReferenceCamera.GetComponent<Camera>();if(camera!=null){camera.nearClipPlane=.01f;camera.farClipPlane=Mathf.Max(camera.farClipPlane,2200);EditorUtility.SetDirty(camera);}}
             AssetDatabase.SaveAssets();EditorSceneManager.MarkSceneDirty(scene);
             if(!EditorSceneManager.SaveScene(scene))throw new IOException("Course save failed");
             Debug.Log("[KH Course] Saved full ground copy: 20 terrain tiles, 24 water chunks, 2 bridges. Verify ground separately; dog route, full navigation, scenery culling and devices are NOT complete.");

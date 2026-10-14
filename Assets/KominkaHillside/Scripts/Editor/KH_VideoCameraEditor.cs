@@ -60,7 +60,8 @@ namespace KominkaHillside.Editor
         // ================================================================ tuning table (trial values; Video/1 writes them, Video/2 compares)
         public const int RenderWidth = 1280, RenderHeight = 720, RenderDepth = 24;
         public const float RenderFps = 30f;
-        public const float CamNear = 0.03f, CamFar = 300f, CamFov = 50f;
+        // BUG-WLD-002: keep close dog shots and the full-course background ring in view.
+        public const float CamNear = 0.01f, CamFar = 2200f, CamFov = 50f;
         public const float Clearance = 0.18f, GroundLift = 0.25f, OcclusionInterval = 0.1f, PushOutScale = 0.45f, CutDistance = 6f, LostHoldSeconds = 3f;
         public const float PosTau = 0.6f, TurnPosTau = 1.0f, LookTau = 0.25f, HeadingTau = 0.8f, FovTau = 0.5f, StillSpeed = 0.3f, TurnRateDeg = 90f;
         public const float DogFov = 50f, DogSideDeg = 40f, DogFill = 0.4f, DogDistMin = 1.2f, DogDistMax = 5f, DogLift = 0.35f, DogLookAhead = 0.5f;
@@ -260,6 +261,32 @@ namespace KominkaHillside.Editor
         // ================================================================ Video/1
 
         [Serializable] class BuildReport { public string utc, scene, status, backup, menu; public List<string> log = new List<string>(); }
+
+        // Apply the clip policy without rebuilding the monitor, controls, wiring or course geometry.
+        [MenuItem(Menu + "2c - Apply Camera Clip Settings")]
+        public static void ApplyCameraClipSettings()
+        {
+            KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
+            var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
+            var reference = descriptor != null && descriptor.ReferenceCamera != null
+                ? descriptor.ReferenceCamera.GetComponent<Camera>() : null;
+            var root = SceneRoot(EditorSceneManager.GetActiveScene(), SystemName, out int count);
+            var video = root != null ? root.GetComponent<KH_VideoCamera>() : null;
+            if (reference == null || count != 1 || video == null || video.cam == null)
+                throw new InvalidOperationException("Existing reference and video cameras required");
+            if (reference == video.cam || reference.gameObject.scene != root.scene ||
+                video.cam.transform.parent != root.transform || UnityEngine.Object.FindObjectsOfType<KH_VideoCamera>(true).Length != 1)
+                throw new InvalidOperationException("Distinct reference and unique video cameras in the target scene required");
+            reference.nearClipPlane = 0.01f;
+            video.cam.nearClipPlane = CamNear;
+            video.cam.farClipPlane = CamFar;
+            EditorUtility.SetDirty(reference);
+            EditorUtility.SetDirty(video.cam);
+            var scene = EditorSceneManager.GetActiveScene();
+            EditorSceneManager.MarkSceneDirty(scene);
+            if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Camera clip settings save failed");
+            Debug.Log("[KH Video] Applied camera clips; run Video/2 - Verify separately");
+        }
 
         [MenuItem(Menu + "1 - Build Video Camera")]
         public static void Build()
