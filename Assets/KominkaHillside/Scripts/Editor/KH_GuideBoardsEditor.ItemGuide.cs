@@ -297,6 +297,7 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-item-guide-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, false);
+            MeshTxBegin();   // BUG-ENV-005: the trays written by this run are undone if it fails before the save
             try
             {
                 // the first version (one board across the road from the map) is gone (2026-10-14 ユーザー決定)
@@ -338,10 +339,12 @@ namespace KominkaHillside.Editor
                 foreach (var line in log.ToString().Split('\n')) if (line.Trim().Length > 0 && !line.StartsWith("  AUTOSIZE")) r.log.Add(line.Trim());
                 EditorSceneManager.MarkSceneDirty(c.scene);
                 if (!EditorSceneManager.SaveScene(c.scene)) throw new IOException("item guide scene save failed");
+                MeshTxCommit();
             }
             catch
             {
-                Debug.LogError("[KH Item Guide] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes.");
+                MeshTxRollback(r.log);
+                Debug.LogError("[KH Item Guide] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes (the tray meshes this run wrote were rolled back).");
                 r.status = "FAIL (exception, not saved)";
                 WriteJson(ItemBuildReportPath, r);
                 throw;
@@ -361,8 +364,7 @@ namespace KominkaHillside.Editor
         static void BuildItemBoard(Transform stand, Board b, Ctx c, List<string> log)
         {
             var keep = new HashSet<Transform>();
-            BuildStructure(stand, b, c, keep);
-            var canvas = EnsureCanvas(stand, b, keep);
+            var canvas = EnsureCanvas(stand, b, keep);   // BUG-ENV-005: the frame is built after the canvas (BuildStructure below)
             Img(canvas, "HeaderPlate", ItemHeaderPos, ItemHeaderPlate, HeaderPlateColor, null, keep);
             Txt(canvas, "Header", ItemHeaderPos, ItemHeaderText, MapTitleMax, MapTitleMin, TextAlignmentOptions.Center, SignInk, false, c, keep);
             var paper = Img(canvas, ItemPaperName, ItemPaperPos, ItemPaperSize, Washi, null, keep).transform;
@@ -418,6 +420,12 @@ namespace KominkaHillside.Editor
                 keep.Add(hit.transform);
             }
             foreach (var g in inRt.GetComponentsInChildren<Graphic>(true)) if (g.color.a == 0f) g.canvasRenderer.cullTransparentMesh = true;
+            // BUG-ENV-005: the frame, its Back with a hole under the header plate and the paper (the cards are on the paper; the input
+            // canvas draws nothing: its graphics are clear and culled)
+            var notes = new List<string>();
+            var holes = CanvasHoles(stand, TrayFront, new[] { canvas }, null, keep, notes);
+            BuildStructure(stand, b, c, keep, holes, b.name, log);
+            foreach (var n in notes) log.Add("NOTE " + stand.name + " " + n);
 
             foreach (Transform t in stand)
                 if (t.name != StructureName && t.name != CanvasName && t.name != ItemInputName) log.Add("WARN " + stand.name + "/" + t.name + " is not made by this builder: left as is");
@@ -535,7 +543,7 @@ namespace KominkaHillside.Editor
             }
             try { KD_LocalizationEditor.ValidateScene(c.language, c.catalog); bound(true, "localization tables, bindings and glyphs match the catalogs (KD_LocalizationEditor.ValidateScene)"); }
             catch (Exception e) { bound(false, "localization: " + e.Message + " (Guide/20 / Guide/22 re-bind; the later of the two binds everything)"); }
-            v.budget = "per board: frame 6 cube renderers (" + WoodMatPath + ", Batching Static, shared with the guide boards), a drawing canvas (header plate, paper, 8 cards (7 rounded "
+            v.budget = "per board: frame 6 renderers (5 cubes + the tray Back, " + BoardMeshDir + "; " + WoodMatPath + ", Batching Static, shared with the guide boards), a drawing canvas (header plate, paper, 8 cards (7 rounded "
                 + KD_UiSpriteEditor.RoundSpritePath + "), " + ItemLabels().Count + " labels) and an input canvas (7 clear hit areas, culled); " + spots.Count + " boards = " + spots.Count
                 + " x 2 canvases; Udon 0 (the buttons call KD_TreatPouch), trigger colliders " + spots.Count + ", network objects 0, no new texture";
             v.status = v.failed == 0 ? "ITEM_GUIDE_OK" : "ITEM_GUIDE_FAIL";
@@ -560,7 +568,15 @@ namespace KominkaHillside.Editor
                 }
             var cv = stand.Find(CanvasName) as RectTransform;
             req(cv != null && cv.GetComponent<Canvas>() != null && cv.sizeDelta == b.canvasMm && Mathf.Abs(cv.localPosition.y - CanvasCenterY(b)) < 0.001f && Mathf.Abs(cv.localScale.x - Mm) < 1e-6f
-                && cv.GetComponent<GraphicRaycaster>() == null && cv.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null, n + " drawing canvas " + b.canvasMm + " mm, read-only");
+                && Mathf.Abs(cv.localPosition.z - TrayFront) < 1e-4f && cv.localRotation == Quaternion.identity
+                && cv.GetComponent<GraphicRaycaster>() == null && cv.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null, n + " drawing canvas " + b.canvasMm + " mm, read-only, in the Back's front plane z " + TrayFront);
+            // BUG-ENV-005 (Codex review 2026-10-15 中1): Back = the tray the canvas needs now (pose, asset, mesh regenerated from the paper's rects)
+            {
+                Vector3 tc, ts; BoardTrayBox(b, out tc, out ts);
+                string why = "no canvas";
+                bool trayOk = cv != null && TrayMatches(stand, new[] { cv }, null, TrayFront, tc, ts, true, BoardTrayAsset(b.name), out why);
+                req(trayOk, n + "/Back is the tray with the paper's holes (BUG-ENV-005; run Guide/22): " + why);
+            }
             var inRt = stand.Find(ItemInputName) as RectTransform;
             var inBox = inRt != null ? inRt.GetComponent<BoxCollider>() : null;
             req(inRt != null && inRt.GetComponent<Canvas>() != null && inRt.GetComponent<GraphicRaycaster>() != null && inRt.GetComponent<VRC.SDK3.Components.VRCUiShape>() != null

@@ -2,11 +2,11 @@
 id: BUG-ENV-004
 type: BUG
 system: ENV
-status: todo
+status: review
 priority: Low
 summary: 自作の小物 2 件に同一平面の重なり (写真ボードの仕上げ板 KH_PhotoBoard/Structure/FinishedVisual 219 cm² gap 2 mm、門前の案内板の屋根の棟 Ridge と RoofFront / RoofBack 7 cm² gap 0)。BUG-ENV-003 の走査で見つかった古民家以外の残り
-next: "ユーザーが Play でちらつきを見た時に着手。直すなら生成側 (KH_PropFinishEditor の仕上げ板の押し出し、KH_GuideBoardsEditor の屋根の棟の高さ) を 4 mm 離す。ZFight/1 で再確認"
-updated: 2026-10-13
+next: "BUG-ENV-005 の Quest 確認 (D34) に合流。棟・屋根板・写真ボードの重なりは ZFight/7 で 0 組"
+updated: 2026-10-15
 ---
 
 # BUG-ENV-004 写真ボードの仕上げ板と案内板の屋根の棟の Z ファイト候補
@@ -30,3 +30,5 @@ updated: 2026-10-13
 
 2026-10-13: 起票 (BUG-ENV-003 の走査の残り)。優先度 Low は AI の仮置き。未着手。
 2026-10-14: 統括 (Fable) 判断で着手せず。着手条件 (ユーザーの Play でちらつきが見える) が満たされておらず、生成側の 4 mm の修正は Guide/1 / Course/162 の再生成を伴うため、条件が揃うまで保留。
+2026-10-15: ユーザーが Quest で看板・ポスターのちらつきを報告 ([BUG-ENV-005](BUG-ENV-005-quest-board-label-poster-zfight.md))。着手条件が満たされたので wip。2 件とも 005 の修正に含める。
+2026-10-15: BUG-ENV-005 で直した (棟を板の下へ、屋根板を頂で突き合わせ、写真ボードは Blender で枠・背板・屋根を作り直し)。ZFight/7 で 0 組。Quest の確認は 005 の D34。

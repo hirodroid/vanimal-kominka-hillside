@@ -130,12 +130,14 @@ namespace KominkaHillside.Editor
 
         // ---------------------------------------------------------------- detection
 
-        static float sCoplanar = CoplanarGap, sNear = NearGap;
+        static float sCoplanar = CoplanarGap, sNear = NearGap, sMinWidth = 0f;
 
-        /// <summary>coplanarGap / nearGap default to the farmhouse tiers (3 / 20 mm); the tools pass tighter ones.</summary>
-        public static Result Run(List<Input> inputs, float cellSize, float minAreaM2, float clusterLink, double budgetSeconds, string progressTitle, float coplanarGap = CoplanarGap, float nearGap = NearGap)
+        /// <summary>coplanarGap / nearGap default to the farmhouse tiers (3 / 20 mm); the tools pass tighter ones. minWidth (BUG-ENV-005, ZFight/7):
+        /// an overlap piece whose mean width 2 x area / perimeter is below it is a float sliver along a shared edge (two faces meeting edge to
+        /// edge through different transforms), not an overlap; 0 = off (the other menus).</summary>
+        public static Result Run(List<Input> inputs, float cellSize, float minAreaM2, float clusterLink, double budgetSeconds, string progressTitle, float coplanarGap = CoplanarGap, float nearGap = NearGap, float minWidth = 0f)
         {
-            sCoplanar = coplanarGap; sNear = nearGap;
+            sCoplanar = coplanarGap; sNear = nearGap; sMinWidth = minWidth;
             var r = new Result(); var watch = Stopwatch.StartNew();
             var tris = new List<Tri>(); var partBounds = new List<Bounds>(); var partMats = new List<List<MaterialInfo>>();
             try
@@ -293,6 +295,11 @@ namespace KominkaHillside.Editor
             ctx.Set(A.a, u, v);
             float area = ctx.Overlap(A.a, A.b, A.c, B.a, B.b, B.c);
             if (area < minArea) return;
+            if (sMinWidth > 0f)
+            {
+                float per = 0f; for (int k = 0; k < ctx.count; k++) per += Vector2.Distance(ctx.poly[k], ctx.poly[(k + 1) % ctx.count]);
+                if (per <= 0f || 2f * area / per < sMinWidth) return;
+            }
             float gMax = 0f, gSum = 0f; float nn = Vector3.Dot(B.n, A.n); if (Mathf.Abs(nn) < 1e-4f) return;
             Vector3 centre = Vector3.zero;
             for (int k = 0; k < ctx.count; k++)

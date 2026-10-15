@@ -478,6 +478,26 @@ namespace KominkaHillside.Editor
             Check(canvas != null && canvas.GetComponent<GraphicRaycaster>() == null && canvas.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null && canvas.GetComponent<Canvas>() != null && canvas.GetComponent<Canvas>().renderMode == RenderMode.WorldSpace,
                 "board canvas: world space, read-only (no raycaster / UI shape)");
             var photos = board.Find("Photos");
+            // BUG-ENV-005: photos flush with the canvas, no Graphic over a photo within 30 mm (the backings are BoardBackingMm behind)
+            if (canvas != null && photos != null)
+            {
+                var over = new List<string>();
+                foreach (var g in canvas.GetComponentsInChildren<Graphic>(true))
+                {
+                    var wc = new Vector3[4]; g.rectTransform.GetWorldCorners(wc);
+                    var lo = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue); var hi = -lo;
+                    foreach (var w in wc) { var p = canvas.InverseTransformPoint(w); lo = Vector3.Min(lo, p); hi = Vector3.Max(hi, p); }
+                    if (lo.z > 30f) continue;
+                    for (int k = 0; k < PageSize; k++)
+                    {
+                        var cp = CellPos(k);
+                        float ox = Mathf.Min(hi.x, cp.x + PhotoMm.x * 0.5f) - Mathf.Max(lo.x, cp.x - PhotoMm.x * 0.5f), oy = Mathf.Min(hi.y, cp.y + PhotoMm.y * 0.5f) - Mathf.Max(lo.y, cp.y - PhotoMm.y * 0.5f);
+                        if (ox > 0.5f && oy > 0.5f) over.Add(g.name + " over photo " + k);
+                    }
+                }
+                bool flush = Enumerable.Range(0, PageSize).All(k => photos.Find("Photo" + k) != null && Mathf.Abs(photos.Find("Photo" + k).localPosition.z - PhotoFrontZ) < 1e-5f);
+                Check(over.Count == 0 && flush, "board photos in the canvas plane (z " + PhotoFrontZ + "), no Graphic over a photo (BUG-ENV-005)" + (over.Count > 0 ? ": " + string.Join(", ", over.Take(6)) : "") + (flush ? "" : "; photo z off: run Photo/4 again"));
+            }
             Check(photos != null && Mathf.Approximately(photos.lossyScale.x, photos.lossyScale.y) && Mathf.Approximately(photos.lossyScale.y, photos.lossyScale.z), "photos' parent has a uniform scale (the snap shader's aim test)");
             for (int k = 0; k < PageSize; k++)
             {

@@ -59,6 +59,9 @@ namespace KominkaHillside.Editor
         static readonly Vector2 UrlPx = new Vector2(750f, 55f);                                             // 1 px = 0.8 mm (古民家と同じ) -> 0.60 x 0.044 m, 28pt (古民家 500 x 44 / 22pt を画像に合わせて拡大)
         const float UrlScale = 0.0008f, UrlPoints = 28f, UrlGap = 0.0075f;
         const float FrameBorder = 0.03f, PlankDepth = 0.02f, PlankGap = 0.01f, PosterGap = 0.20f;
+        /// <summary>BUG-ENV-005 (2026-10-15): root-local z of the planks' front face; the image / URL canvases sit in it, in the planks' holes
+        /// (KH_GuideBoardsEditor.Tray.cs; were 2 / 4 mm in front of a solid plank).</summary>
+        const float PlankFront = -(PlankGap + PlankDepth);
         /// <summary>画像の中心の高さ (読む場所の地面から)。塀が低ければ順に下げる。立って読む目の高さ 1.5〜1.6、座った VR 約 1.15 の間。</summary>
         static readonly float[] PosterCentreHeights = { 1.35f, 1.30f, 1.25f, 1.20f };
         const float PosterReaderNear = 0.3f, PosterReaderFar = 1.5f, PosterFrontZone = 0.3f, WallFlatTol = 0.03f;
@@ -409,6 +412,7 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-wall-posters-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, false);
+            MeshTxBegin();   // BUG-ENV-005: the trays written by this run are undone if it fails before the save
             try
             {
                 var root = w.existing;
@@ -428,10 +432,12 @@ namespace KominkaHillside.Editor
                 EditorSceneManager.MarkSceneDirty(w.c.scene);
                 if (!EditorSceneManager.SaveScene(w.c.scene)) throw new IOException("wall posters scene save failed");
                 AssetDatabase.SaveAssets();
+                MeshTxCommit();
             }
             catch
             {
-                Debug.LogError("[KH Wall Posters] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes.");
+                MeshTxRollback(r.log);
+                Debug.LogError("[KH Wall Posters] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes (the tray meshes this run wrote were rolled back).");
                 r.status = "FAIL (exception, not saved)";
                 WriteJson(WallBuildReportPath, r);
                 throw;
@@ -488,25 +494,34 @@ namespace KominkaHillside.Editor
             var tor = PosterChild(root, TorinosukePosterName, new Vector3(TorX(side), 0f, 0f));
             var keepT = new HashSet<Transform>();
             var sT = Child(tor, StructureName, keepT); sT.localPosition = Vector3.zero; sT.localRotation = Quaternion.identity; sT.localScale = Vector3.one;
-            float torCy = h + (TorFrameTop + TorFrameBottom) * 0.5f, torH = TorFrameTop - TorFrameBottom;
-            Wood(sT, "Back", new Vector3(0f, torCy, -(PlankGap + PlankDepth * 0.5f)), Quaternion.identity, new Vector3(TorFrameW, torH, PlankDepth), c, keepT);
-            var torCanvas = PosterCanvas(tor, CanvasName, TorImageM / Mm, Mm, new Vector3(0f, h, -(PlankGap + PlankDepth + 0.002f)), false, keepT);
+            // BUG-ENV-005 (2026-10-15): both canvases in the plank's front plane (were 2 / 4 mm in front of it: Quest z-fighting); the plank
+            // is a tray with a hole under the image and under the URL field (built after the canvases)
+            var torCanvas = PosterCanvas(tor, CanvasName, TorImageM / Mm, Mm, new Vector3(0f, h, PlankFront), false, keepT);
             PosterImage(torCanvas, w.torTex, TorImageM / Mm, keepT);
-            var urlCanvas = PosterCanvas(tor, "UrlCanvas", UrlPx, UrlScale, new Vector3(0f, h - TorUrlBelow, -(PlankGap + PlankDepth + 0.004f)), true, keepT);
+            var urlCanvas = PosterCanvas(tor, "UrlCanvas", UrlPx, UrlScale, new Vector3(0f, h - TorUrlBelow, PlankFront), true, keepT);
             var field = KD_MenuFinishEditor.CopyField(urlCanvas, "Url", Vector2.zero, UrlPx, TorinosukeUrl, c.font, false);
             field.pointSize = UrlPoints;
             if (field.textComponent != null) { field.textComponent.font = c.font; EditorUtility.SetDirty(field.textComponent); }
             EditorUtility.SetDirty(field);
             foreach (var t in urlCanvas.GetComponentsInChildren<Transform>(true)) { keepT.Add(t); t.gameObject.layer = 0; }
+            var notesT = new List<string>();
+            var holesT = CanvasHoles(tor, PlankFront, new[] { torCanvas, urlCanvas }, null, keepT, notesT);
+            Vector3 tc, ts; TorTrayBox(h, out tc, out ts);
+            Tray(sT, "Back", tc, ts, holesT, false, PosterTrayAsset(TorinosukePosterName), c, keepT, log);
+            foreach (var n in notesT) log.Add("NOTE " + TorinosukePosterName + " " + n);
             RemoveStalePoster(tor, keepT, log);
 
             // ---- group poster: frame, image, Interact (KH_GroupPoster) ----
             var grp = PosterChild(root, GroupPosterName, new Vector3(GroupX(side), 0f, 0f));
             var keepG = new HashSet<Transform>();
             var sG = Child(grp, StructureName, keepG); sG.localPosition = Vector3.zero; sG.localRotation = Quaternion.identity; sG.localScale = Vector3.one;
-            Wood(sG, "Back", new Vector3(0f, h, -(PlankGap + PlankDepth * 0.5f)), Quaternion.identity, new Vector3(GroupFrameW, 2f * GroupFrameHalfH, PlankDepth), c, keepG);
-            var grpCanvas = PosterCanvas(grp, CanvasName, GroupImageM / Mm, Mm, new Vector3(0f, h, -(PlankGap + PlankDepth + 0.002f)), false, keepG);
+            var grpCanvas = PosterCanvas(grp, CanvasName, GroupImageM / Mm, Mm, new Vector3(0f, h, PlankFront), false, keepG);
             PosterImage(grpCanvas, w.groupTex, GroupImageM / Mm, keepG);
+            var notesG = new List<string>();
+            var holesG = CanvasHoles(grp, PlankFront, new[] { grpCanvas }, null, keepG, notesG);
+            GroupTrayBox(h, out tc, out ts);
+            Tray(sG, "Back", tc, ts, holesG, false, PosterTrayAsset(GroupPosterName), c, keepG, log);
+            foreach (var n in notesG) log.Add("NOTE " + GroupPosterName + " " + n);
             var it = Child(grp, InteractName, keepG);
             it.localPosition = Vector3.zero; it.localRotation = Quaternion.identity; it.localScale = Vector3.one;
             foreach (var col in it.GetComponents<Collider>()) if (!(col is BoxCollider)) UnityEngine.Object.DestroyImmediate(col);
@@ -524,6 +539,19 @@ namespace KominkaHillside.Editor
             RemoveStalePoster(grp, keepG, log);
             log.Add("torinosuke on the root's " + (side > 0f ? "+X" : "-X") + " side (toward the gate), group poster on the other; image centres " + h.ToString("F2") + " m; posters " + PostersW.ToString("F2") + " m wide");
         }
+
+        /// <summary>BUG-ENV-005: the planks (trays) around the image centre height h, root-local; one source for Guide/20 and Guide/21.</summary>
+        static void TorTrayBox(float h, out Vector3 centre, out Vector3 size)
+        {
+            centre = new Vector3(0f, h + (TorFrameTop + TorFrameBottom) * 0.5f, -(PlankGap + PlankDepth * 0.5f));
+            size = new Vector3(TorFrameW, TorFrameTop - TorFrameBottom, PlankDepth);
+        }
+        static void GroupTrayBox(float h, out Vector3 centre, out Vector3 size)
+        {
+            centre = new Vector3(0f, h, -(PlankGap + PlankDepth * 0.5f));
+            size = new Vector3(GroupFrameW, 2f * GroupFrameHalfH, PlankDepth);
+        }
+        static string PosterTrayAsset(string poster) { return WallPostersName + "_" + poster + "_Back"; }
 
         static Transform PosterChild(Transform root, string name, Vector3 local)
         {
@@ -697,6 +725,22 @@ namespace KominkaHillside.Editor
                 var mr = back != null ? back.GetComponent<MeshRenderer>() : null;
                 req(mr != null && mr.sharedMaterial == w.c.wood && back.GetComponent<Collider>() == null && (GameObjectUtility.GetStaticEditorFlags(back.gameObject) & StaticEditorFlags.BatchingStatic) != 0,
                     p.name + " frame: wood (" + WoodMatPath + "), no collider, Batching Static");
+                // BUG-ENV-005 (Codex review 2026-10-15 中1): every canvas in the plank's front plane, and the plank = the tray those canvases need
+                // now (pose, asset, mesh regenerated from the image / URL rects at the built image height)
+                var pc = p.Find(CanvasName) as RectTransform;
+                var pUrl = p == tor ? p.Find("UrlCanvas") as RectTransform : null;
+                var pcs = new List<RectTransform>(); if (pc != null) pcs.Add(pc); if (pUrl != null) pcs.Add(pUrl);
+                req(pc != null && (p != tor || pUrl != null) && pcs.All(x => Mathf.Abs(x.localPosition.z - PlankFront) < 1e-4f && x.localRotation == Quaternion.identity),
+                    p.name + " canvases (" + string.Join(", ", pcs.Select(x => x.name)) + ") in the plank's front plane (z " + PlankFront + ")");
+                string why = "no image canvas";
+                bool trayOk = false;
+                if (pc != null)
+                {
+                    Vector3 tc, ts;
+                    if (p == tor) TorTrayBox(pc.localPosition.y, out tc, out ts); else GroupTrayBox(pc.localPosition.y, out tc, out ts);
+                    trayOk = TrayMatches(p, pcs, null, PlankFront, tc, ts, false, PosterTrayAsset(p.name), out why);
+                }
+                req(trayOk, p.name + " frame is the tray with the image / URL holes (BUG-ENV-005; run Guide/20): " + why);
             }
             CheckPosterImage(tor, w.torTex, TorImageM, TorinosukeSrcW, TorinosukeSrcH, req);
             CheckPosterImage(grp, w.groupTex, GroupImageM, GroupSrcW, GroupSrcH, req);
@@ -746,7 +790,7 @@ namespace KominkaHillside.Editor
             }
             try { KD_LocalizationEditor.ValidateScene(w.c.language, w.c.catalog); bound(true, "localization tables, bindings and glyphs match the catalogs (KD_LocalizationEditor.ValidateScene)"); }
             catch (Exception e) { bound(false, "localization: " + e.Message + " (Guide/20 / Guide/22 re-bind; the later of the two binds everything)"); }
-            v.budget = "2 wood planks (" + WoodMatPath + ", Batching Static), 2 RawImages (" + TorinosukeTexturePath + " 1241x1754 -> POT, " + GroupTexturePath + " 1587x2245 -> POT; PC BC7 2048, Android / iOS 1024), "
+            v.budget = "2 wood planks (tray meshes in " + BoardMeshDir + ", " + WoodMatPath + ", Batching Static), 2 RawImages (" + TorinosukeTexturePath + " 1241x1754 -> POT, " + GroupTexturePath + " 1587x2245 -> POT; PC BC7 2048, Android / iOS 1024), "
                 + "1 URL field (shared font), 1 UdonBehaviour (KH_GroupPoster, sync None), 2 trigger colliders; network objects 0";
             v.status = v.failed == 0 ? "WALL_POSTERS_OK" : "WALL_POSTERS_FAIL";
             return v;

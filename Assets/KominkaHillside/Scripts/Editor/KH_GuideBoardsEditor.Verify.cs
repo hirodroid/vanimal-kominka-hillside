@@ -201,11 +201,18 @@ namespace KominkaHillside.Editor
             if (cv != null)
             {
                 req(Mathf.Abs(cv.localScale.x - Mm) < 1e-6f && Mathf.Abs(cv.localScale.y - Mm) < 1e-6f && Mathf.Abs(cv.localScale.z - Mm) < 1e-6f, b.name + " canvas scale 0.001 (1 unit = 1 mm)");
-                req(cv.sizeDelta == b.canvasMm && cv.localRotation == Quaternion.identity && Mathf.Abs(cv.localPosition.y - CanvasCenterY(b)) < 0.001f,
-                    b.name + " canvas " + cv.sizeDelta + " mm at " + cv.localPosition.y.ToString("F2") + " m, front -Z");
+                req(cv.sizeDelta == b.canvasMm && cv.localRotation == Quaternion.identity && Mathf.Abs(cv.localPosition.y - CanvasCenterY(b)) < 0.001f && Mathf.Abs(cv.localPosition.z - TrayFront) < 1e-4f,
+                    b.name + " canvas " + cv.sizeDelta + " mm at " + cv.localPosition.y.ToString("F2") + " m, front -Z, in the Back's front plane z " + TrayFront);
                 req(cv.gameObject.layer == 0, b.name + " canvas on Default");
             }
             if (b == MapBoard && cv != null) CheckMap(cv, t, c, req);
+            // BUG-ENV-005 (Codex review 2026-10-15 中1): Back = the tray the canvas needs now (pose, asset, mesh regenerated from the papers' rects)
+            {
+                Vector3 tc, ts; BoardTrayBox(b, out tc, out ts);
+                string why = "no canvas";
+                bool trayOk = cv != null && TrayMatches(t, new[] { cv }, null, TrayFront, tc, ts, true, BoardTrayAsset(RootName + "_" + b.name), out why);
+                req(trayOk, b.name + "/Back is the tray with the papers' holes (BUG-ENV-005; run Guide/1): " + why);
+            }
 
             // ---- placement ----
             try { Placement(b, t, a, c, req, warn, v); }
@@ -642,7 +649,7 @@ namespace KominkaHillside.Editor
                 chars += cc;
                 parts.Add(cv.transform.parent.name + ": " + graphics.Length + " graphics in " + groups.Count + " material/texture groups (≈ batches when nothing interleaves), " + tmps.Length + " labels, " + cc + " ja characters");
             }
-            return "frame: " + mrs.Length + " cube renderers, " + tris + " triangles, one material (" + WoodMatPath + "), Batching Static (≈ 1 draw call + shadow when visible); "
+            return "frame: " + mrs.Length + " renderers (cubes + the tray Backs in " + BoardMeshDir + ", BUG-ENV-005), " + tris + " triangles, one material (" + WoodMatPath + "), Batching Static (≈ 1 draw call + shadow when visible); "
                 + string.Join("; ", parts) + "; text quads ≈ " + (chars * 2) + " triangles; textures: board A's cut atlas " + KH_PlayGuideCaptureEditor.AtlasPath + " (2048 x 768, ~1.02 MB PC DXT1 / ~0.93 MB Android+iOS ASTC 6x6 with mips, plan §5), the map = " + KH_CourseTravelMapEditor.TexturePath + " (already in the hand menu), KD_UiCircle / KD_UiRound (shared); "
                 + "font: the shared 2048² atlas (no new texture memory), glyphs added only for missing ja / en characters; Udon 0, colliders 0, network objects 0";
         }

@@ -37,8 +37,10 @@ namespace KominkaHillside.Editor
         const float StandSide = 40f, StandTop = 25f, StandHeaderH = 130f, StandGap = 30f, StandBottom = 25f;
         /// <summary>canvas の下端の高さ (m)。0.85 でパネルの中心が地面 + 約 1.23 m (前の置き方の 1.25 m とほぼ同じ。案内板は 0.80)。</summary>
         const float StandCanvasBottom = 0.85f;
-        /// <summary>パネル (KD_DogBook の Index ページ) を看板の canvas の面より手前 (-Z) へ出す量 (m)。詳細・説明のページはさらに 0.04 m 手前。</summary>
-        public const float StandPanelFront = 0.01f;
+        /// <summary>パネル (KD_DogBook の Index ページ) を看板の canvas の面より手前 (-Z) へ出す量 (m)。詳細・説明のページはさらに 0.04 m 手前。
+        /// BUG-ENV-005 (2026-10-15): 0.01 -> 0。パネルは canvas と同じ面 (背板の盆の縁の面) に置き、背板にはパネルの矩形の穴 (奥 50 mm のポケット) を開ける。
+        /// 前は木の前面が canvas の 10 mm 奥、パネルが 10 mm 手前で、Quest で平行な面が重なってちらつく形だった。</summary>
+        public const float StandPanelFront = 0f;
 
         // ---- 置き場所の探索 ----
         const float StandGapToAsob = 0.4f, StandLateralStep = 0.5f, StandLateralMax = 2.0f, StandBackStep = 0.25f, StandBackMax = 1.0f;
@@ -66,7 +68,7 @@ namespace KominkaHillside.Editor
         public static Vector3 DogBookPanelLocal(Vector2 panelMm)
         {
             var b = DogBookBoard(panelMm);
-            return new Vector3(0f, CanvasCenterY(b) + StandPanelY(b, panelMm) * Mm, -StandPanelFront);
+            return new Vector3(0f, CanvasCenterY(b) + StandPanelY(b, panelMm) * Mm, TrayFront - StandPanelFront);
         }
 
         /// <summary>看板ローカル (m) でのパネルの矩形と見出しの板の矩形 (x, y)。Verify が重なり・はみ出しを見る。</summary>
@@ -145,11 +147,22 @@ namespace KominkaHillside.Editor
             stand.position = new Vector3(stand.position.x, y, stand.position.z);
 
             var keep = new HashSet<Transform>();
-            BuildStructure(stand, b, c, keep);
             var canvas = EnsureCanvas(stand, b, keep);
             float hy = StandHeaderY(b);
             Img(canvas, "HeaderPlate", new Vector2(0f, hy), new Vector2(b.canvasMm.x - 40f, StandHeaderH), HeaderPlateColor, null, keep);
             header = Txt(canvas, "Header", new Vector2(0f, hy), new Vector2(b.canvasMm.x - 80f, StandHeaderH - 10f), MapTitleMax, MapTitleMin, TextAlignmentOptions.Center, SignInk, false, c, keep);
+            // BUG-ENV-005: the frame after the canvas. Its Back has holes under the header plate and under the panel (KD_DogBook is not on
+            // this canvas; the caller puts it at DogBookPanelLocal = the tray's front plane). The panel's own pages are checked by ZFight/7.
+            Rect rc, rh, rp;
+            DogBookStandRects(panelMm, out rc, out rh, out rp);
+            var notes = new List<string>();
+            var holes = CanvasHoles(stand, TrayFront, new[] { canvas }, new[] { rp }, keep, notes);
+            var meshLog = new List<string>();
+            MeshTxBegin();   // the one tray of this stand: undone if the frame fails half-way (DogBook/2 never saves the scene itself)
+            try { BuildStructure(stand, b, c, keep, holes, DogBookStandName, meshLog); }
+            catch { MeshTxRollback(meshLog); foreach (var line in meshLog) log.AppendLine(line); throw; }
+            MeshTxCommit();
+            foreach (var line in meshLog.Concat(notes)) log.AppendLine(line);
             foreach (var name in new[] { StructureName, CanvasName })
             {
                 var top = stand.Find(name);
@@ -273,8 +286,18 @@ namespace KominkaHillside.Editor
                     check(mr != null && mr.sharedMaterial == c.wood && p.GetComponent<Collider>() == null, DogBookStandName + "/" + name + " wood (" + WoodMatPath + "), no collider (same as the guide boards)");
                 }
             var cv = stand.Find(CanvasName) as RectTransform;
-            check(cv != null && cv.GetComponent<Canvas>() != null && cv.sizeDelta == b.canvasMm && Mathf.Abs(cv.localPosition.y - CanvasCenterY(b)) < 0.001f && Mathf.Abs(cv.localScale.x - Mm) < 1e-6f,
-                DogBookStandName + " canvas " + b.canvasMm + " mm at " + CanvasCenterY(b).ToString("F2") + " m, scale 0.001");
+            check(cv != null && cv.GetComponent<Canvas>() != null && cv.sizeDelta == b.canvasMm && Mathf.Abs(cv.localPosition.y - CanvasCenterY(b)) < 0.001f && Mathf.Abs(cv.localScale.x - Mm) < 1e-6f
+                && Mathf.Abs(cv.localPosition.z - TrayFront) < 1e-4f && cv.localRotation == Quaternion.identity,
+                DogBookStandName + " canvas " + b.canvasMm + " mm at " + CanvasCenterY(b).ToString("F2") + " m, scale 0.001, in the Back's front plane z " + TrayFront);
+            // BUG-ENV-005 (Codex review 2026-10-15 中1): Back = the tray the canvas and the panel need now (pose, asset, mesh regenerated)
+            {
+                Vector3 tc, ts; BoardTrayBox(b, out tc, out ts);
+                Rect trc, trh, trp;
+                DogBookStandRects(panelMm, out trc, out trh, out trp);
+                string why = "no canvas";
+                bool trayOk = cv != null && TrayMatches(stand, new[] { cv }, new[] { trp }, TrayFront, tc, ts, true, BoardTrayAsset(DogBookStandName), out why);
+                check(trayOk, DogBookStandName + "/Back is the tray with the header / panel holes (BUG-ENV-005; run DogBook/2): " + why);
+            }
             check(cv != null && cv.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null && cv.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null, DogBookStandName + " canvas is read-only (the panel has its own input canvases)");
             var header = cv != null ? cv.Find("Header") : null;
             check(header != null && cv.Find("HeaderPlate") != null, DogBookStandName + " header plate + header");
@@ -313,7 +336,7 @@ namespace KominkaHillside.Editor
             check(panel.parent == stand, "panel KD_DogBook is a child of " + DogBookStandName);
             var want = DogBookPanelLocal(panelMm);
             check(Vector3.Distance(panel.localPosition, want) < 0.001f && Quaternion.Angle(panel.localRotation, Quaternion.identity) < 0.01f && Mathf.Abs(panel.localScale.x - Mm) < 1e-6f,
-                "panel on the stand's canvas: local " + panel.localPosition.ToString("F3") + " = " + want.ToString("F3") + " (" + (StandPanelFront * 1000f).ToString("F0") + " mm in front of the canvas), facing like the stand, 1 px = 1 mm");
+                "panel on the stand's canvas: local " + panel.localPosition.ToString("F3") + " = " + want.ToString("F3") + " (" + (StandPanelFront * 1000f).ToString("F0") + " mm in front of the canvas; in its plane, in the Back's hole, since BUG-ENV-005), facing like the stand, 1 px = 1 mm");
             Rect rc, rh, rp;
             DogBookStandRects(panelMm, out rc, out rh, out rp);
             check(rc.Contains(rp.min) && rc.Contains(rp.max) && !rp.Overlaps(rh), "panel rect inside the canvas and below the header (panel " + rp + ", header " + rh + ")");

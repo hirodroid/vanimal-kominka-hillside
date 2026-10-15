@@ -58,7 +58,7 @@ namespace KominkaHillside.Editor
             Prepare();var components=UnityEngine.Object.FindObjectsOfType<Component>(true).Where(c=>c!=null&&c.gameObject.scene==scene&&Target(c.transform)&&!(c is MeshRenderer)&&!(c is MeshFilter)&&!(c is Transform)).ToArray();
             var before=components.Select(c=>EditorJsonUtility.ToJson(c)).ToArray();
             foreach(var st in UnityEngine.Object.FindObjectsOfType<Transform>(true).Where(t=>t.gameObject.scene==scene&&t.Find("ImportedShelf")!=null).ToArray())FinishShelf(st);
-            foreach(var t in UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true).Where(t=>t.tool==KH_DogWash.ToolBottle))FinishBottle(t.transform);
+            foreach(var t in UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true).Where(t=>t.tool==KH_DogWash.ToolBottle&&t.transform.Find("Body")!=null))FinishBottle(t.transform);   // 2026-10-15 BUG-ENV-005: the premium FoamCannon also has tool == ToolBottle (IMP-DOG-049); only the shampoo bottles have the Body/Shoulder/Cap/Spout children
             foreach(var rack in Roots())FinishRack(rack);FinishPhotoFrame(GameObject.Find("KH_PhotoBoard").transform);
             var after=components.Select(c=>EditorJsonUtility.ToJson(c)).ToArray();if(!before.SequenceEqual(after))throw new Exception("Existing functional component changed; discard scene changes");
             File.WriteAllText(Evidence+"/runtime-preservation.txt","Existing non-render, non-transform components compared via EditorJsonUtility: "+components.Length+" unchanged.\n");

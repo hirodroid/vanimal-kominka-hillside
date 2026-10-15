@@ -15,8 +15,9 @@ namespace KominkaHillside.Editor
     //   ZFight/3 - Scan Premium Tools  (KH_ZFightScanEditor.Premium.cs)
     //   ZFight/4 - Capture Premium Tools
     // Nothing is saved, nothing is instantiated in the open scene by 1-2; a missing object is logged and skipped.
-    // Player camera: the scene's Reference Camera is near 0.3 / far 2200 / FOV 60, and VRChat clamps the near plane to
-    // 0.001-0.05 (camera-design.md:44), so captures use near = clamp(ref, 0.001, 0.05) = 0.05 and far = ref (2200).
+    // Player camera: captures use near = clamp(Reference Camera near, 0.001, 0.05) (VRChat's clamp, camera-design.md:44) and far = ref.
+    // Written when the Reference Camera was near 0.3 (-> 0.05); since BUG-WLD-002 (2026-10-14) it is near 0.01 / far 2200 (-> 0.01).
+    //   ZFight/7 - Scan Boards And Props (KH_ZFightScanEditor.Boards.cs, BUG-ENV-005): the generated boards, posters, photo board, bottles.
     public static partial class KH_ZFightScanEditor
     {
         const string Menu = "Tools/KominkaHillside/ZFight/";

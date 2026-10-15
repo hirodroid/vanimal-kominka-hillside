@@ -31,7 +31,8 @@ namespace KominkaHillside.Editor
     ///               west of the opening before). Interact (KH_PortalBoard, local only) shows the scene's one
     ///               VRCPortalMarker, taken over (moved under Kominka/PortalAnchor, never re-typed) and hidden in the saved scene.
     ///               Guide/0 creates KH_PortalBoard's Program Asset (once, before the first Guide/1).
-    /// Each board is a wooden frame (cubes, KH_RiverWood, no collider, Batching Static) + one read-only World Space Canvas (no
+    /// Each board is a wooden frame (posts / ridge / roof cubes + since BUG-ENV-005 a "tray" Back with a hole under every paper, its rim in
+    /// the canvas plane: .Tray.cs; KH_RiverWood, no collider, Batching Static) + one read-only World Space Canvas (no
     /// raycaster, no VRCUiShape, no collider, no Udon). The words are the base catalog's guide.* keys (UITranslations.json, 13
     /// languages) bound through UILocalizationBindings.json; the build adds the ja / en glyphs through KD_ShopSetupEditor.AddGlyphs and
     /// rebuilds KD_Language's tables and re-binds every label (KD_LocalizationEditor.Configure + Bind, as Menu Finish does; KD_Language follows the viewer's language at run time).
@@ -292,6 +293,7 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-guide-boards-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, false);
+            MeshTxBegin();   // BUG-ENV-005: the trays written by this run are undone if it fails before the save
             try
             {
                 var root = c.root;
@@ -321,11 +323,15 @@ namespace KominkaHillside.Editor
                         bt.position = new Vector3(bt.position.x, gy, bt.position.z);
                         r.log.Add(b.name + " re-placed: " + r.kominkaPlacement);
                     }
-                    BuildStructure(bt, b, c, keep);
                     var canvas = EnsureCanvas(bt, b, keep);
                     if (b == Asob) BuildAsobikataCanvas(canvas, c, keep);
                     else if (b == MapBoard) BuildMapCanvas(canvas, bt, c, keep);
                     else { BuildKominkaCanvas(canvas, c, keep); BuildPortal(bt, b, c, keep, r); }
+                    // BUG-ENV-005: the frame after the canvas (its Back has a hole under every paper / plate)
+                    var notes = new List<string>();
+                    var holes = CanvasHoles(bt, TrayFront, new[] { canvas }, null, keep, notes);
+                    BuildStructure(bt, b, c, keep, holes, RootName + "_" + b.name, r.log);
+                    foreach (var n in notes) r.log.Add("NOTE " + b.name + " " + n);
                     RemoveStale(bt, keep, r);
                     r.boards.Add(b.name + " at " + V(bt.position) + " yaw " + bt.eulerAngles.y.ToString("F1"));
                 }
@@ -341,10 +347,12 @@ namespace KominkaHillside.Editor
 
                 EditorSceneManager.MarkSceneDirty(c.scene);
                 if (!EditorSceneManager.SaveScene(c.scene)) throw new IOException("guide boards scene save failed");
+                MeshTxCommit();
             }
             catch
             {
-                Debug.LogError("[KH Guide Boards] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes.");
+                MeshTxRollback(r.log);
+                Debug.LogError("[KH Guide Boards] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes (the tray meshes this run wrote were rolled back).");
                 r.status = "FAIL (exception, not saved)";
                 WriteJson(BuildReportPath, r);
                 throw;
@@ -805,12 +813,21 @@ namespace KominkaHillside.Editor
 
         static Vector3[] SeatSamples(Board b) { return new[] { new Vector3(-PostX(b), 0f, BackZ), new Vector3(PostX(b), 0f, BackZ), new Vector3(0f, 0f, BackZ) }; }
 
-        static void BuildStructure(Transform board, Board b, Ctx c, HashSet<Transform> keep)
+        /// <summary>BUG-ENV-005 (2026-10-15): the ridge's top stays this far under the roof planks' lower faces (see BuildStructure).</summary>
+        const float RidgeClear = 0.001f;
+
+        /// <summary>The frame. Call it after the canvas is built: <paramref name="holes"/> (board-local x / y, CanvasHoles) are cut into the Back.
+        /// BUG-ENV-005 (2026-10-15): Back is no longer a Cube (front face 10 mm behind the canvas: Quest z-fighting) but a tray mesh
+        /// (KH_GuideBoardsEditor.Tray.cs) from the canvas plane z 0 (TrayFront) to the old back face z 0.05 (TrayBack), with a pocket under every
+        /// paper; meshName = its asset Meshes/Boards/&lt;meshName&gt;_Back.asset.</summary>
+        static void BuildStructure(Transform board, Board b, Ctx c, HashSet<Transform> keep, List<Rect> holes, string meshName, List<string> log)
         {
             var s = Child(board, StructureName, keep);
             s.localPosition = Vector3.zero; s.localRotation = Quaternion.identity; s.localScale = Vector3.one;
-            float bw = BackW(b), bh = BackH(b), cy = CanvasCenterY(b), top = PostTop(b), ridge = RidgeY(b), len = RoofLength(b);
-            Wood(s, "Back", new Vector3(0f, cy, BackZ), Quaternion.identity, new Vector3(bw, bh, BackDepth), c, keep);
+            float top = PostTop(b), ridge = RidgeY(b), len = RoofLength(b);
+            Vector3 trayCentre, traySize;
+            BoardTrayBox(b, out trayCentre, out traySize);
+            Tray(s, "Back", trayCentre, traySize, holes, true, BoardTrayAsset(meshName), c, keep, log);
             for (int i = 0; i < 2; i++)
             {
                 float x = i == 0 ? -PostX(b) : PostX(b);
@@ -818,12 +835,29 @@ namespace KominkaHillside.Editor
                 float bottom = ground - PostSink;
                 Wood(s, i == 0 ? "PostL" : "PostR", new Vector3(x, (top + bottom) * 0.5f, BackZ), Quaternion.identity, new Vector3(PostSize, top - bottom, PostSize), c, keep);
             }
-            Wood(s, "Ridge", new Vector3(0f, ridge, BackZ), Quaternion.identity, new Vector3(len, RidgeSize, RidgeSize), c, keep);
             float half = RoofPlankDepth * 0.5f, lift = RidgeSize * 0.5f;
+            // BUG-ENV-004 / BUG-ENV-005 (2026-10-15): the ridge and both planks are RoofLength long, so their end faces shared the planes
+            // x = +-len/2 and overlapped where the planks' slabs crossed the ridge's square (7 cm2 x 4, gap 0). Now the ridge's top stops
+            // RidgeClear under the planks' lower faces (they cross its top corners at z = +-RidgeSize/2: pivot - t/cos(a) - h*tan(a)), so the
+            // ridge's and the planks' cross-sections no longer overlap and neither do their end faces (same length, same silhouette). The
+            // ridge's bottom (the part seen under the roof) and the planks are where they were; only its hidden top part is gone (60 -> 28.5 mm).
+            float slope = RoofSlope * Mathf.Deg2Rad, pivot = ridge + lift;
+            float ridgeTop = pivot - RoofThick * 0.5f / Mathf.Cos(slope) - RidgeSize * 0.5f * Mathf.Tan(slope) - RidgeClear, ridgeBottom = ridge - RidgeSize * 0.5f;
+            Wood(s, "Ridge", new Vector3(0f, (ridgeTop + ridgeBottom) * 0.5f, BackZ), Quaternion.identity, new Vector3(len, ridgeTop - ridgeBottom, RidgeSize), c, keep);
+            // BUG-ENV-005 (2026-10-15, ZFight/7 after the first fix: RoofFront x RoofBack 1.03 cm2 x 2 per board, gap 0): both planks started
+            // on the pivot line, so their slabs crossed at the apex (each plank's lower upper-end corner reached t*sin(a) past the apex plane
+            // z = BackZ) and their end faces at x = +-len/2 overlapped there. Each plank now slides down its own slope by t*tan(a) (7.0 mm), so
+            // its lower upper-end corner sits exactly on the apex plane: the front plank lies wholly at z <= BackZ, the back plank at z >= BackZ,
+            // the two cross-sections touch at one point (the apex's underside), and their end faces no longer overlap. A butt joint: no face of
+            // one plank is parallel to a face of the other. Length (RoofLength, overhang along x), slope and the lower faces' planes are
+            // unchanged (so the ridge clearance above holds); the eaves move 6.3 mm out / 3.0 mm down, and the small V notch on top of the
+            // apex (already there: the end faces dipped to the pivot) is now 25 mm wide x 27 mm deep instead of 13 x 14 mm (seen only from above
+            // or against the sky at the gable ends; the ridge sits under it, so nothing shows through).
+            float apexSlide = RoofThick * 0.5f * Mathf.Tan(slope);
             var front = Quaternion.Euler(-RoofSlope, 0f, 0f);
             var back = Quaternion.Euler(RoofSlope, 0f, 0f);
-            Wood(s, "RoofFront", new Vector3(0f, ridge + lift, BackZ) + front * new Vector3(0f, 0f, -half), front, new Vector3(len, RoofThick, RoofPlankDepth), c, keep);
-            Wood(s, "RoofBack", new Vector3(0f, ridge + lift, BackZ) + back * new Vector3(0f, 0f, half), back, new Vector3(len, RoofThick, RoofPlankDepth), c, keep);
+            Wood(s, "RoofFront", new Vector3(0f, pivot, BackZ) + front * new Vector3(0f, 0f, -(half + apexSlide)), front, new Vector3(len, RoofThick, RoofPlankDepth), c, keep);
+            Wood(s, "RoofBack", new Vector3(0f, pivot, BackZ) + back * new Vector3(0f, 0f, half + apexSlide), back, new Vector3(len, RoofThick, RoofPlankDepth), c, keep);
         }
 
         static void Wood(Transform parent, string name, Vector3 pos, Quaternion rot, Vector3 size, Ctx c, HashSet<Transform> keep)

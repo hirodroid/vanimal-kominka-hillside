@@ -49,14 +49,19 @@ namespace KominkaHillside.Editor
         static readonly Vector2 PaperPos = new Vector2(0f, -110f), PaperSize = new Vector2(2160f, 780f);
         static readonly Vector2 StatePos = new Vector2(0f, 235f), StateSize = new Vector2(2080f, 64f);
         public static readonly Vector2 PhotoMm = new Vector2(480f, 270f);
-        const float PhotoPitchX = 520f, PhotoRow0Y = 50f, PhotoRow1Y = -265f, CellBorderMm = 12f, PhotoFrontZ = -0.006f;
+        // BUG-ENV-005 (2026-10-15): the photos lie in the canvas plane (z 0) and no Graphic lies under them (the paper and the cell
+        // borders are strips around each photo). The wood behind is a tray (prop-finish.py PhotoFrame) with holes exactly at
+        // HeaderPlate and Paper and no face toward the readers; the dark backings sit BoardBackingMm behind the canvas and show
+        // only through empty photo slots. Nothing faces the readers within 30 mm behind anything else (Quest depth precision).
+        const float PhotoPitchX = 520f, PhotoRow0Y = 50f, PhotoRow1Y = -265f, CellBorderMm = 12f, PhotoFrontZ = 0f, BoardBackingMm = 35f;
         public static Vector2 CellPos(int k) { int col = k % 4, row = k / 4; return new Vector2((col - 1.5f) * PhotoPitchX, row == 0 ? PhotoRow0Y : PhotoRow1Y); }
         const float CaptionMax = 44f, CaptionMin = 24f, StateMax = 44f, StateMin = 24f;
         // IMP-WLD-007 W1: the board pager ◀ 1/3 ▶ — its own pressable Canvas (Default + GraphicRaycaster + VRCUiShape + trigger BoxCollider, vrc-world-ui §2)
         // in the strip under the bottom row (the cells end at -412 mm, the canvas at -520 mm). The read-only Canvas stays read-only
         public const string BoardPagerName = "Pager";
         public static readonly Vector2 BoardPagerMm = new Vector2(700f, 84f), BoardPagerButtonMm = new Vector2(170f, 76f), BoardPagerLabelMm = new Vector2(240f, 76f);
-        public const float BoardPagerY = -462f, BoardPagerButtonX = 255f, BoardPagerZ = -0.004f;
+        // -458 (was -462): the pager plate stays inside the paper (-500 mm), not over the tray's wood rim (BUG-ENV-005)
+        public const float BoardPagerY = -458f, BoardPagerButtonX = 255f, BoardPagerZ = -0.004f;
 
         static readonly Color Washi = new Color(0.94f, 0.91f, 0.83f);
         static readonly Color Sumi = new Color(0.17f, 0.13f, 0.10f);
@@ -270,12 +275,25 @@ namespace KominkaHillside.Editor
             crt.anchorMin = crt.anchorMax = crt.pivot = new Vector2(0.5f, 0.5f); crt.sizeDelta = BoardCanvasMm;
             crt.localPosition = new Vector3(0f, BoardCanvasCenterY, 0f); crt.localRotation = Quaternion.identity; crt.localScale = Vector3.one * Mm;
             string T(string key) { return KD_LocalizationEditor.Text(c.catalog, c.catalog.fallbackLanguage, key); }
+            // backings first: UI/Default writes no depth, so every later Graphic draws over them; the tray's rim hides them elsewhere
+            foreach (var bk in new[] { Img(crt, "PaperBack", PaperPos, PaperSize, CellColor), Img(crt, "HeaderBack", HeaderPlatePos, HeaderPlateSize, HeaderPlateColor) })
+            { var r = bk.rectTransform; r.anchoredPosition3D = new Vector3(r.anchoredPosition.x, r.anchoredPosition.y, BoardBackingMm); r.SetAsFirstSibling(); }
             var plate = Img(crt, "HeaderPlate", HeaderPlatePos, HeaderPlateSize, HeaderPlateColor);
             var caption = BoardText(plate.transform, "Caption", Vector2.zero, CaptionSize, CaptionMax, CaptionMin, SignInk, T("gallery.caption"), c.font);
-            var paper = Img(crt, "Paper", PaperPos, PaperSize, Washi);
-            var state = BoardText(paper.transform, "State", StatePos - PaperPos, StateSize, StateMax, StateMin, Sumi, T("photo.empty"), c.font);
+            var paper = UiBox(crt, "Paper", PaperPos, PaperSize);   // a holder: the washi is the strips around the cells
+            var state = BoardText(paper, "State", StatePos - PaperPos, StateSize, StateMax, StateMin, Sumi, T("photo.empty"), c.font);
+            var washi = PaperWashi();
+            for (int i = 0; i < washi.Count; i++) Img(paper, "Washi" + i, washi[i].center - PaperPos, washi[i].size, Washi);
             for (int k = 0; k < PageSize; k++)
-                Img(paper.transform, "Cell" + k, CellPos(k) - PaperPos, PhotoMm + Vector2.one * (CellBorderMm * 2f), CellColor);
+            {
+                var cell = UiBox(paper, "Cell" + k, CellPos(k) - PaperPos, PhotoMm + Vector2.one * (CellBorderMm * 2f));
+                float hx = PhotoMm.x * 0.5f, hy = PhotoMm.y * 0.5f, b = CellBorderMm;
+                Img(cell, "Top", new Vector2(0f, hy + b * 0.5f), new Vector2(PhotoMm.x + 2f * b, b), CellColor);
+                Img(cell, "Bottom", new Vector2(0f, -hy - b * 0.5f), new Vector2(PhotoMm.x + 2f * b, b), CellColor);
+                Img(cell, "Left", new Vector2(-hx - b * 0.5f, 0f), new Vector2(b, PhotoMm.y), CellColor);
+                Img(cell, "Right", new Vector2(hx + b * 0.5f, 0f), new Vector2(b, PhotoMm.y), CellColor);
+            }
+            state.transform.SetAsLastSibling();   // over the washi strips
 
             // ---- the 8 photos of the shown page: Quads with the KD_PhotoPrint material (the VRChat camera snap), trigger collider + KD_PhotoBoard (phones: tap to view) ----
             var photosT = Child(root, "Photos");
@@ -363,6 +381,33 @@ namespace KominkaHillside.Editor
             mr.lightProbeUsage = LightProbeUsage.BlendProbes; mr.reflectionProbeUsage = ReflectionProbeUsage.Off;
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
             EditorUtility.SetDirty(mr);
+        }
+
+        /// <summary>BUG-ENV-005: the washi of the paper as strips (canvas mm) that cover the paper except the 8 cells (photo + border).</summary>
+        static List<Rect> PaperWashi()
+        {
+            var o = new List<Rect>();
+            float l = PaperPos.x - PaperSize.x * 0.5f, r = PaperPos.x + PaperSize.x * 0.5f, top = PaperPos.y + PaperSize.y * 0.5f, bottom = PaperPos.y - PaperSize.y * 0.5f;
+            float cw = PhotoMm.x * 0.5f + CellBorderMm, ch = PhotoMm.y * 0.5f + CellBorderMm;
+            float y = top;
+            foreach (float row in new[] { PhotoRow0Y, PhotoRow1Y })
+            {
+                o.Add(Rect.MinMaxRect(l, row + ch, r, y));   // the band above the row
+                float x = l;
+                for (int col = 0; col < 4; col++) { float cx = CellPos(col).x; o.Add(Rect.MinMaxRect(x, row - ch, cx - cw, row + ch)); x = cx + cw; }
+                o.Add(Rect.MinMaxRect(x, row - ch, r, row + ch));
+                y = row - ch;
+            }
+            o.Add(Rect.MinMaxRect(l, bottom, r, y));
+            return o;
+        }
+
+        static RectTransform UiBox(Transform parent, string name, Vector2 pos, Vector2 size)
+        {
+            var go = KD_ShopSetupEditor.EnsureUiChild(parent, name, pos, size);
+            go.layer = 0;
+            foreach (var g in go.GetComponents<Graphic>()) UnityEngine.Object.DestroyImmediate(g);
+            return (RectTransform)go.transform;
         }
 
         static Image Img(Transform parent, string name, Vector2 pos, Vector2 size, Color color)

@@ -72,15 +72,17 @@ def uvmap(o,k,size=None):
             u=(co[across]-lo[across])/max(span[across],1e-6)*.48+.1+offset
             v=(co[along]-lo[along])/max(span[along],1e-6)*.92+.04
             uv.data[li].uv=((k%2+u)/2,(k//2+v)/2)
-def box(name,p,size,k=0,bevel=.003,angle=0):
+def box(name,p,size,k=0,bevel=.003,angle=0,segments=2):
     bpy.ops.mesh.primitive_cube_add(size=1,location=U(p));o=bpy.context.object;o.name=name;o.dimensions=(size[0],size[2],size[1]);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-    b=o.modifiers.new('Crafted edge','BEVEL');b.width=min(bevel,min(size)*.22);b.segments=2;bpy.ops.object.modifier_apply(modifier=b.name)
+    b=o.modifiers.new('Crafted edge','BEVEL');b.width=min(bevel,min(size)*.22);b.segments=segments;bpy.ops.object.modifier_apply(modifier=b.name)
     uvmap(o,k);o.rotation_euler.x=math.radians(angle)
     for face in o.data.polygons:face.use_smooth=True
     b=o.modifiers.new('Face weighted normals','WEIGHTED_NORMAL');b.keep_sharp=True;bpy.ops.object.modifier_apply(modifier=b.name)
     pieces.append(o);return o
-def lathe(name,profile,k=2,sides=32,position=(0,0,0),direction=(0,1,0),label_uv=False):
+def lathe(name,profile,k=2,sides=32,position=(0,0,0),direction=(0,1,0),label_uv=False,caps=(True,True),label_band=None):
     # Positive-height cross sections in Unity-local Y. Winding is outward.
+    # caps=(bottom,top) drops an end disk that another part covers. label_band=(first ring,last ring,phase steps,tile):
+    # those side faces map to the label tile on the same surface, so a printed label needs no second, parallel shell.
     verts=[];faces=[];uvs=[];d=U(direction).normalized();q=Vector((0,0,1)).rotation_difference(d)
     for h,r in profile:
         for j in range(sides):
@@ -88,23 +90,29 @@ def lathe(name,profile,k=2,sides=32,position=(0,0,0),direction=(0,1,0),label_uv=
     for i in range(len(profile)-1):
         for j in range(sides):faces.append((i*sides+j,(i+1)*sides+j,(i+1)*sides+(j+1)%sides,i*sides+(j+1)%sides))
     # Cap polygons use opposite winding to the side strip.
-    faces.extend([tuple(range(sides-1,-1,-1)),tuple((len(profile)-1)*sides+j for j in range(sides))])
+    if caps[0]:faces.append(tuple(range(sides-1,-1,-1)))
+    if caps[1]:faces.append(tuple((len(profile)-1)*sides+j for j in range(sides)))
     mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o)
     # Recalculate outward normals, including caps, independently of profile orientation.
     bpy.context.view_layer.objects.active=o;o.select_set(True);bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.mesh.normals_make_consistent(inside=False);bpy.ops.object.mode_set(mode='OBJECT');o.select_set(False)
     uv=mesh.uv_layers.new(name='UVMap')
     for face in mesh.polygons:
         face.use_smooth=len(face.vertices)==4
-        js=[mesh.loops[li].vertex_index%sides for li in face.loop_indices];seam=0 in js and sides-1 in js
+        rings=[mesh.loops[li].vertex_index//sides for li in face.loop_indices]
+        band=label_band if label_band and len(face.vertices)==4 and label_band[0]<=min(rings) and max(rings)<=label_band[1] else None
+        shift=band[2] if band else 0
+        js=[(mesh.loops[li].vertex_index+shift)%sides for li in face.loop_indices];seam=0 in js and sides-1 in js
         for li in face.loop_indices:
-            vi=mesh.loops[li].vertex_index;j=vi%sides
+            vi=mesh.loops[li].vertex_index;j=(vi+shift)%sides
             u=(sides if seam and j==0 else j)/sides;v=(vi//sides)/(len(profile)-1)
+            if band:v=(vi//sides-band[0])/(band[1]-band[0])
             if len(face.vertices)>4:
                 u=.5+.42*math.sin(2*math.pi*j/sides);v=.5+.42*math.cos(2*math.pi*j/sides)
-            if not label_uv:u=.08+u*.84;v=.08+v*.84
+            if not (label_uv or band):u=.08+u*.84;v=.08+v*.84
             else:u=.02+(1-u)*.96;v=.02+v*.96
             if name in ('Cap','Outlet'):u=.04+u*.07;v=.45+v*.07
-            uv.data[li].uv=((k%2+u)/2,(k//2+v)/2)
+            kk=band[3] if band else k
+            uv.data[li].uv=((kk%2+u)/2,(kk//2+v)/2)
     # Analytic lathe normals prevent triangulation-weighted wedges on long cylindrical faces.
     ring_normals=[]
     for i,(h,r) in enumerate(profile):
@@ -129,6 +137,43 @@ def tube(name,points,r=.006,k=1,sides=8):
     for v,p in zip(spline.points,points):v.co=(*U(p),1)
     o=bpy.data.objects.new(name,curve);bpy.context.collection.objects.link(o);bpy.context.view_layer.objects.active=o;o.select_set(True);bpy.ops.object.convert(target='MESH');o=bpy.context.object;uvmap(o,k);o.select_set(False);pieces.append(o)
 def bolt(x,y,z,r=.009):return lathe('Recessed fastener',[(0,r),(.0015,r),(.003,r*.8)],1,12,(x,y,z),(0,0,-1))
+def domed_bolt(x,y,z,r=.009):
+    # Low dome head: no flat face parallel to the post face behind it (the tip disk is ~0.05 cm2).
+    return lathe('Recessed fastener',[(0,r),(.0015,r),(.003,r*.75),(.004,r*.4),(.0045,r*.1)],1,12,(x,y,z),(0,0,-1))
+def tray(name,cy,k=0):
+    # Photo board back (BUG-ENV-005 tray): the wood face lies in the canvas plane (z 0) only around the two UI
+    # holes, hole walls run back to a rear plate that faces +Z only, so nothing faces the readers behind the canvas.
+    # The UI shows a dark backing 35 mm deep through empty photo slots (KH_PhotoGalleryEditor.Place.cs).
+    # Rim edges reach 1.5 mm into the frame and the rear plate sits 2 mm in front of the frame's rear and runs 3 mm
+    # into it, under the frame's chamfers only: closed seams, and no face parallel to a frame face over it.
+    x0,x1=FRAME_IN_X+.0015,FRAME_IN_X+.003;rz=TRAY_REAR-.002
+    holes=[((px-w/2)*Mm,(px+w/2)*Mm,cy+(py-h/2)*Mm,cy+(py+h/2)*Mm) for (px,py),(w,h) in CANVAS_HOLES]
+    xs=[-x0,holes[0][0],holes[0][1],x0];ys=sorted({FRAME_IN_Y[0]-.0015,FRAME_IN_Y[1]+.0015,*[h[2] for h in holes],*[h[3] for h in holes]})
+    verts=[];index={}
+    def v(p):
+        key=tuple(round(c,6) for c in p)
+        if key not in index:index[key]=len(verts);verts.append(U(p))
+        return index[key]
+    faces=[]
+    def quad(a,b,c,d,n):
+        # a..d in order around the quad; flip to face n (Unity axes; U() is a proper rotation).
+        e1=Vector(b)-Vector(a);e2=Vector(c)-Vector(b)
+        q=(a,b,c,d) if e1.cross(e2).dot(Vector(n))>0 else (d,c,b,a)
+        faces.append(tuple(v(p) for p in q))
+    for i in range(3):
+        for j in range(len(ys)-1):
+            cx=(xs[i]+xs[i+1])/2;cyy=(ys[j]+ys[j+1])/2
+            if any(h[0]<cx<h[1] and h[2]<cyy<h[3] for h in holes):continue
+            quad((xs[i],ys[j],0),(xs[i+1],ys[j],0),(xs[i+1],ys[j+1],0),(xs[i],ys[j+1],0),(0,0,-1))
+    for hx0,hx1,hy0,hy1 in holes:
+        quad((hx0,hy0,0),(hx0,hy1,0),(hx0,hy1,rz),(hx0,hy0,rz),(1,0,0))
+        quad((hx1,hy0,0),(hx1,hy1,0),(hx1,hy1,rz),(hx1,hy0,rz),(-1,0,0))
+        quad((hx0,hy0,0),(hx1,hy0,0),(hx1,hy0,rz),(hx0,hy0,rz),(0,1,0))
+        quad((hx0,hy1,0),(hx1,hy1,0),(hx1,hy1,rz),(hx0,hy1,rz),(0,-1,0))
+    quad((-x1,FRAME_IN_Y[0]-.003,rz),(x1,FRAME_IN_Y[0]-.003,rz),(x1,FRAME_IN_Y[1]+.003,rz),(-x1,FRAME_IN_Y[1]+.003,rz),(0,0,1))
+    mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+    o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o)
+    uvmap(o,k);pieces.append(o);return o
 def finish(name,budget):
     bpy.ops.object.select_all(action='DESELECT')
     for o in pieces:o.select_set(True)
@@ -172,25 +217,49 @@ for x in (-.43,.43):box('Guide post',(x,.4575,0),(.04,.665,.04),bevel=.003)
 box('Guide back',(0,.63,0),(.82,.28,.018),bevel=.002)
 finish('RackGuide',1000)
 # Photo frame uses the exact current beam placements exported by the read-only survey.
+Mm=.001
+# Frame opening: sides unchanged (x +-1.128); rails 29 mm (was 32) so the rim beside each UI hole is wider than 30 mm.
+FRAME_IN_X=1.128;FRAME_IN_Y=(.839,1.901);TRAY_REAR=.07
+# KH_PhotoGalleryEditor.Place.cs canvas layout (mm from the canvas centre): HeaderPlate and Paper. Keep in step.
+CANVAS_HOLES=(((0,410),(2160,180)),((0,-110),(2160,780)))
 survey=json.loads((ROOT/'art-source/prop-finish/config.json').read_text(encoding='utf8'))
 for part in survey['parts']:
     if not part['path'].startswith('KH_PhotoBoard/Structure/'):continue
     name=part['path'].split('/')[-1];p=part['localPosition'];s=part['localScale'];a=part['localEuler']['x']
+    # BUG-ENV-005: no two faces may be parallel, same-facing and overlapping within 30 mm (Quest depth precision).
+    # Roof planks and the ridge use single 45-degree chamfers: plank faces then sit at 25 (mod 45) degrees and the
+    # ridge's at 0 (mod 45), so no plank face is near-parallel to a ridge face where they interpenetrate.
     if name.startswith('Roof'):
-        # Three long overlapping-looking planks along each roof slope, inside the old envelope.
+        # Three long overlapping-looking planks along each roof slope, inside the old envelope. The top plank stops
+        # 7 mm short of the apex so the two slopes' top planks no longer cross (their end faces were coplanar there);
+        # the ridge covers the meeting line.
         for i in range(3):
-            dz=(-1+i)*s['z']/3;ang=math.radians(a)
-            box(name+str(i),(p['x'],p['y']-math.sin(ang)*dz,p['z']+math.cos(ang)*dz),(s['x'],s['y'],s['z']/3-.0015),bevel=.002,angle=a)
+            dz=(-1+i)*s['z']/3;ang=math.radians(a);trim=.007 if i!=1 and -math.sin(ang)*dz>0 else 0
+            dz-=math.copysign(trim/2,dz)
+            box(name+str(i),(p['x'],p['y']-math.sin(ang)*dz,p['z']+math.cos(ang)*dz),(s['x'],s['y'],s['z']/3-.0015-trim),bevel=.002,angle=a,segments=1)
+    elif name=='Ridge':
+        # Runs 40 mm past the plank ends on each side (was flush), so the ridge and plank end faces are not coplanar
+        # and the ridge still covers the slopes' meeting line to the gable ends.
+        box(name,(p['x'],p['y'],p['z']),(s['x']+.08,s['y'],s['z']),bevel=.003,angle=a,segments=1)
+    elif name=='Back':
+        # A tray inside the frame instead of a box (a box left its front 17 mm behind the frame front, its rims
+        # 0-2 mm under the frame's, and the canvas 10-16 mm in front of it). Back's y is the canvas centre.
+        tray(name,p['y'])
     else:box(name,(p['x'],p['y'],p['z']),(s['x'],s['y'],s['z']),bevel=.005 if name.startswith('Post') else .003,angle=a)
-# Narrow lip sits outside the 2.24 x 1.04 m canvas; the photos and pager remain clear.
-for x in (-1.144,1.144):box('Frame side',(x,1.37,.006),(.032,1.12,.026))
-for y0 in (.828,1.912):box('Frame rail',(0,y0,.006),(2.26,.032,.026))
+# Narrow lip sits outside the 2.24 x 1.04 m canvas; the photos and pager remain clear. The frame spans the full
+# depth from its old front (z -.007) to the tray's rear (TRAY_REAR) on the old outline (x +-1.16, y .81-1.93);
+# rails butt between the sides, so no frame face lies on or just behind another.
+fz=(TRAY_REAR-.007)/2;fd=TRAY_REAR+.007
+for x in (-1,1):box('Frame side',(x*(FRAME_IN_X+.016),1.37,fz),(.032,1.12,fd))
+for y0,y1 in ((.81,FRAME_IN_Y[0]),(FRAME_IN_Y[1],1.93)):box('Frame rail',(0,(y0+y1)/2,fz),(2*FRAME_IN_X,y1-y0,fd))
 for x in (-1.22,1.22):
-    for y0 in (.9,1.86,2.07):bolt(x,y0,-.022,.012)
+    for y0 in (.9,1.86,2.07):domed_bolt(x,y0,-.022,.012)
 finish('PhotoFrame',4000)
 # Shampoo: smooth shoulder, bottom moulding, cap collar, slanted hollow outlet.
-lathe('Bottle body',[(-.085,.024),(-.083,.028),(-.079,.03),(-.074,.03),(.05,.03),(.059,.029),(.066,.0265),(.072,.020),(.075,.014)],2,32)
-sleeve=lathe('Printed sleeve',[(-.054,.0303),(.027,.0303)],3,32,label_uv=True);sleeve.rotation_euler.z=math.pi/2
+# BUG-ENV-005: the printed label is a UV band (rings 4-5, h -.054 to .027) of the body surface itself, not a
+# second 0.3 mm shell; phase 8 keeps the label's old quarter-turn orientation. The body's top disk is dropped
+# because the cap covers it (it sat 19 mm under the cap's top disk).
+lathe('Bottle body',[(-.085,.024),(-.083,.028),(-.079,.03),(-.074,.03),(-.054,.03),(.027,.03),(.05,.03),(.059,.029),(.066,.0265),(.072,.020),(.075,.014)],2,32,caps=(True,False),label_band=(4,5,8,3))
 lathe('Cap',[ (.073,.014),(.075,.015),(.091,.015),(.094,.013)],3,32)
 direction=(0,math.cos(math.pi/6),math.sin(math.pi/6))
 lathe('Outlet',[(0,.005),(.003,.006),(.028,.006),(.03,.005),(.03,.0034),(.024,.0034)],3,20,(0,.092,0),direction)

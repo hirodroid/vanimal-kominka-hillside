@@ -51,11 +51,16 @@ namespace KominkaHillside.Editor
     //   they are listed in the report and left alone.
     // Invisible from any standing eye: faces with n.y < -0.7 whose overlap is below the spawn eye (wall bottoms; culled from above).
     // They are not seeds here and not FAILs in 6 (same rule, listed as excluded).
-    // Depth precision: a perspective depth buffer with b bits resolves about z^2 / (near * 2^b) at distance z (far >> near). With the
-    // VRChat near plane clamped to <= 0.05 m (camera-design.md:44) and 24-bit depth: 3 m -> 0.01 mm, 8 m -> 0.08 mm, so a 4 mm
-    // separation has >= 50x margin at 3-8 m. Assumptions: 24-bit depth on Quest and near ~0.05 m; with a 16-bit buffer (~20 mm at 8 m)
-    // or a 0.001 m near (~3.8 mm at 8 m) 4 mm would not be enough at 8 m. The 0.0 mm groups fight on any buffer because the two faces'
-    // interpolated depths differ only by rounding.
+    // Depth precision: a perspective fixed-point depth buffer with b bits resolves about z^2 / (near * 2^b) at distance z (far >> near).
+    // Written 2026-10-13 for near 0.05 m (the Reference Camera's 0.3 clamped by VRChat): 24-bit 8 m -> 0.08 mm, "4 mm has >= 50x margin".
+    // STALE since BUG-WLD-002 (2026-10-14, user-approved): the Reference Camera's near is 0.01 m, so every step is 5x coarser:
+    //   24-bit: 3 m -> 0.054 mm, 8 m -> 0.38 mm (4 mm is ~10x margin at 8 m, not 50x);
+    //   16-bit: 1 m -> 1.5 mm, 3 m -> 14 mm, 8 m -> 98 mm (4 mm is below one step beyond ~1.6 m);
+    //   a viewer's near override (Dynamic / Forced, down to 0.001) is up to 10x coarser again (24-bit 8 m -> 3.8 mm).
+    // Quest's depth format (bits, reversed-Z or not) is UNCONFIRMED (BUG-ENV-005, 2026-10-15: Quest-only flicker on the boards' 10 mm
+    // paper gap, which 24-bit at near 0.01 would resolve at ~185 steps at 3 m). PC (DX11) uses reversed-Z float depth and does not show it.
+    // So the 4 mm separations below are only a 24-bit answer; the generated boards / posters (BUG-ENV-005) remove the parallel overlap
+    // instead. The 0.0 mm groups fight on any buffer because the two faces' interpolated depths differ only by rounding.
     // MeshColliders are never touched: physics and the Guide/1 board raycasts keep using the original meshes.
     public static partial class KH_ZFightScanEditor
     {
@@ -161,7 +166,7 @@ namespace KominkaHillside.Editor
             var rep = new FixReport { utc = DateTime.UtcNow.ToString("o"), mode = apply ? "apply" : "plan only (nothing written to the scene or assets)",
                 method = "inflate whole connected components (see the header of KH_ZFightScanEditor.Fix.cs)",
                 thresholds = "target separation " + FixTarget * 1000 + " mm; seed = sheet within +-" + FixTarget * 1000 + " mm with coplanar (<= " + FixSeedGap * 1000 + " mm) overlap >= " + FixSeedMinAreaM2 * 1e4f + " cm2 within " + FixSeedRadius + " m of the spawn eye; pair window " + FixWindow * 1000 + " mm; |dot| > " + KH_ZFightDetector.NormalDot + "; max offset " + FixMaxOffset * 1000 + " mm; excluded: n.y < " + FixDownNormalY + " below the eye",
-                depthNote = "24-bit depth, near <= 0.05 m: step ~ z^2/(near*2^24) = 0.08 mm at 8 m, so 4 mm is >= 50x margin; not valid for a 16-bit buffer or near 0.001 m at 8 m" };
+                depthNote = "near 0.01 m since BUG-WLD-002 (2026-10-14; this note said 0.05 before): step ~ z^2/(near*2^b). 24-bit: 0.38 mm at 8 m, so 4 mm is ~10x margin; 16-bit: 14 mm at 3 m, 98 mm at 8 m, so 4 mm fails beyond ~1.6 m; near override 0.001: 10x coarser. Quest's depth bits are unconfirmed (BUG-ENV-005)" };
             FxPlan plan = null; bool sceneChanged = false;
             try
             {
