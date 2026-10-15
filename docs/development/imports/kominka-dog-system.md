@@ -705,3 +705,12 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 資産・シーン: `Data/CE/KD_Product_{RoyalSet,SummerSet,CandyStep,PumpkinParade,KominkaLivePack,PlushSet}.asset` は残す (Menu/4 の後はシーンから参照されないのでワールドに入らない。`EnsureCeAssets` は従来どおり作り続ける)。飾りのモデル (王様・夏・キャンディ・パンプキンの 12 品 × 6 匹と試着のミニチュア) と同梱の撫でFX (5 種 × 2 層 × 6 匹) はシーンに残り、容量にも残る (削除は別件)。
 
 **古民家ドッグランへは反映しない** (古民家では販売中)。
+
+## 2026-10-15 おじいさんの文言を「どの看板を見るか」へ (IMP-UI-010)
+
+| ファイル | 裏山改変 | 理由 |
+|---|---|---|
+| `Scripts/KD_ShopKeeper.cs` | const 6 本 (`WordGreeting` / `WordGreetingGift` / `InfoWays` / `InfoWalk` / `InfoTreats` / `InfoCall`) を文言表 ja と同じ文字列に書き換え (1 行 1 リテラル)。挨拶から端末別の開き方を外して「わしのうしろの看板」「リード台」「塀ぎわの洗い場」「地図の看板」を指す。InfoWalk はつなぎ方 (リード台の板) と行き先 6 つ (地図) を本人が言わない。InfoCall はトグル名「呼ぶを全員に許可」(設定ホームの `WordOpenOn`) を維持したまま権限の説明を整理し、「姿勢」を「ポーズ」に。const の上のコメントも更新 | 看板・帯が説明する操作を NPC が繰り返さない (ユーザー依頼 2026-10-15)。レビューと採用した文は [棚卸し §12](../../plans/2026-10-15-wording-review.md) |
+| `Data/UITranslations.json` | 同 6 キー + `guide.*` 5 + `welcome.*` 2 + `activities.hillside.*` 4 + `KD_TreatPouch.WordToyHelp` / `WordWalkUnknown` + `photo.help.body` = 20 キー × 13 言語 = 260 値を照合、236 値を変更、24 値 (`guide.pointer` / `guide.ball.more` の 11 言語 + ja/en の一部) は既存値のまま (ja / en 自作、11 言語 AI 訳・校正なし) | 同上 |
+
+Verify の要求語 (`KD_WelcomeGuideEditor.Hillside.cs` の `HillsideBodyJa` / `HillsideRereadJa` / `HillsideAbsentJa`) は変えていない (ようこその本文は行の題を残した)。**古民家ドッグランへは反映しない** (古民家のおじいさんは 8 話題のまま)。

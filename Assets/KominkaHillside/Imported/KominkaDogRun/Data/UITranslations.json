@@ -102,11 +102,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "よく来たね。\nここは古民家の裏山だよ。\n犬たちと、のんびり\n歩いていきな。\n\n支度は、手元メニューの\n「かざり」でできる。\nVRは右スティックを下に\n倒したままにすると出る。\nDesktopはTキー、\nスマホは画面にある\n「メニュー」を押しな。\n\n知りたいことがあれば、\n左から選んでおくれ。"
+          "text": "よく来たね。\nここは古民家の裏山だよ。\n犬たちと、のんびり\n歩いていきな。\n\nわしのうしろの看板に、\n遊び方が書いてあるよ。\n手元メニューの出し方もな。\nさんぽはリード台、\n洗うのは塀ぎわの洗い場、\n道は地図の看板を見な。\n\n聞きたいことがあれば、\n左から選んでおくれ。"
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "よく来たね。\nはじめてだね。\n散歩の支度に、これを\n持っていきな。\n{0}ptだ。一度きりだよ。\n\n手元メニューの「かざり」で\n犬の支度ができる。\nVRは右スティックを下に\n倒したままにすると出る。\nDesktopはTキー、\nスマホは画面にある\n「メニュー」を押しな。\n\n知りたいことがあれば、\n左から選んでおくれ。"
+          "text": "よく来たね。\nはじめて見る顔だね。\nここは古民家の裏山だよ。\nさんぽの支度に、これを\n持っていきな。\n{0}ptだ。一度きりだよ。\n手元メニューの「かざり」や\n「おやつ」「呼ぶ」で使いな。\n\nわしのうしろの看板に、\n遊び方が書いてあるよ。\nさんぽはリード台、\n洗うのは塀ぎわの洗い場、\n道は地図の看板を見な。\n\n聞きたいことがあれば、\n左から選んでおくれ。"
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -162,11 +162,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "手元のメニューで「おやつ」を\n選び、「出す」を押しな。\nおやつが出るとメニューは\n閉じるから、犬にあげておくれ。\n\n手に持っていると犬が寄ってきて、\n手放すと、一番近くにいる犬が\n食べてくれるよ。\n一度に出せるのはひとつだけ。\nはじめに5個持たせてあるから、\nなくなったら「おやつ」で\nポイントと交換しな。"
+          "text": "手元メニューの「おやつ」で\n「出す」を押しな。\nおやつが出ると、メニューは\n閉じるよ。\n\n手に持つと、犬が寄ってくる。\n放すと、いちばん近くの犬が\n食べてくれるよ。\n一度に出せるのはひとつだけ。\n\nはじめに5個持たせてある。\nなくなったら「おやつ」で\nポイントと交換しな。"
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "手元メニューの「呼ぶ」で\n犬を選び、ポーズを選んで、\n場所と向きを決める。\n犬が歩いてきて、そこで\n休んでくれるよ。\n自由にするなら、「呼ぶ」で\nその犬を選び、\n「自由にする」を押しな。\n\nリードでつないでいる犬は\n呼べない。先に外しな。\n\nごろん、ふせ、おすわり、\nうずくまるの4つは無料だ。\nほかの姿勢や動作は、\nポイントで増やせるよ。\n\n呼べるのは部屋のオーナー\n(いなければMaster) と、\n「呼ぶを全員に許可」が\nONのときの参加者だよ。"
+          "text": "手元メニューの「呼ぶ」で\n犬とポーズを選び、\n場所と向きを決める。\n犬が歩いてきて、そこで\n休んでくれるよ。\n終わりにするなら、その犬の\n「自由にする」を押しな。\n\nつないでいる犬は呼べない。\n先に外しな。\n\nごろん、ふせ、おすわり、\nうずくまるは無料だ。\nほかのポーズは、ポイントで\n増やせるよ。\n\n呼べるのは部屋のオーナー\n(いなければMaster) だ。\n「呼ぶを全員に許可」が\nONなら、だれでも呼べるよ。"
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -930,7 +930,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "ここでの過ごし方だよ。\n好きな順でいい。\n\n犬をつないで、さんぽに行く。\n犬をなでる。\nボールやディスクを投げる。\nおやつをあげる。\n\n山の上からは、ふもとの\n古民家が見えるよ。\nときどき振り返ってみな。\n\n「かざり」で犬におめかし、\nなでたときの光も選べる。\n「呼ぶ」で犬をそばに呼んで\n休ませることもできる。\n\nぜんぶやらなくていい。\nながめているだけでも\nいいもんだよ。"
+          "text": "ここでの過ごし方だよ。\n好きな順でいい。\n\n犬をつないで、さんぽに行く。\n犬をなでる。\nボールやディスクを投げる。\nおやつをあげる。\nさんぽのあとは、洗い場で洗う。\n\n山の上からは、ふもとの\n古民家が見えるよ。\nときどき振り返ってみな。\n\nぜんぶやらなくていい。\nながめているだけでも\nいいもんだよ。"
         },
         {
           "key": "gallery.bedroom.title",
@@ -978,7 +978,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "なにも持っていなくても — いつもの遊びは、そのまま\n・撫でる: 頭・ほっぺ・あごをなでると、犬が返事をします\n・ボールやディスクを投げる: 拾って投げると、持ってきます\n・一緒に歩く: この板の「さんぽ」から。犬をつないで、裏山を歩けます\n・そばで寝てもらう: この板の「呼ぶ」から。犬が来て、そばで寝ます\n\nこの板でできること — 過ごした時間がポイントになり、好きなものと交換できます\n・さんぽ・おやつ・かざり: 犬をつなぐ、手元に出す、犬につける。上のタブから\n・ポイントとおじいさん: 右上の「ポイント」に入手経路。門のそばのおじいさんに話しかけると、支度用のポイントがもらえます"
+          "text": "なにも持っていなくても、すぐに遊べます\n・撫でる: 頭・ほっぺ・あごをなでると、犬がよろこびます\n・ボールやディスクを投げる: 「おもちゃ」で出して投げると、犬が持ってきます\n・一緒に歩く: 「さんぽ」で犬をつないで、裏山を歩けます\n・そばで寝てもらう: 「呼ぶ」で犬が来て、そばで寝ます\n・洗う: さんぽのあとは、洗い場へ\n\nこの板でできること\n・さんぽ・おやつ・かざり: 上のタブから、犬をつないだり、おやつを出したり、かざりをつけたりできます\n・ポイントとおじいさん: ここで過ごすだけでポイントがたまり、右上の「ポイント」に出ます。門のそばのおじいさんに話しかけると、さんぽの支度にポイントをくれます"
         },
         {
           "key": "welcome.footer.vr",
@@ -1830,7 +1830,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "犬と遊んだり散歩したりすると、自動で写真を撮ります（シャッターはありません）。ボールを持ってきたとき、撫でているとき、走ったり犬同士でじゃれ合ったりしたとき、フリスビーを跳んで取ったとき、集合写真のときに撮ります。\n\nリードでつないで歩くと、立ち寄った場所や見晴らしの場所、しばらく歩いたときにも、犬の目線で見た景色や、自撮りのような写真を撮ります。\n\n写真は24枚まで残ります（散歩10・撫で4・遊び4・洗う6）。いっぱいになると、同じ種類の古い写真から入れ替わります。新しい写真が左上に並び、◀ ▶ でページをめくれます。\n\n写真はあなたの端末の中だけにあり、他の人には別の写真が見えています。退室すると消えます。\n\n残したい写真は、PC・Questでは門の写真ボードか、ここに並んだ写真で、VRChatカメラを近づけた1枚が画面いっぱいに写って撮れます。スマホでは、写真を大きく表示して（ここで押す・ボードの写真をタップ）スクリーンショットで持ち帰れます。\n\n自動撮影は、［設定］の［写真: ON / OFF］で切り替えられます。"
+          "text": "犬と遊んだりさんぽしたりすると、いい瞬間が自動で写真になります。ボールを持ってきたとき、なでているとき、犬どうしでじゃれたとき、フリスビーを跳んで取ったとき、集合写真のとき。さんぽでは、立ち寄った場所や見晴らしのいい場所でも撮ります。\n\n写真は 24 枚まで残ります (さんぽ 10・なでる 4・遊び 4・洗う 6)。いっぱいになると、同じ種類の古い写真から入れ替わります。新しい写真が左上で、◀ ▶ でページをめくれます。\n\n写真はあなたにだけ見えていて、ほかの人には別の写真が見えています。このワールドを出ると消えます。\n\n残したい写真は、PC・Quest では、門の写真ボードかここの写真に VRChat カメラを近づけると 1 枚が画面いっぱいに写るので、そのまま撮ります。スマホでは写真を大きく表示して、スクリーンショットで持ち帰れます。\n\n自動撮影は［設定］の［写真: ON / OFF］で切り替えられます。"
         },
         {
           "key": "photo.help.close",
@@ -2386,7 +2386,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>いつもの遊びを、気軽に</b>\nなにも持っていなくても、そのまま遊べます。\n\n<b>撫でる</b>\n頭・ほっぺ・あごをなでると、犬が返事をします。\n\n<b>ボールやディスクを投げる</b>\n拾って投げると、犬が持ってきます。\n\n<b>一緒に歩く</b>\nメニューの「さんぽ」から。犬をつないで、裏山を歩けます。\n\n<b>そばで寝てもらう</b>\nメニューの「呼ぶ」から。犬が来て、そばで寝ます。\n\n<b>メニューでできること</b>\nここで過ごした時間がポイントになり、好きなものと交換できます。\n上のタブから、犬をつないでさんぽしたり、おやつを手元に出したり、犬にかざりをつけたりできます。\n\n<b>ポイントとおじいさん</b>\n右上の「ポイント」で、ポイントの入手方法を確認できます。\n門のそばのおじいさんに話しかけると、支度用のポイントがもらえます。\n\n<b>メニューを手元に呼ぶには</b>\nVR：右スティックを下に長押し\nDesktop：T キー\nスマホ：画面の［メニュー］"
+          "text": "<b>なにも持っていなくても、すぐに遊べます</b>\nポイントがなくても、そのまま遊べます。\n\n<b>撫でる</b>\n頭・ほっぺ・あごをなでると、犬がよろこびます。\n\n<b>ボールやディスクを投げる</b>\n「おもちゃ」で出して投げると、犬が持ってきます。\n\n<b>一緒に歩く</b>\n「さんぽ」で犬をつないで、裏山を歩けます。\n\n<b>そばで寝てもらう</b>\n「呼ぶ」で犬が来て、そばで寝ます。\n\n<b>洗う</b>\nさんぽのあとは、洗い場へ。\n\n<b>メニューでできること</b>\n上のタブから、犬をつないだり、おやつを出したり、かざりをつけたりできます。\nここで過ごすだけでポイントがたまり、好きなものと交換できます。\n\n<b>ポイントとおじいさん</b>\n右上の「ポイント」で、いまのポイントとためかたが分かります。\n門のそばのおじいさんに話しかけると、さんぽの支度にポイントをくれます。\n\n<b>メニューを手元に呼ぶには</b>\nVR：右スティックを下に長押し\nDesktop：T キー\nスマホ：画面の［メニュー］"
         },
         {
           "key": "photo.frame.halloween",
@@ -2558,7 +2558,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "結果を確認できませんでした。表示を見てもう一度どうぞ"
+          "text": "うまくいったか分かりませんでした。もう一度どうぞ"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -2638,7 +2638,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "おもちゃは 1 つずつ、目の前の地面に置きます。ディスクは持つと軌道が見え、Use で飛びます"
+          "text": "おもちゃは犬ごとに 1 つ、目の前に出ます。ディスクは持つと線が出て、Use で投げられます"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -2662,7 +2662,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "隊形を選び、足元の印を見て「ここに集合」。印が出ない枠はそこに並べません。坂でも並びます。1 分で解散し、その場で自由行動に戻ります"
+          "text": "隊形を選び、足元の印を見て「ここに集合」。印が出ない所には並べません。坂でも並びます。1 分で解散して、それぞれ遊びに戻ります"
         },
         {
           "key": "activities.hillside.perk",
@@ -2670,11 +2670,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "トレーナーになると、犬たちを集合させて集合写真を撮れます。古民家で買った特典はここでも使えます。\n1 か月 500 / 3 か月 1,350 / 6 か月 2,550 / 12 か月 4,800 Credits。自動更新はなく、延長は残りの日数に足されます。"
+          "text": "トレーナーになると、犬たちを並ばせて集合写真を撮ったり、フリスビーの取り方を変えたりできます。古民家ドッグランでトレーナーになった人も、ここで使えます。\n1 か月 500 / 3 か月 1,350 / 6 か月 2,550 / 12 か月 4,800 Credits。自動更新はなく、延長は残りの日数に足されます。"
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "入室時に有効だったトレーナーの権利は、滞在中はそのまま使えます。集合は、その場のみんなで楽しめます。"
+          "text": "このワールドに来たときにトレーナーなら、出るまでそのまま使えます。集合は、その場のみんなで楽しめます。"
         },
         {
           "key": "activities.hillside.started",
@@ -2698,7 +2698,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "結果を確認できませんでした。表示を見てもう一度どうぞ"
+          "text": "うまくいったか分かりませんでした。もう一度どうぞ"
         },
         {
           "key": "activities.hillside.requesting",
@@ -2806,7 +2806,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "手元メニューの「さんぽ」で\n犬をリードにつなげるよ。\n犬の行で「左につなぐ」か\n「右につなぐ」を押しな。\n近くにいる犬だけだ。\n片手に3匹、両手で6匹まで\nつなげる。\n\n行き先は6つから選べる。\n「広場」「奥の広場」「川辺」\nと、ぐるっと回る周回が2つ、\nそれに「古民家側の入口」だ。\nつないだ犬は、寄り道を\nしながら行き先へ歩く。\n\n外すときは「はずす」だ。\nつないだ本人だけが外せる。\n\nポイントがなくても、さんぽと\nボール遊びはいつでもできる。"
+          "text": "つなぎ方は、リード台に\n書いてあるよ。\n\n行き先は、手元メニューの\n「さんぽ」で選べる。\n道は、地図の看板にあるよ。\nつないだ犬は、寄り道を\nしながら歩く。\n急かさず、付き合ってやりな。\n\n外せるのは、つないだ\n本人だけだよ。"
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -2954,7 +2954,7 @@
         },
         {
           "key": "guide.pointer",
-          "text": "お散歩はリード台で、洗うのは洗い場で、道は地図の看板で"
+          "text": "さんぽはリード台で、洗うのは洗い場で、道は地図の看板で"
         },
         {
           "key": "guide.frisbee.title",
@@ -2986,7 +2986,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "ディスクは犬ごとに1枚。広場にも置いてあります。\n強さ: VR は右スティック上下、Desktop はマウスホイール。\nリードでつないだ犬は取りに行きません。はずしてから。\n川ではディスクが浮き、犬が飛びこんで取ってきます。"
+          "text": "ディスクは犬ごとに1枚。広場にもある。\n強さ: VR は右スティック上下、Desktop はマウスホイール。\nつないだ犬は取りに行かない。はずしてから。\nディスクは川に浮く。犬が飛びこんで取ってくる。"
         },
         {
           "key": "guide.ball.title",
@@ -3002,7 +3002,7 @@
         },
         {
           "key": "guide.ball.more",
-          "text": "ボールかディスク、犬ごとに1つ出せます\nリードでつないだ犬は取りに行きません"
+          "text": "ボールかディスク、犬ごとに1つ\nつないだ犬は取りに行かない"
         },
         {
           "key": "guide.cut.throw.label",
@@ -3022,7 +3022,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "お散歩・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n入口のおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを集合させて、みんなで集合写真。古民家で入った人は、ここでもそのまま。\n入る: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］"
+          "text": "さんぽ・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n門のそばのおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを並ばせて集合写真。フリスビーの取り方も変えられる。古民家ドッグランでトレーナーになった人も、ここで使える。\n加入: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］"
         },
         {
           "key": "guide.map.title",
@@ -3054,7 +3054,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "門の向こうに見える古民家が「古民家ドッグラン」。\n同じ6匹の犬たちがいる、このワールドの前作です。\n<color=#B5432A>この看板を押すと、となりにポータルが出ます。</color>\nVR: 手を向けてトリガー ／ Desktop: クリック ／ スマホ: タップ\nもう一度押すとしまいます。1分たつと自動でしまいます。\nポイントと持ち物は、ワールドごとに別です。\nばにまるトレーナーは、どちらで入っても両方で使えます。"
+          "text": "門の向こうに見える古民家が「古民家ドッグラン」。\n同じ6匹の犬たちが暮らす、このワールドの前作。\n<color=#B5432A>この看板を押すと、となりにポータルが出る。</color>\nもう一度押すか、1分たつと消える。\nポイントと持ち物は、ワールドごとに別。\nばにまるトレーナーは、どちらで加入しても両方で使える。"
         },
         {
           "key": "guide.kominka.interact",
@@ -3933,11 +3933,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nThe board behind me tells you how to play, and how to open your hand menu. For walks, see the leash rack. For washing, the wash station by the wall. For the trails, the map board.\n\nIf you want to ask something, pick it on the left."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Welcome. A new face, I see. This is the hillside behind the old farmhouse. Take these to get ready for a walk: {0} pt, just this once. Spend them in Dress, Treats or Call in your hand menu.\n\nThe board behind me tells you how to play. For walks, see the leash rack. For washing, the wash station by the wall. For the trails, the map board.\n\nIf you want to ask something, pick it on the left."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -3993,11 +3993,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Open Treats in your hand menu and press Give. The menu closes once the treat is out.\n\nHold it and the dogs come over. Let go, and the nearest dog eats it. One treat at a time.\n\nI have given you 5 to start with. When they run out, trade points for more in Treats."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Open Call in your hand menu, pick a dog and a pose, then choose the spot and the way it faces. The dog walks over and rests there. When you are done, press Let roam for that dog.\n\nLeashed dogs cannot be called. Unleash them first.\n\nSide sleep, Lie down, Sit and Curl up are free. Other poses can be added with points.\n\nThe instance owner (or the Master if there is none) can call. With Calling open to all on, anyone can."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -4761,7 +4761,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Here is how to spend your time. Any order you like.\n\nLeash a dog and go for a walk. Pet a dog. Throw a ball or a disc. Give a treat. After the walk, wash them at the wash station.\n\nFrom up on the hill you can see the old farmhouse below. Look back now and then.\n\nYou do not have to do it all. Just watching is fine, too."
         },
         {
           "key": "gallery.bedroom.title",
@@ -4809,7 +4809,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "No points needed to start playing\n- Pet: stroke the head, cheeks or chin and the dog is happy\n- Throw a ball or disc: bring one out in Toys, throw it, and the dog brings it back\n- Walk together: leash dogs in Walk and walk the hillside\n- Nap together: in Call a dog comes and sleeps beside you\n- Wash: after a walk, head to a wash station\n\nWhat this board does\n- Walk, Treats, Dress: from the tabs above, leash dogs, bring out treats, dress a dog\n- Points and Grandpa: points add up just by being here and show at Points, top right. Talk to Grandpa by the gate and he gives you points to get ready for a walk"
         },
         {
           "key": "welcome.footer.vr",
@@ -5661,7 +5661,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Photos are taken automatically while you play and walk with the dogs (there is no shutter): when a dog brings back a ball, while you pet a dog, when dogs run or play together, when a dog jumps to catch a frisbee, and at group photo time.\n\nOn a leash walk, photos are also taken at stopovers, at viewpoints and every so often: the view through the dog's eyes, or a selfie-style shot.\n\nUp to 24 photos are kept (walk 10, petting 4, play 4, washing 6). When a kind is full, its oldest is replaced. The newest is at the top left; turn pages with ◀ ▶.\n\nPhotos stay on your own device; other people see different photos. They disappear when you leave.\n\nTo keep one on PC or Quest, bring your VRChat camera close to a photo on the board by the gate, or to any photo here: that one fills the frame. On a phone, show the photo large (press it here, or tap it on the board) and take a screenshot.\n\nTurn automatic photos ON or OFF with [Photos: ON / OFF] in Settings."
+          "text": "As you play and walk with the dogs, good moments become photos on their own: when a dog brings a ball back, while you pet, when dogs play together, when a dog leaps for a frisbee, and at group photos. On walks, stops and viewpoints are captured too.\n\nUp to 24 photos are kept (walk 10, petting 4, play 4, wash 6). When full, the oldest of that kind is replaced. The newest is top left, and ◀ ▶ turns the pages.\n\nOnly you see your photos. Others see their own. They are gone when you leave this world.\n\nTo keep one: on PC and Quest, bring the VRChat camera close to the photo board at the gate or a photo here, and it fills the frame, then shoot. On your phone, enlarge the photo and take a screenshot.\n\nTurn automatic photos on or off at Settings → Photos: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -6217,7 +6217,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>No points needed to start playing</b>\nYou can play right away without any points.\n\n<b>Pet a dog</b>\nStroke the head, cheeks or chin and the dog is happy.\n\n<b>Throw a ball or disc</b>\nBring one out in Toys and throw it. The dog brings it back.\n\n<b>Walk together</b>\nLeash dogs in Walk and walk the hillside.\n\n<b>Nap together</b>\nIn Call a dog comes and sleeps beside you.\n\n<b>Wash</b>\nAfter a walk, head to a wash station.\n\n<b>What the menu does</b>\nFrom the tabs above, leash dogs, bring out treats, or dress a dog.\nPoints add up just by being here, and you trade them for things you like.\n\n<b>Points and Grandpa</b>\nPoints, top right, shows how many you have and how to earn them.\nTalk to Grandpa by the gate and he gives you points to get ready for a walk.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nPhone: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -6389,7 +6389,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Could not tell if that worked. Try again"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -6469,7 +6469,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "One toy per dog, placed in front of you. Hold a disc to see its path, then Use to throw"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -6493,7 +6493,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Pick a formation, check the marks at your feet, then press Gather here. No mark, no spot. Slopes are fine. They break up after 1 minute and go back to playing"
         },
         {
           "key": "activities.hillside.perk",
@@ -6501,11 +6501,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "As a Trainer you can line the dogs up for group photos and switch the Frisbee catch style. A Trainer from Kominka Dog Run works here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; extensions add to the days left."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "If you were a Trainer when you joined, it stays on until you leave. Everyone around can join the gathering."
         },
         {
           "key": "activities.hillside.started",
@@ -6529,7 +6529,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Could not tell if that worked. Try again"
         },
         {
           "key": "activities.hillside.requesting",
@@ -6637,7 +6637,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "How to leash a dog is shown at the leash rack.\n\nPick where to go in Walk in your hand menu. The trails are on the map board. Leashed dogs stop to sniff around on the way. Take your time with them.\n\nOnly the person who leashed a dog can unleash it."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -6817,7 +6817,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Each dog has its own disc. Some wait at the Plaza too.\nPower: VR right stick up/down, Desktop mouse wheel.\nLeashed dogs won't fetch. Unleash them first.\nIn the river the disc floats and the dog jumps in for it."
+          "text": "One disc per dog. Some wait at the Plaza too.\nPower: VR right stick up/down, Desktop mouse wheel.\nLeashed dogs won't fetch. Unleash first.\nA disc floats on the river. The dog dives in for it."
         },
         {
           "key": "guide.ball.title",
@@ -6853,7 +6853,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa at the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nGather the dogs for a group photo everyone can enjoy. Joined at the farmhouse? It works here too.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]"
+          "text": "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa by the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nLine the dogs up for a group photo, and switch the Frisbee catch style. A Trainer from Kominka Dog Run works here too.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]"
         },
         {
           "key": "guide.map.title",
@@ -6885,7 +6885,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "The farmhouse beyond the gate is Kominka Dog Run, the earlier world with the same six dogs.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nVR: point and pull the trigger / Desktop: click / Phone: tap\nPress again to put it away. It also goes away after 1 minute.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined."
+          "text": "The farmhouse beyond the gate is Kominka Dog Run, the earlier world where the same six dogs live.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nPress again, or wait 1 minute, and it goes away.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined."
         },
         {
           "key": "guide.kominka.interact",
@@ -7764,11 +7764,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Здравствуй, проходи. Это холм за старым деревенским домом. Погуляй с собаками не спеша.\n\nНа щите за моей спиной написано, как тут играть и как открыть личное меню. Прогулки — у стойки с поводками. Мытьё — у мойки возле ограды. Дороги — на щите с картой.\n\nЕсли хочешь что-то спросить, выбирай слева."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Здравствуй, проходи. Новое лицо, гляжу. Это холм за старым деревенским домом. Вот, возьми на сборы к прогулке: {0} pt, только один раз. Трать их во вкладках «Наряды», «Лакомства» или «Позвать» личного меню.\n\nНа щите за моей спиной написано, как тут играть. Прогулки — у стойки с поводками. Мытьё — у мойки возле ограды. Дороги — на щите с картой.\n\nЕсли хочешь что-то спросить, выбирай слева."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -7824,11 +7824,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Открой «Лакомства» в личном меню и нажми «Дать». Как лакомство появится, меню закроется.\n\nДержи его в руке — собаки подойдут. Отпустишь — съест ближайшая. Только по одному за раз.\n\nДля начала я дал тебе 5 штук. Кончатся — обменяй очки на новые во вкладке «Лакомства»."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Открой «Позвать» в личном меню, выбери собаку и позу, потом место и куда ей смотреть. Собака подойдёт и отдохнёт там. Когда хватит, нажми «Отпустить» у этой собаки.\n\nСобак на поводке позвать нельзя. Сначала отстегни.\n\n«На боку», «Лежать», «Сидеть» и «Клубком» — бесплатно. Другие позы можно добавить за очки.\n\nЗвать может владелец инстанса (а если его нет — Master). Если включено «Звать могут все», звать может любой."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -8592,7 +8592,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Вот чем тут можно заняться. В каком хочешь порядке.\n\nВозьми собаку на поводок и иди гулять. Погладь собаку. Брось мяч или диск. Дай лакомство. После прогулки помой собак на мойке.\n\nС вершины холма видно старый дом внизу. Оглядывайся иногда.\n\nНе обязательно делать всё. Можно и просто смотреть."
         },
         {
           "key": "gallery.bedroom.title",
@@ -8640,7 +8640,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Очки не нужны — играть можно сразу\n- Погладить: погладь голову, щёки или подбородок — собака обрадуется\n- Бросить мяч или диск: достань его в «Игрушки», брось — и собака принесёт\n- Гулять вместе: пристегни собак в «Walk» и гуляй по холму\n- Поспать рядом: в «Позвать» собака придёт и уснёт рядом с тобой\n- Мыть: после прогулки — к месту для мытья\n\nЧто умеет эта доска\n- Walk, Лакомства, Наряды: во вкладках сверху пристёгивай собак, доставай лакомства, наряжай собаку\n- Очки и дедушка: очки копятся, просто пока ты здесь, и видны в «Очки» справа вверху. Поговори с дедушкой у ворот — он даст очки на сборы к прогулке"
         },
         {
           "key": "welcome.footer.vr",
@@ -9492,7 +9492,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото снимаются сами, пока вы играете и гуляете с собаками (кнопки затвора нет): когда собака приносит мяч, пока вы её гладите, когда собаки бегают или играют вместе, когда собака ловит фрисби в прыжке, а также во время группового фото.\n\nНа прогулке с поводком фото снимаются и на остановках, у смотровых мест и время от времени: вид глазами собаки или снимок в стиле селфи.\n\nХранится до 24 фото (прогулка 10, поглаживание 4, игры 4, мытьё 6). Когда вид заполнен, заменяется его самое старое фото. Новое — слева вверху; страницы листаются кнопками ◀ ▶.\n\nФото хранятся только на вашем устройстве; другие люди видят другие фото. После выхода они исчезают.\n\nЧтобы сохранить снимок на ПК или Quest, поднесите камеру VRChat к фото на доске у ворот или к любому фото здесь: оно заполнит кадр. На телефоне откройте фото крупно (нажмите здесь или коснитесь на доске) и сделайте скриншот.\n\nАвтосъёмку можно включить или выключить кнопкой [Фото: ON / OFF] в «Настройках»."
+          "text": "Пока вы играете и гуляете с собаками, удачные моменты сами становятся фото: когда собака приносит мяч, пока вы её гладите, когда собаки играют вместе, когда собака прыгает за фрисби, а также во время группового фото. На прогулке снимаются и остановки, и смотровые места.\n\nХранится до 24 фото (прогулка 10, поглаживание 4, игры 4, мытьё 6). Когда вид заполнен, заменяется его самое старое фото. Новое — слева вверху; страницы листаются кнопками ◀ ▶.\n\nВаши фото видите только вы. Другие видят свои. После выхода из этого мира они исчезают.\n\nЧтобы сохранить снимок на PC или Quest, поднесите камеру VRChat к доске с фото у ворот или к фото здесь: оно заполнит кадр, и снимайте. На телефоне откройте фото крупно и сделайте скриншот.\n\nАвтосъёмку можно включить или выключить: Настройки → Фото: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -10048,7 +10048,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Очки не нужны — играть можно сразу</b>\nМожно играть прямо сейчас, без всяких очков.\n\n<b>Погладить собаку</b>\nПогладь голову, щёки или подбородок — собака обрадуется.\n\n<b>Бросить мяч или диск</b>\nДостань его в «Игрушки» и брось. Собака принесёт его обратно.\n\n<b>Гулять вместе</b>\nПристегни собак в «Walk» и гуляй по холму.\n\n<b>Поспать рядом</b>\nВ «Позвать» собака придёт и уснёт рядом с тобой.\n\n<b>Мыть</b>\nПосле прогулки иди к месту для мытья.\n\n<b>Что умеет меню</b>\nВо вкладках сверху пристёгивай собак, доставай лакомства или наряжай собаку.\nОчки копятся, просто пока ты здесь, и их можно обменять на то, что нравится.\n\n<b>Очки и дедушка</b>\nВ «Очки» справа вверху видно, сколько у тебя очков и как их получить.\nПоговори с дедушкой у ворот — он даст очки на сборы к прогулке.\n\n<b>Как вызвать меню</b>\nVR: удерживай правый стик вниз\nDesktop: нажми T\nТелефон: коснись [Меню] на экране"
         },
         {
           "key": "photo.frame.halloween",
@@ -10220,7 +10220,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Не удалось понять, получилось ли. Попробуйте ещё раз"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -10300,7 +10300,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "По игрушке на собаку, прямо перед вами. Возьмите диск, чтобы увидеть путь, и Use — бросок"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -10324,7 +10324,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Выбери построение, посмотри на метки под ногами и нажми «Собрать здесь». Нет метки — нет места. На склонах тоже можно. Через 1 минуту собаки расходятся и снова играют"
         },
         {
           "key": "activities.hillside.perk",
@@ -10332,11 +10332,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "С Trainer можно выстроить собак для группового фото и сменить стиль ловли фрисби. Trainer из Kominka Dog Run действует и здесь.\n500 Credits за 1 месяц / 1 350 за 3 / 2 550 за 6 / 4 800 за 12. Без автопродления; продление добавляется к остатку."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Если при входе у вас был Trainer, он действует, пока вы не уйдёте. В сборе могут участвовать все, кто рядом."
         },
         {
           "key": "activities.hillside.started",
@@ -10360,7 +10360,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Не удалось понять, получилось ли. Попробуйте ещё раз"
         },
         {
           "key": "activities.hillside.requesting",
@@ -10468,7 +10468,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Как взять собаку на поводок, написано у стойки с поводками.\n\nКуда идти, выбирай во вкладке «Walk» личного меню. Дороги — на щите с картой. Собаки на поводке по пути останавливаются всё обнюхать. Не торопи их.\n\nОтстегнуть собаку может только тот, кто её пристегнул."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -10648,7 +10648,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "У каждой собаки свой диск. Несколько лежат на Plaza.\nСила: в VR правый стик вверх/вниз, на Desktop колесо мыши.\nСобака на поводке не побежит за диском. Сначала отстегни.\nВ реке диск плавает, и собака прыгает за ним."
+          "text": "По диску на каждую собаку. Несколько лежат и на Plaza.\nСила: в VR правый стик вверх/вниз, на Desktop колесо мыши.\nСобака на поводке не побежит за диском. Сначала отстегни.\nДиск плавает в реке. Собака ныряет за ним."
         },
         {
           "key": "guide.ball.title",
@@ -10684,7 +10684,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Прогулка, поглаживание, мячи, фрисби и мытьё — бесплатно для всех.\n<color=#B5432A>Очки</color>\nПоговори с дедушкой у ворот — 200 pt (один раз). Здесь 1 pt в минуту.\nОбменивай во вкладках «Наряды», «Позвать», «Лакомства» на украшения, эффекты, позы и лакомства.\n<color=#B5432A>VAnimal Trainer</color> (на срок, Credits)\nСобери собак для общего фото — радуются все. Оформил на ферме? Работает и здесь.\nОформить: меню «Игры» → [Открыть магазин]\nПользоваться: в «Игры» выбери построение → [Собрать здесь]"
+          "text": "Прогулка, поглаживание, мячи, фрисби и мытьё — бесплатно для всех.\n<color=#B5432A>Очки</color>\nПоговори с дедушкой у ворот — 200 pt (один раз). Здесь 1 pt в минуту.\nОбменивай во вкладках «Наряды», «Позвать», «Лакомства» на украшения, эффекты, позы и лакомства.\n<color=#B5432A>VAnimal Trainer</color> (на срок, Credits)\nВыстрой собак для общего фото и меняй стиль ловли фрисби. Оформил в Kominka Dog Run? Работает и здесь.\nОформить: меню «Игры» → [Открыть магазин]\nПользоваться: в «Игры» выбери построение → [Собрать здесь]"
         },
         {
           "key": "guide.map.title",
@@ -10716,7 +10716,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Фермерский дом за воротами — это Kominka Dog Run, предыдущий мир с теми же шестью собаками.\n<color=#B5432A>Нажми на эту доску — рядом появится портал.</color>\nVR: наведи и нажми курок / ПК: щёлкни / Телефон: коснись\nНажми ещё раз, чтобы убрать. Через 1 минуту он исчезнет сам.\nОчки и предметы в каждом мире свои.\nVAnimal Trainer работает в обоих мирах, где бы ты его ни оформил."
+          "text": "Фермерский дом за воротами — это Kominka Dog Run, предыдущий мир, где живут те же шесть собак.\n<color=#B5432A>Нажми на эту доску — рядом появится портал.</color>\nНажми ещё раз или подожди 1 минуту — и он исчезнет.\nОчки и предметы в каждом мире свои.\nVAnimal Trainer работает в обоих мирах, где бы ты его ни оформил."
         },
         {
           "key": "guide.kominka.interact",
@@ -11595,11 +11595,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Вітаю, заходь. Це пагорб за старою сільською хатою. Погуляй із собаками не поспішаючи.\n\nНа щиті за моєю спиною написано, як тут гратися і як відкрити своє меню. Прогулянки — біля стійки з повідцями. Миття — біля мийки під огорожею. Дороги — на щиті з мапою.\n\nЯкщо хочеш щось спитати, вибирай ліворуч."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Вітаю, заходь. Нове обличчя, бачу. Це пагорб за старою сільською хатою. Ось, візьми на збори до прогулянки: {0} pt, лише один раз. Витрачай їх у вкладках «Вбрання», «Ласощі» чи «Покликати» свого меню.\n\nНа щиті за моєю спиною написано, як тут гратися. Прогулянки — біля стійки з повідцями. Миття — біля мийки під огорожею. Дороги — на щиті з мапою.\n\nЯкщо хочеш щось спитати, вибирай ліворуч."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -11655,11 +11655,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Відкрий «Ласощі» у своєму меню й натисни «Дати». Щойно ласощі з'являться, меню закриється.\n\nТримай їх у руці — собаки підійдуть. Відпустиш — з'їсть найближча. Лише по одному за раз.\n\nДля початку я дав тобі 5 штук. Скінчаться — обміняй бали на нові у вкладці «Ласощі»."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Відкрий «Покликати» у своєму меню, вибери собаку й позу, потім місце і куди їй дивитися. Собака підійде й відпочине там. Коли закінчиш, натисни «Відпустити» біля цієї собаки.\n\nСобак на повідці покликати не можна. Спершу відстебни.\n\n«На боці», «Лежати», «Сидіти» і «Клубочком» — безкоштовно. Інші пози можна додати за бали.\n\nКликати може власник інстансу (а якщо його нема — Master). Якщо ввімкнено «Кликати можуть усі», кликати може будь-хто."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -12423,7 +12423,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Ось як тут можна провести час. У якому хочеш порядку.\n\nВізьми собаку на повідець і йди гуляти. Погладь собаку. Кинь м'яч або диск. Дай ласощі. Після прогулянки помий собак на мийці.\n\nЗ вершини пагорба видно стару хату внизу. Озирайся часом.\n\nНе обов'язково робити все. Можна й просто дивитися."
         },
         {
           "key": "gallery.bedroom.title",
@@ -12471,7 +12471,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Бали не потрібні — грати можна одразу\n- Погладити: погладь голову, щоки чи підборіддя — собака зрадіє\n- Кинути м'яч чи диск: дістань його в «Іграшки», кинь — і собака принесе\n- Гуляти разом: пристебни собак у «Walk» і гуляй пагорбом\n- Поспати поруч: у «Покликати» собака прийде й засне поруч із тобою\n- Миття: після прогулянки — до місця для миття\n\nЩо вміє ця дошка\n- Walk, Ласощі, Вбрання: у вкладках угорі пристібай собак, діставай ласощі, вбирай собаку\n- Бали й дідусь: бали накопичуються, просто поки ти тут, і їх видно в «Бали» праворуч угорі. Поговори з дідусем біля воріт — він дасть бали на збори до прогулянки"
         },
         {
           "key": "welcome.footer.vr",
@@ -13323,7 +13323,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото знімаються самі, поки ви граєтеся й гуляєте із собаками (кнопки затвора немає): коли собака приносить м'яч, поки ви її гладите, коли собаки бігають або граються разом, коли собака ловить фрисбі в стрибку, а також під час групового фото.\n\nНа прогулянці з повідцем фото знімаються й на зупинках, біля оглядових місць і час від часу: вигляд очима собаки або знімок у стилі селфі.\n\nЗберігається до 24 фото (прогулянка 10, погладжування 4, ігри 4, миття 6). Коли вид заповнено, замінюється його найстаріше фото. Нове — ліворуч угорі; сторінки гортаються кнопками ◀ ▶.\n\nФото зберігаються лише на вашому пристрої; інші люди бачать інші фото. Після виходу вони зникають.\n\nЩоб зберегти знімок на ПК або Quest, піднесіть камеру VRChat до фото на дошці біля воріт або до будь-якого фото тут: воно заповнить кадр. На телефоні відкрийте фото великим (натисніть тут або торкніться на дошці) і зробіть знімок екрана.\n\nАвтозйомку можна вмикати й вимикати кнопкою [Фото: ON / OFF] у «Параметрах»."
+          "text": "Поки ви граєтеся й гуляєте із собаками, вдалі моменти самі стають фото: коли собака приносить м'яч, поки ви її гладите, коли собаки граються разом, коли собака стрибає за фрисбі, а також під час групового фото. На прогулянці знімаються й зупинки, і оглядові місця.\n\nЗберігається до 24 фото (прогулянка 10, погладжування 4, ігри 4, миття 6). Коли вид заповнено, замінюється його найстаріше фото. Нове — ліворуч угорі; сторінки гортаються кнопками ◀ ▶.\n\nВаші фото бачите лише ви. Інші бачать свої. Після виходу з цього світу вони зникають.\n\nЩоб зберегти знімок на PC або Quest, піднесіть камеру VRChat до дошки з фото біля воріт або до фото тут: воно заповнить кадр, і знімайте. На телефоні відкрийте фото великим і зробіть знімок екрана.\n\nАвтозйомку можна вмикати й вимикати: Параметри → Фото: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -13879,7 +13879,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Бали не потрібні — грати можна одразу</b>\nГрати можна просто зараз, без жодних балів.\n\n<b>Погладити собаку</b>\nПогладь голову, щоки чи підборіддя — собака зрадіє.\n\n<b>Кинути м'яч чи диск</b>\nДістань його в «Іграшки» й кинь. Собака принесе його назад.\n\n<b>Гуляти разом</b>\nПристебни собак у «Walk» і гуляй пагорбом.\n\n<b>Поспати поруч</b>\nУ «Покликати» собака прийде й засне поруч із тобою.\n\n<b>Миття</b>\nПісля прогулянки йди до місця для миття.\n\n<b>Що вміє меню</b>\nУ вкладках угорі пристібай собак, діставай ласощі чи вбирай собаку.\nБали накопичуються, просто поки ти тут, і їх можна обміняти на те, що до вподоби.\n\n<b>Бали й дідусь</b>\nУ «Бали» праворуч угорі видно, скільки в тебе балів і як їх отримати.\nПоговори з дідусем біля воріт — він дасть бали на збори до прогулянки.\n\n<b>Як викликати меню</b>\nVR: утримуй правий стік донизу\nDesktop: натисни T\nТелефон: торкнись [Меню] на екрані"
         },
         {
           "key": "photo.frame.halloween",
@@ -14051,7 +14051,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Не вдалося зрозуміти, чи вийшло. Спробуйте ще раз"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -14131,7 +14131,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "По іграшці на собаку, просто перед вами. Візьміть диск, щоб побачити шлях, і Use — кидок"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -14155,7 +14155,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Вибери шикування, подивись на позначки під ногами й натисни «Зібрати тут». Немає позначки — немає місця. На схилах теж можна. Через 1 хвилину собаки розходяться й знову граються"
         },
         {
           "key": "activities.hillside.perk",
@@ -14163,11 +14163,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "З Trainer можна вишикувати собак для групового фото й змінити стиль ловлі фрисбі. Trainer із Kominka Dog Run діє й тут.\n500 Credits за 1 місяць / 1 350 за 3 / 2 550 за 6 / 4 800 за 12. Без автопродовження; продовження додається до решти."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Якщо при вході у вас був Trainer, він діє, доки ви не підете. У зборі можуть брати участь усі, хто поруч."
         },
         {
           "key": "activities.hillside.started",
@@ -14191,7 +14191,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Не вдалося зрозуміти, чи вийшло. Спробуйте ще раз"
         },
         {
           "key": "activities.hillside.requesting",
@@ -14299,7 +14299,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Як узяти собаку на повідець, написано біля стійки з повідцями.\n\nКуди йти, вибирай у вкладці «Walk» свого меню. Дороги — на щиті з мапою. Собаки на повідці дорогою зупиняються все обнюхати. Не квап їх.\n\nВідстебнути собаку може лише той, хто її пристебнув."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -14479,7 +14479,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\nСила: у VR правий стік угору/вниз, на Desktop коліщатко миші.\nСобака на повідці не побіжить по диск. Спершу відстебни.\nУ річці диск плаває, і собака стрибає по нього."
+          "text": "По диску на кожну собаку. Кілька лежать і на Plaza.\nСила: у VR правий стік угору/вниз, на Desktop коліщатко миші.\nСобака на повідці не побіжить по диск. Спершу відстебни.\nДиск плаває в річці. Собака пірнає по нього."
         },
         {
           "key": "guide.ball.title",
@@ -14515,7 +14515,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Прогулянка, погладжування, м'ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nЗбери собак для спільного фото — радіють усі. Оформив на фермі? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]"
+          "text": "Прогулянка, погладжування, м'ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nВишикуй собак для спільного фото й змінюй стиль ловлі фризбі. Оформив у Kominka Dog Run? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]"
         },
         {
           "key": "guide.map.title",
@@ -14547,7 +14547,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Фермерський дім за воротами — це Kominka Dog Run, попередній світ із тими ж шістьма собаками.\n<color=#B5432A>Натисни на цю дошку — поруч з'явиться портал.</color>\nVR: наведи й натисни курок / ПК: клацни / Телефон: торкнись\nНатисни ще раз, щоб прибрати. За 1 хвилину він зникне сам.\nБали й предмети в кожному світі свої.\nVAnimal Trainer діє в обох світах, де б ти його не оформив."
+          "text": "Фермерський дім за воротами — це Kominka Dog Run, попередній світ, де живуть ті ж шість собак.\n<color=#B5432A>Натисни на цю дошку — поруч з'явиться портал.</color>\nНатисни ще раз або зачекай 1 хвилину — і він зникне.\nБали й предмети в кожному світі свої.\nVAnimal Trainer діє в обох світах, де б ти його не оформив."
         },
         {
           "key": "guide.kominka.interact",
@@ -15426,11 +15426,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "잘 왔네. 여기는 옛 고택의 뒷산이라네. 강아지들이랑 느긋하게 걸어 보게.\n\n내 뒤에 있는 안내판에 노는 법이 적혀 있네. 손 메뉴를 여는 법도 말일세. 산책은 리드 거치대, 씻기는 담장 옆 세척장, 길은 지도 안내판을 보게.\n\n묻고 싶은 게 있으면 왼쪽에서 고르게나."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "잘 왔네. 처음 보는 얼굴이구먼. 여기는 옛 고택의 뒷산이라네. 산책 채비에 이걸 가져가게. {0} pt, 딱 한 번뿐이네. 손 메뉴의 [꾸미기], [간식], [부르기]에서 쓰게나.\n\n내 뒤에 있는 안내판에 노는 법이 적혀 있네. 산책은 리드 거치대, 씻기는 담장 옆 세척장, 길은 지도 안내판을 보게.\n\n묻고 싶은 게 있으면 왼쪽에서 고르게나."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -15486,11 +15486,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "손 메뉴의 [간식]에서 [꺼내기]를 누르게. 간식이 나오면 메뉴는 닫힌다네.\n\n손에 들고 있으면 강아지들이 다가오지. 놓으면 가장 가까운 강아지가 먹는다네. 한 번에 하나씩이네.\n\n처음에 5개 쥐여 줬네. 다 떨어지면 [간식]에서 포인트로 바꾸게."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "손 메뉴의 [부르기]에서 강아지와 포즈를 고르고, 자리와 방향을 정하게. 강아지가 걸어와서 거기서 쉰다네. 끝내려면 그 강아지의 [자유롭게]를 누르게.\n\n리드에 맨 강아지는 부를 수 없네. 먼저 풀어 주게.\n\n[옆으로 눕기], [엎드리기], [앉기], [웅크리기]는 무료라네. 다른 포즈는 포인트로 늘릴 수 있네.\n\n부를 수 있는 건 인스턴스 주인 (없으면 Master)이네. [부르기 전체 허용]이 ON이면 누구든 부를 수 있지."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -16254,7 +16254,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "여기서 지내는 법이라네. 순서는 아무래도 좋네.\n\n강아지를 리드에 매고 산책을 가게. 강아지를 쓰다듬게. 공이나 디스크를 던지게. 간식을 주게. 산책이 끝나면 세척장에서 씻겨 주게.\n\n산 위에서는 아래쪽 고택이 보인다네. 가끔 뒤돌아보게.\n\n다 안 해도 되네. 그냥 바라만 봐도 좋은 법이지."
         },
         {
           "key": "gallery.bedroom.title",
@@ -16302,7 +16302,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "포인트가 없어도 바로 놀 수 있어요\n- 쓰다듬기: 머리·볼·턱을 쓰다듬으면 강아지가 좋아해요\n- 공이나 디스크 던지기: 장난감에서 꺼내 던지면 강아지가 가져와요\n- 함께 걷기: Walk에서 강아지에게 리드를 연결하고 뒷산을 걸어요\n- 곁에서 재우기: 부르기에서 강아지가 와서 곁에서 자요\n- 씻기기: 산책 후에는 세척장으로\n\n이 판에서 할 수 있는 것\n- Walk·간식·꾸미기: 위의 탭에서 리드 연결, 간식 꺼내기, 꾸미기를 할 수 있어요\n- 포인트와 할아버지: 여기 있기만 해도 포인트가 쌓이고, 오른쪽 위 포인트에 표시돼요. 문 옆의 할아버지에게 말을 걸면 산책 준비용 포인트를 줘요"
         },
         {
           "key": "welcome.footer.vr",
@@ -17154,7 +17154,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "강아지와 놀거나 산책하면 자동으로 사진을 찍습니다(셔터는 없습니다). 공을 물어 왔을 때, 쓰다듬을 때, 강아지가 달리거나 함께 놀 때, 프리스비를 점프해서 잡았을 때, 단체 사진 시간에 찍습니다.\n\n목줄로 산책하면 들른 곳이나 전망 좋은 곳, 한동안 걸었을 때에도 강아지 눈높이에서 본 풍경이나 셀카 같은 사진을 찍습니다.\n\n사진은 24장까지 남습니다(산책 10・쓰다듬기 4・놀이 4・목욕 6). 가득 차면 같은 종류의 오래된 사진부터 교체됩니다. 새 사진이 왼쪽 위에 오고 ◀ ▶로 페이지를 넘길 수 있습니다.\n\n사진은 내 기기 안에만 있으며, 다른 사람에게는 다른 사진이 보입니다. 나가면 사라집니다.\n\n남기고 싶은 사진은 PC・Quest에서는 문 옆 사진판이나 여기 목록의 사진에 VRChat 카메라를 가까이 대면 그 한 장을 화면 가득 담아 찍을 수 있습니다. 스마트폰에서는 사진을 크게 띄워(여기서 누르거나 사진판의 사진을 탭) 스크린샷으로 가져가세요.\n\n자동 촬영은 [설정]의 [사진: ON / OFF]로 바꿀 수 있습니다."
+          "text": "강아지와 놀거나 산책하면 좋은 순간이 자동으로 사진이 됩니다. 공을 물어 왔을 때, 쓰다듬을 때, 강아지끼리 함께 놀 때, 프리스비를 향해 점프할 때, 단체 사진 때. 산책에서는 들른 곳이나 전망 좋은 곳에서도 찍습니다.\n\n사진은 24장까지 남습니다(산책 10・쓰다듬기 4・놀이 4・목욕 6). 가득 차면 같은 종류의 오래된 사진부터 교체됩니다. 새 사진이 왼쪽 위에 오고 ◀ ▶로 페이지를 넘길 수 있습니다.\n\n사진은 나에게만 보이고, 다른 사람에게는 다른 사진이 보입니다. 이 월드를 나가면 사라집니다.\n\n남기고 싶은 사진은 PC・Quest에서는 문 옆 사진판이나 여기의 사진에 VRChat 카메라를 가까이 대면 한 장이 화면 가득 담기니 그대로 찍으세요. 스마트폰에서는 사진을 크게 띄워 스크린샷으로 가져가세요.\n\n자동 촬영은 [설정 → 사진: ON / OFF]에서 바꿀 수 있습니다."
         },
         {
           "key": "photo.help.close",
@@ -17710,7 +17710,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>포인트가 없어도 바로 놀 수 있어요</b>\n포인트가 하나도 없어도 지금 바로 놀 수 있어요.\n\n<b>쓰다듬기</b>\n머리·볼·턱을 쓰다듬으면 강아지가 좋아해요.\n\n<b>공이나 디스크 던지기</b>\n장난감에서 꺼내 던지세요. 강아지가 가져와요.\n\n<b>함께 걷기</b>\nWalk에서 강아지에게 리드를 연결하고 뒷산을 걸어요.\n\n<b>곁에서 재우기</b>\n부르기에서 강아지가 와서 곁에서 자요.\n\n<b>씻기기</b>\n산책 후에는 세척장으로 가세요.\n\n<b>메뉴로 할 수 있는 것</b>\n위의 탭에서 리드 연결, 간식 꺼내기, 꾸미기를 할 수 있어요.\n여기 있기만 해도 포인트가 쌓이고, 좋아하는 것과 교환할 수 있어요.\n\n<b>포인트와 할아버지</b>\n오른쪽 위 포인트에서 지금 포인트와 모으는 법을 볼 수 있어요.\n문 옆의 할아버지에게 말을 걸면 산책 준비용 포인트를 줘요.\n\n<b>메뉴를 손안으로 부르는 법</b>\nVR: 오른쪽 스틱을 아래로 길게\nDesktop: T 키\n스마트폰: 화면의 [메뉴]"
         },
         {
           "key": "photo.frame.halloween",
@@ -17882,7 +17882,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "잘 되었는지 확인하지 못했습니다. 다시 해 주세요"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -17962,7 +17962,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "장난감은 강아지마다 1개씩 앞에 놓입니다. 디스크를 들면 선이 보이고, Use로 던질 수 있습니다"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -17986,7 +17986,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "대형을 고르고 발밑의 표시를 확인한 뒤 [여기에 모이기]를 누르세요. 표시가 없는 곳에는 설 수 없습니다. 경사에서도 됩니다. 1분 뒤 흩어져 다시 놀러 갑니다"
         },
         {
           "key": "activities.hillside.perk",
@@ -17994,11 +17994,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Trainer가 되면 강아지들을 줄 세워 단체 사진을 찍거나 프리스비 잡는 방식을 바꿀 수 있습니다. Kominka Dog Run의 Trainer도 여기서 쓸 수 있습니다.\n1개월 500 / 3개월 1,350 / 6개월 2,550 / 12개월 4,800 Credits. 자동 갱신은 없고, 연장하면 남은 일수에 더해집니다."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "입장할 때 Trainer였다면 나갈 때까지 그대로 쓸 수 있습니다. 모이기는 그 자리의 모두가 함께 즐길 수 있습니다."
         },
         {
           "key": "activities.hillside.started",
@@ -18022,7 +18022,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "잘 되었는지 확인하지 못했습니다. 다시 해 주세요"
         },
         {
           "key": "activities.hillside.requesting",
@@ -18130,7 +18130,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "리드 매는 법은 리드 거치대에 적혀 있네.\n\n갈 곳은 손 메뉴의 [Walk]에서 고를 수 있네. 길은 지도 안내판에 있고. 리드에 맨 강아지는 가는 길에 여기저기 냄새를 맡으며 걷는다네. 재촉하지 말고 맞춰 주게.\n\n리드를 풀 수 있는 건 맨 사람 본인뿐이네."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -18310,7 +18310,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "디스크는 강아지마다 1장. Plaza에도 놓여 있어요.\n세기: VR은 오른쪽 스틱 위아래, Desktop은 마우스 휠.\n리드에 연결된 강아지는 가지러 가지 않아요. 먼저 풀어 주세요.\n강에서는 디스크가 떠서 강아지가 뛰어들어 가져와요."
+          "text": "디스크는 강아지마다 1장. Plaza에도 있어요.\n세기: VR은 오른쪽 스틱 위아래, Desktop은 마우스 휠.\n리드에 연결된 강아지는 가지러 가지 않아요. 먼저 풀어 주세요.\n디스크는 강에 떠요. 강아지가 뛰어들어 가져와요."
         },
         {
           "key": "guide.ball.title",
@@ -18346,7 +18346,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "산책·쓰다듬기·공·프리스비·씻기기는 누구나 무료.\n<color=#B5432A>포인트</color>\n입구의 할아버지와 이야기하면 200pt (한 번만). 여기 있으면 1분마다 1pt.\n꾸미기·부르기·간식 탭에서 장식·쓰다듬을 때의 빛·포즈·간식과 교환.\n<color=#B5432A>VAnimal Trainer</color> (기간제·Credits)\n강아지들을 모아 다 함께 단체 사진. 고민가에서 가입했다면 여기서도 그대로.\n가입: 손 메뉴 놀기 → [구매 화면 열기]\n사용: 놀기에서 대형을 고르고 [여기에 모이기]"
+          "text": "산책·쓰다듬기·공·프리스비·씻기기는 누구나 무료.\n<color=#B5432A>포인트</color>\n문 옆의 할아버지와 이야기하면 200pt (한 번만). 여기 있으면 1분마다 1pt.\n꾸미기·부르기·간식 탭에서 장식·쓰다듬을 때의 빛·포즈·간식과 교환.\n<color=#B5432A>VAnimal Trainer</color> (기간제·Credits)\n강아지들을 줄 세워 단체 사진. 프리스비 받는 방식도 바꿀 수 있어요. Kominka Dog Run에서 가입했다면 여기서도 그대로.\n가입: 손 메뉴 놀기 → [구매 화면 열기]\n사용: 놀기에서 대형을 고르고 → [여기에 모이기]"
         },
         {
           "key": "guide.map.title",
@@ -18378,7 +18378,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "문 너머로 보이는 고민가가 Kominka Dog Run. 같은 6마리 강아지가 있는 이 월드의 전작이에요.\n<color=#B5432A>이 판을 누르면 옆에 포털이 나와요.</color>\nVR: 가리키고 트리거 ／ Desktop: 클릭 ／ 스마트폰: 탭\n한 번 더 누르면 사라져요. 1분이 지나면 자동으로 사라져요.\n포인트와 소지품은 월드마다 따로예요.\nVAnimal Trainer는 어느 쪽에서 가입해도 양쪽에서 쓸 수 있어요."
+          "text": "문 너머로 보이는 고민가가 Kominka Dog Run. 같은 6마리 강아지가 사는 이 월드의 전작이에요.\n<color=#B5432A>이 판을 누르면 옆에 포털이 나와요.</color>\n한 번 더 누르거나 1분이 지나면 사라져요.\n포인트와 소지품은 월드마다 따로예요.\nVAnimal Trainer는 어느 쪽에서 가입해도 양쪽에서 쓸 수 있어요."
         },
         {
           "key": "guide.kominka.interact",
@@ -19257,11 +19257,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Schön, dass du da bist. Das hier ist der Hügel hinter dem alten Bauernhaus. Geh in Ruhe mit den Hunden spazieren.\n\nAuf der Tafel hinter mir steht, wie alles geht und wie du dein Handmenü öffnest. Für den Spaziergang schau zum Leinenständer. Zum Waschen zum Waschplatz an der Mauer. Für die Wege zur Kartentafel.\n\nWenn du was fragen willst, such es dir links aus."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Schön, dass du da bist. Ein neues Gesicht, wie ich sehe. Das hier ist der Hügel hinter dem alten Bauernhaus. Nimm die hier für deinen Spaziergang: {0} pt, nur dieses eine Mal. Ausgeben kannst du sie unter Outfits, Leckerlis oder Rufen in deinem Handmenü.\n\nAuf der Tafel hinter mir steht, wie alles geht. Für den Spaziergang schau zum Leinenständer. Zum Waschen zum Waschplatz an der Mauer. Für die Wege zur Kartentafel.\n\nWenn du was fragen willst, such es dir links aus."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -19317,11 +19317,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Öffne Leckerlis in deinem Handmenü und drück Geben. Sobald das Leckerli da ist, geht das Menü zu.\n\nHalt es fest, dann kommen die Hunde. Lass los, und der nächste Hund frisst es. Immer nur eins auf einmal.\n\nFür den Anfang hab ich dir 5 gegeben. Wenn sie alle sind, tausch unter Leckerlis Punkte gegen neue."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Öffne Rufen in deinem Handmenü, wähl einen Hund und eine Pose, dann den Platz und die Blickrichtung. Der Hund läuft hin und ruht sich dort aus. Wenn du fertig bist, drück bei dem Hund Freilassen.\n\nAngeleinte Hunde kann man nicht rufen. Erst ableinen.\n\nSeitenlage, Platz, Sitz und Eingerollt sind kostenlos. Andere Posen kannst du mit Punkten dazuholen.\n\nRufen kann der Besitzer der Instanz (oder der Master, wenn keiner da ist). Ist Rufen für alle an, kann jeder rufen."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -20085,7 +20085,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "So kannst du hier deine Zeit verbringen. In welcher Reihenfolge du willst.\n\nNimm einen Hund an die Leine und geh spazieren. Streichle einen Hund. Wirf einen Ball oder eine Scheibe. Gib ein Leckerli. Nach dem Spaziergang wasch sie am Waschplatz.\n\nVom Hügel oben siehst du unten das alte Bauernhaus. Schau ab und zu mal zurück.\n\nDu musst nicht alles machen. Einfach nur zuschauen ist auch schön."
         },
         {
           "key": "gallery.bedroom.title",
@@ -20133,7 +20133,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Ohne Punkte kannst du sofort loslegen\n- Streicheln: Kopf, Wangen oder Kinn streicheln, und der Hund freut sich\n- Ball oder Scheibe werfen: unter Spielzeug herausholen und werfen, der Hund bringt es zurück\n- Zusammen gehen: unter Walk Hunde anleinen und über den Hügel spazieren\n- Nickerchen: unter Rufen kommt ein Hund und schläft neben dir\n- Waschen: nach dem Spaziergang zum Waschplatz\n\nWas diese Tafel kann\n- Walk, Leckerlis, Outfits: über die Tabs oben Hunde anleinen, Leckerlis holen, einen Hund schmücken\n- Punkte und Opa: Punkte sammeln sich schon, wenn du hier bist, und stehen oben rechts unter Punkte. Sprich mit Opa am Tor, dann gibt er dir Punkte für die Vorbereitung zum Spaziergang"
         },
         {
           "key": "welcome.footer.vr",
@@ -20985,7 +20985,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Beim Spielen und Spazierengehen mit den Hunden entstehen Fotos automatisch (es gibt keinen Auslöser): wenn ein Hund einen Ball zurückbringt, während du einen Hund streichelst, wenn Hunde rennen oder miteinander spielen, wenn ein Hund eine Frisbee im Sprung fängt, und beim Gruppenfoto.\n\nBeim Spaziergang an der Leine entstehen auch an Haltepunkten, an Aussichtsstellen und ab und zu Fotos: der Blick mit den Augen des Hundes oder ein Bild im Selfie-Stil.\n\nEs bleiben bis zu 24 Fotos (Spaziergang 10, Streicheln 4, Spiel 4, Waschen 6). Ist eine Art voll, wird ihr ältestes ersetzt. Das neueste ist oben links; mit ◀ ▶ blätterst du.\n\nDie Fotos bleiben nur auf deinem Gerät; andere sehen andere Fotos. Sie verschwinden, wenn du gehst.\n\nAuf PC und Quest hältst du deine VRChat-Kamera nah an ein Foto auf der Tafel am Tor oder an ein Foto hier in der Liste: Es füllt dann das Bild. Am Handy öffnest du das Foto groß (hier antippen oder auf der Tafel) und machst einen Screenshot.\n\nDie automatischen Fotos schaltest du in den Einstellungen mit [Fotos: ON / OFF] ein oder aus."
+          "text": "Beim Spielen und Spazierengehen mit den Hunden werden schöne Momente von selbst zu Fotos: wenn ein Hund einen Ball zurückbringt, während du streichelst, wenn Hunde miteinander spielen, wenn ein Hund nach einer Frisbee springt, und bei Gruppenfotos. Auf Spaziergängen werden auch Haltepunkte und Aussichtsstellen festgehalten.\n\nEs bleiben bis zu 24 Fotos (Spaziergang 10, Streicheln 4, Spiel 4, Waschen 6). Ist eine Art voll, wird ihr ältestes ersetzt. Das neueste ist oben links; mit ◀ ▶ blätterst du.\n\nDeine Fotos siehst nur du. Andere sehen ihre eigenen. Sie verschwinden, wenn du diese Welt verlässt.\n\nZum Behalten: Auf PC und Quest hältst du die VRChat-Kamera nah an die Fototafel am Tor oder an ein Foto hier, dann füllt es das Bild, und du drückst ab. Am Handy öffnest du das Foto groß und machst einen Screenshot.\n\nAutomatische Fotos schaltest du unter Einstellungen → Fotos: ON / OFF ein oder aus."
         },
         {
           "key": "photo.help.close",
@@ -21541,7 +21541,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Ohne Punkte sofort loslegen</b>\nDu kannst gleich spielen, ganz ohne Punkte.\n\n<b>Hund streicheln</b>\nStreichle Kopf, Wangen oder Kinn, und der Hund freut sich.\n\n<b>Ball oder Scheibe werfen</b>\nHol eins unter Spielzeug heraus und wirf es. Der Hund bringt es zurück.\n\n<b>Zusammen spazieren</b>\nLeine unter Walk Hunde an und spaziere über den Hügel.\n\n<b>Nickerchen zusammen</b>\nUnter Rufen kommt ein Hund und schläft neben dir.\n\n<b>Waschen</b>\nNach dem Spaziergang geht's zum Waschplatz.\n\n<b>Was das Menü kann</b>\nÜber die Tabs oben Hunde anleinen, Leckerlis holen oder einen Hund schmücken.\nPunkte sammeln sich schon, wenn du hier bist, und du tauschst sie gegen Dinge, die dir gefallen.\n\n<b>Punkte und Opa</b>\nUnter Punkte oben rechts siehst du, wie viele du hast und wie du sie bekommst.\nSprich mit Opa am Tor, dann gibt er dir Punkte für die Vorbereitung zum Spaziergang.\n\n<b>Menü zu dir holen</b>\nVR: rechten Stick nach unten halten\nDesktop: Taste T\nHandy: [Menü] auf dem Bildschirm tippen"
         },
         {
           "key": "photo.frame.halloween",
@@ -21713,7 +21713,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Unklar, ob es geklappt hat. Versuch es noch einmal"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -21793,7 +21793,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Ein Spielzeug pro Hund, direkt vor dir. Halte eine Scheibe, um ihre Bahn zu sehen, dann Use zum Werfen"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -21817,7 +21817,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Wähl eine Aufstellung, sieh dir die Markierungen zu deinen Füßen an und drück „Hier sammeln“. Ohne Markierung kein Platz. Hänge gehen auch. Nach 1 Minute lösen sie sich auf und spielen weiter"
         },
         {
           "key": "activities.hillside.perk",
@@ -21825,11 +21825,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Als Trainer stellst du die Hunde fürs Gruppenfoto auf und wechselst die Frisbee-Fangart. Ein Trainer aus Kominka Dog Run gilt auch hier.\n500 Credits für 1 Monat / 1.350 für 3 / 2.550 für 6 / 4.800 für 12. Endet von selbst; Verlängern zählt zur Restzeit."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Warst du beim Betreten Trainer, bleibt das aktiv, bis du gehst. Beim Versammeln können alle hier mitmachen."
         },
         {
           "key": "activities.hillside.started",
@@ -21853,7 +21853,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Unklar, ob es geklappt hat. Versuch es noch einmal"
         },
         {
           "key": "activities.hillside.requesting",
@@ -21961,7 +21961,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Wie man einen Hund anleint, steht am Leinenständer.\n\nWohin es geht, wählst du unter Walk in deinem Handmenü. Die Wege stehen auf der Kartentafel. Angeleinte Hunde bleiben unterwegs stehen und schnüffeln herum. Lass ihnen Zeit.\n\nAbleinen kann nur, wer den Hund angeleint hat."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -22141,7 +22141,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Jeder Hund hat seine eigene Scheibe. Einige liegen auf der Plaza.\nStärke: in VR rechter Stick hoch/runter, am Desktop Mausrad.\nAngeleinte Hunde holen nicht. Erst lösen.\nIm Fluss schwimmt die Scheibe, und der Hund springt hinterher."
+          "text": "Eine Scheibe pro Hund. Einige liegen auch auf der Plaza.\nStärke: in VR rechter Stick hoch/runter, am Desktop Mausrad.\nAngeleinte Hunde holen nicht. Erst lösen.\nDie Scheibe schwimmt im Fluss. Der Hund springt hinterher."
         },
         {
           "key": "guide.ball.title",
@@ -22177,7 +22177,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Spazieren, Streicheln, Bälle, Frisbee und Waschen sind für alle gratis.\n<color=#B5432A>Punkte</color>\nSprich mit Opa am Tor: 200 pt (einmal). Hier gibt es 1 pt pro Minute.\nTausche sie unter Outfits, Rufen und Leckerlis gegen Schmuck, Streichel-Effekte, Posen und Leckerlis.\n<color=#B5432A>VAnimal Trainer</color> (auf Zeit, Credits)\nVersammle die Hunde zum Gruppenfoto für alle. Im Bauernhaus gebucht? Gilt auch hier.\nBuchen: Handmenü Spielen → [Store öffnen]\nNutzen: unter Spielen Formation wählen → [Hier sammeln]"
+          "text": "Spazieren, Streicheln, Bälle, Frisbee und Waschen sind für alle gratis.\n<color=#B5432A>Punkte</color>\nSprich mit Opa am Tor: 200 pt (einmal). Hier gibt es 1 pt pro Minute.\nTausche sie unter Outfits, Rufen und Leckerlis gegen Schmuck, Streichel-Effekte, Posen und Leckerlis.\n<color=#B5432A>VAnimal Trainer</color> (auf Zeit, Credits)\nStell die Hunde zum Gruppenfoto auf und wechsle den Frisbee-Fangstil. Im Kominka Dog Run gebucht? Gilt auch hier.\nBuchen: Handmenü Spielen → [Store öffnen]\nNutzen: unter Spielen Formation wählen → [Hier sammeln]"
         },
         {
           "key": "guide.map.title",
@@ -22209,7 +22209,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Das Bauernhaus hinter dem Tor ist Kominka Dog Run, die frühere Welt mit denselben sechs Hunden.\n<color=#B5432A>Drück diese Tafel, dann erscheint daneben ein Portal.</color>\nVR: zeigen und Trigger / Desktop: klicken / Handy: tippen\nNochmal drücken blendet es aus. Nach 1 Minute verschwindet es von selbst.\nPunkte und Sachen gelten je Welt getrennt.\nDer VAnimal Trainer gilt in beiden Welten, egal wo du gebucht hast."
+          "text": "Das Bauernhaus hinter dem Tor ist Kominka Dog Run, die frühere Welt, in der dieselben sechs Hunde leben.\n<color=#B5432A>Drück diese Tafel, dann erscheint daneben ein Portal.</color>\nNochmal drücken oder 1 Minute warten, dann verschwindet es.\nPunkte und Sachen gelten je Welt getrennt.\nDer VAnimal Trainer gilt in beiden Welten, egal wo du gebucht hast."
         },
         {
           "key": "guide.kominka.interact",
@@ -23088,11 +23088,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "来啦。这里是老宅的后山。带着狗狗们慢慢走走吧。\n\n我身后的告示牌上写着怎么玩，还有怎么打开手边菜单。散步去牵绳架，洗澡去围墙边的洗澡处，路线看地图告示牌。\n\n想问什么，就从左边选吧。"
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "来啦。是张新面孔啊。这里是老宅的后山。这些拿去，准备散步用：{0} pt，只给这一次。在手边菜单的“装饰”“零食”“呼唤”里用吧。\n\n我身后的告示牌上写着怎么玩。散步去牵绳架，洗澡去围墙边的洗澡处，路线看地图告示牌。\n\n想问什么，就从左边选吧。"
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -23148,11 +23148,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "在手边菜单的“零食”里按“取出”。零食一出来，菜单就会关上。\n\n拿在手里，狗狗们就会凑过来。一松手，离得最近的狗狗就会吃掉。一次只能拿出一个。\n\n一开始给了你5个。吃完了，就在“零食”里用积分换。"
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "在手边菜单的“呼唤”里选好狗狗和姿势，再定好位置和朝向。狗狗会走过来，在那儿歇着。想结束的话，就按那只狗狗的“让它自由”。\n\n系着牵绳的狗狗叫不来。先解开吧。\n\n“侧躺”“趴下”“坐下”“蜷缩”是免费的。别的姿势可以用积分增加。\n\n能呼唤的是房间的主人(不在的话就是 Master)。“允许所有人呼唤”是 ON 的话，谁都能叫。"
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -23916,7 +23916,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "在这儿可以这么过。顺序随你。\n\n给狗狗系上牵绳去散步。摸摸狗狗。扔个球或飞盘。喂点零食。散完步，到洗澡处给它们洗洗。\n\n从山上能看到山脚下的老宅。时不时回头看看吧。\n\n不用样样都做。光是看看也挺好的。"
         },
         {
           "key": "gallery.bedroom.title",
@@ -23964,7 +23964,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "不需要积分，马上就能玩\n- 抚摸：摸摸头、脸颊或下巴，狗狗会很开心\n- 扔球或飞盘：在「玩具」里拿出来扔出去，狗狗会叼回来\n- 一起散步：在「Walk」里给狗狗系上牵绳，在后山散步\n- 陪在身边睡觉：在「呼唤」里狗狗会过来，在你身边睡觉\n- 洗澡：散步之后，去洗澡处\n\n这块板能做的事\n- Walk・零食・装饰：从上方的标签页给狗狗系牵绳、拿出零食、给狗狗戴装饰\n- 积分和爷爷：只要待在这里积分就会累积，显示在右上角的「积分」。和门边的爷爷说话，他会给你散步准备用的积分"
         },
         {
           "key": "welcome.footer.vr",
@@ -24816,7 +24816,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "和狗狗玩耍、散步时会自动拍照（没有快门）。狗狗叼球回来、你抚摸狗狗、狗狗奔跑或一起嬉戏、狗狗跳起来接住飞盘，以及合影的时候都会拍。\n\n牵着狗绳散步时，在狗狗停留的地方、视野好的地方，以及走了一段时间后，也会拍下狗狗视角的风景，或像自拍一样的照片。\n\n最多保留 24 张（散步 10・抚摸 4・玩耍 4・洗澡 6）。某一类满了，会替换该类最旧的一张。最新的排在左上角，用 ◀ ▶ 翻页。\n\n照片只保存在你自己的设备里，别人看到的是另外的照片。退出世界后就会消失。\n\n想留下的照片，在 PC 和 Quest 上把 VRChat 相机凑近大门旁照片板上的照片，或这里的任一张，就能拍下铺满画面的那一张。在手机上请把照片放大（在这里按下，或点击照片板上的照片）再截图带回去。\n\n自动拍照可以在“设置”里的［照片: ON / OFF］切换。"
+          "text": "和狗狗玩耍、散步时，美好的瞬间会自动变成照片。狗狗叼球回来、你抚摸狗狗、狗狗们一起嬉戏、狗狗跳起来接飞盘，以及合影的时候都会拍。散步时，在停留的地方和视野好的地方也会拍。\n\n最多保留 24 张（散步 10・抚摸 4・玩耍 4・洗澡 6）。满了以后，会替换同类中最旧的一张。最新的排在左上角，用 ◀ ▶ 翻页。\n\n照片只有你自己看得到，别人看到的是他们自己的照片。离开这个世界后就会消失。\n\n想留下的照片，在 PC 和 Quest 上把 VRChat 相机凑近大门旁的照片板或这里的照片，那一张就会铺满画面，直接拍下即可。在手机上请把照片放大，再截图带回去。\n\n自动拍照可以在“设置 → 照片: ON / OFF”中切换。"
         },
         {
           "key": "photo.help.close",
@@ -25372,7 +25372,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>不需要积分，马上就能玩</b>\n没有积分也能立刻开始玩。\n\n<b>抚摸狗狗</b>\n摸摸头、脸颊或下巴，狗狗会很开心。\n\n<b>扔球或飞盘</b>\n在「玩具」里拿出来扔出去。狗狗会叼回来。\n\n<b>一起散步</b>\n在「Walk」里给狗狗系上牵绳，在后山散步。\n\n<b>陪在身边睡觉</b>\n在「呼唤」里狗狗会过来，在你身边睡觉。\n\n<b>洗澡</b>\n散步之后，去洗澡处吧。\n\n<b>菜单能做的事</b>\n从上方的标签页可以给狗狗系牵绳、拿出零食，或给狗狗戴装饰。\n只要待在这里积分就会累积，可以换取喜欢的东西。\n\n<b>积分和爷爷</b>\n右上角的「积分」里可以看到现有积分和获取方法。\n和门边的爷爷说话，他会给你散步准备用的积分。\n\n<b>把菜单叫到手边</b>\nVR：长按右摇杆向下\nDesktop：T 键\n手机：画面上的 [菜单]"
         },
         {
           "key": "photo.frame.halloween",
@@ -25544,7 +25544,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "不确定是否成功。请再试一次"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -25624,7 +25624,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "每只狗一个玩具，放在你面前。拿起飞盘会显示路线，按 Use 投出"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -25648,7 +25648,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "选好队形，看着脚下的标记按“在这里集合”。没有标记的地方不能站。坡上也可以。1 分钟后解散，各自回去玩"
         },
         {
           "key": "activities.hillside.perk",
@@ -25656,11 +25656,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "成为 Trainer 后，可以让狗狗们排好队拍合影，也能切换接飞盘的方式。在 Kominka Dog Run 成为 Trainer 的人，在这里也能用。\n1 个月 500 / 3 个月 1,350 / 6 个月 2,550 / 12 个月 4,800 Credits。没有自动续费，续期会累加到剩余天数上。"
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "进入这个世界时是 Trainer 的话，离开前都能继续使用。集合时，在场的所有人都能一起享受。"
         },
         {
           "key": "activities.hillside.started",
@@ -25684,7 +25684,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "不确定是否成功。请再试一次"
         },
         {
           "key": "activities.hillside.requesting",
@@ -25792,7 +25792,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "怎么系牵绳，牵绳架上写着呢。\n\n去哪儿，在手边菜单的“Walk”里选。路线在地图告示牌上。系上牵绳的狗狗一路上会停下来到处闻闻。别催，陪着它慢慢走。\n\n只有系上牵绳的人自己才能解开。"
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -25972,7 +25972,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "每只狗狗都有自己的飞盘。Plaza 也放着几个。\n力度：VR 用右摇杆上下，Desktop 用鼠标滚轮。\n牵着的狗狗不会去捡。先解开牵绳。\n在河里飞盘会浮起来，狗狗会跳进水里叼回来。"
+          "text": "每只狗狗一个飞盘。Plaza 也有。\n力度：VR 用右摇杆上下，Desktop 用鼠标滚轮。\n牵着的狗狗不会去捡。先解开牵绳。\n飞盘会浮在河上。狗狗会跳进水里叼回来。"
         },
         {
           "key": "guide.ball.title",
@@ -26008,7 +26008,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "散步・抚摸・球・飞盘・洗澡，所有人都免费。\n<color=#B5432A>积分</color>\n和入口的爷爷说话可得 200pt (仅一次)。待在这里每分钟 1pt。\n在「装饰」「呼唤」「零食」里换取饰品・抚摸光效・姿势・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n让狗狗们集合，大家一起拍合照。在古民家加入过的话，这里也能直接用。\n加入: 手边菜单「玩耍」→ [打开购买界面]\n使用: 在「玩耍」选队形 → [在这里集合]"
+          "text": "散步・抚摸・球・飞盘・洗澡，所有人都免费。\n<color=#B5432A>积分</color>\n和门边的爷爷说话可得 200pt (仅一次)。待在这里每分钟 1pt。\n在「装饰」「呼唤」「零食」里换取饰品・抚摸光效・姿势・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n让狗狗们排好队拍合照，还能更换接飞盘的方式。在 Kominka Dog Run 成为 Trainer 的话，这里也能直接用。\n加入: 手边菜单「玩耍」→ [打开购买界面]\n使用: 在「玩耍」选队形 → [在这里集合]"
         },
         {
           "key": "guide.map.title",
@@ -26040,7 +26040,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "门那边看到的古民家就是 Kominka Dog Run，有同样 6 只狗狗的前作世界。\n<color=#B5432A>按一下这块牌子，旁边会出现传送门。</color>\nVR: 指向后扣扳机 / Desktop: 点击 / 手机: 轻触\n再按一次就收起。1 分钟后也会自动收起。\n积分和物品在每个世界是分开的。\nVAnimal Trainer 不论在哪边加入，两边都能用。"
+          "text": "门那边看到的古民家就是 Kominka Dog Run，同样 6 只狗狗生活的前作世界。\n<color=#B5432A>按一下这块牌子，旁边会出现传送门。</color>\n再按一次，或等 1 分钟，就会消失。\n积分和物品在每个世界是分开的。\nVAnimal Trainer 不论在哪边购买，两边都能用。"
         },
         {
           "key": "guide.kominka.interact",
@@ -26919,11 +26919,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Qué bien que hayas venido. Esta es la colina detrás de la vieja casa de campo. Date un paseo tranquilo con los perros.\n\nEn el cartel que tengo detrás pone cómo se juega y cómo abrir tu menú de mano. Para pasear, mira el soporte de correas. Para bañarlos, el lavadero junto al muro. Para los caminos, el cartel del mapa.\n\nSi quieres preguntar algo, elígelo a la izquierda."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Qué bien que hayas venido. Una cara nueva, por lo que veo. Esta es la colina detrás de la vieja casa de campo. Toma esto para preparar el paseo: {0} pt, solo esta vez. Gástalos en Adornos, Premios o Llamar en tu menú de mano.\n\nEn el cartel que tengo detrás pone cómo se juega. Para pasear, mira el soporte de correas. Para bañarlos, el lavadero junto al muro. Para los caminos, el cartel del mapa.\n\nSi quieres preguntar algo, elígelo a la izquierda."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -26979,11 +26979,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Abre Premios en tu menú de mano y pulsa Dar. Cuando sale el premio, el menú se cierra.\n\nSostenlo y los perros se acercan. Suéltalo y se lo come el perro más cercano. Uno cada vez.\n\nTe di 5 para empezar. Cuando se acaben, cambia puntos por más en Premios."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Abre Llamar en tu menú de mano, elige un perro y una pose, y luego el sitio y hacia dónde mira. El perro va hasta allí y se queda descansando. Cuando acabes, pulsa Dejar libre en ese perro.\n\nA los perros con correa no se les puede llamar. Quítales la correa primero.\n\nDe lado, Echado, Sentado y Acurrucado son gratis. Las demás poses se añaden con puntos.\n\nPuede llamar el dueño de la instancia (o el Master si no hay). Con Todos pueden llamar activado, puede cualquiera."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -27747,7 +27747,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Así puedes pasar el rato aquí. En el orden que quieras.\n\nPonle la correa a un perro y sal de paseo. Acaricia a un perro. Lanza una pelota o un disco. Dale un premio. Después del paseo, báñalos en el lavadero.\n\nDesde lo alto de la colina se ve la vieja casa allá abajo. Mira atrás de vez en cuando.\n\nNo hace falta hacerlo todo. Solo mirar también está bien."
         },
         {
           "key": "gallery.bedroom.title",
@@ -27795,7 +27795,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "No necesitas puntos para empezar a jugar\n- Acariciar: acaricia la cabeza, las mejillas o la barbilla y el perro se pondrá contento\n- Lanzar una pelota o un disco: sácalo en Juguetes, lánzalo y el perro te lo traerá\n- Pasear juntos: pon la correa a los perros en Walk y pasea por la ladera\n- Siesta juntos: en Llamar viene un perro y duerme a tu lado\n- Bañar: después del paseo, ve a un lavadero\n\nQué hace este tablero\n- Walk, Premios, Adornos: desde las pestañas de arriba, pon la correa, saca premios, adorna a un perro\n- Puntos y el abuelo: los puntos se acumulan solo por estar aquí y se ven en Puntos, arriba a la derecha. Habla con el abuelo de la puerta y te dará puntos para preparar el paseo"
         },
         {
           "key": "welcome.footer.vr",
@@ -28647,7 +28647,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Las fotos se hacen solas mientras juegas y paseas con los perros (no hay disparador): cuando un perro te trae la pelota, mientras lo acaricias, cuando los perros corren o juegan juntos, cuando un perro atrapa un frisbi de un salto y en la foto de grupo.\n\nEn el paseo con correa también se hacen fotos en las paradas, en los miradores y de vez en cuando: la vista con los ojos del perro o una foto tipo selfi.\n\nSe guardan hasta 24 fotos (paseo 10, caricias 4, juego 4, baño 6). Cuando un tipo se llena, se cambia su foto más antigua. La más nueva va arriba a la izquierda; pasa de página con ◀ ▶.\n\nLas fotos quedan solo en tu dispositivo; las demás personas ven otras fotos. Desaparecen al salir.\n\nPara quedarte con una en PC o Quest, acerca tu cámara de VRChat a una foto del tablero junto a la puerta o a cualquier foto de aquí: llenará el encuadre. En el móvil, muestra la foto en grande (púlsala aquí o tócala en el tablero) y haz una captura de pantalla.\n\nActiva o desactiva las fotos automáticas con [Fotos: ON / OFF] en los Ajustes."
+          "text": "Mientras juegas y paseas con los perros, los buenos momentos se convierten solos en fotos: cuando un perro te trae la pelota, mientras lo acaricias, cuando los perros juegan juntos, cuando un perro salta a por un frisbi y en las fotos de grupo. En los paseos también se fotografían las paradas y los miradores.\n\nSe guardan hasta 24 fotos (paseo 10, caricias 4, juego 4, baño 6). Cuando se llenan, se cambia la más antigua de ese tipo. La más nueva va arriba a la izquierda; pasa de página con ◀ ▶.\n\nSolo tú ves tus fotos. Las demás personas ven las suyas. Desaparecen al salir de este mundo.\n\nPara quedarte con una en PC o Quest, acerca la cámara de VRChat al tablero de fotos junto a la puerta o a una foto de aquí: llenará el encuadre y podrás hacerla. En el móvil, amplía la foto y haz una captura de pantalla.\n\nActiva o desactiva las fotos automáticas en Ajustes → Fotos: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -29203,7 +29203,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>No necesitas puntos para empezar a jugar</b>\nPuedes jugar ya mismo, sin ningún punto.\n\n<b>Acariciar a un perro</b>\nAcaricia la cabeza, las mejillas o la barbilla y el perro se pondrá contento.\n\n<b>Lanzar una pelota o un disco</b>\nSácalo en Juguetes y lánzalo. El perro te lo traerá.\n\n<b>Pasear juntos</b>\nPon la correa a los perros en Walk y pasea por la ladera.\n\n<b>Siesta juntos</b>\nEn Llamar viene un perro y duerme a tu lado.\n\n<b>Bañar</b>\nDespués del paseo, ve a un lavadero.\n\n<b>Qué hace el menú</b>\nDesde las pestañas de arriba, pon la correa, saca premios o adorna a un perro.\nLos puntos se acumulan solo por estar aquí y los cambias por cosas que te gusten.\n\n<b>Puntos y el abuelo</b>\nEn Puntos, arriba a la derecha, ves cuántos tienes y cómo ganarlos.\nHabla con el abuelo de la puerta y te dará puntos para preparar el paseo.\n\n<b>Traer el menú</b>\nVR: mantén el stick derecho hacia abajo\nDesktop: pulsa T\nMóvil: toca [Menú] en la pantalla"
         },
         {
           "key": "photo.frame.halloween",
@@ -29375,7 +29375,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "No se pudo saber si funcionó. Inténtalo otra vez"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -29455,7 +29455,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Un juguete por perro, delante de ti. Sujeta un disco para ver su trayectoria y Use para lanzarlo"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -29479,7 +29479,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Elige una forma, mira las marcas a tus pies y pulsa «Reunirlos aquí». Sin marca, no hay sitio. Las cuestas valen. Al cabo de 1 minuto se dispersan y vuelven a jugar"
         },
         {
           "key": "activities.hillside.perk",
@@ -29487,11 +29487,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Como Trainer alineas a los perros para fotos de grupo y cambias cómo atrapan el frisbi. El Trainer de Kominka Dog Run también vale aquí.\n500 Credits por 1 mes / 1350 por 3 / 2550 por 6 / 4800 por 12. No se renueva solo; prorrogar suma a lo que queda."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Si tenías Trainer al entrar, sigue activo hasta que te vayas. Todos los presentes pueden unirse a la reunión."
         },
         {
           "key": "activities.hillside.started",
@@ -29515,7 +29515,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "No se pudo saber si funcionó. Inténtalo otra vez"
         },
         {
           "key": "activities.hillside.requesting",
@@ -29623,7 +29623,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Cómo ponerle la correa a un perro viene en el soporte de correas.\n\nAdónde ir lo eliges en Walk, en tu menú de mano. Los caminos están en el cartel del mapa. Los perros con correa se paran a olisquear por el camino. Tómatelo con calma con ellos.\n\nSolo quien le puso la correa a un perro se la puede quitar."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -29803,7 +29803,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Cada perro tiene su propio disco. Hay algunos en la Plaza.\nFuerza: en VR stick derecho arriba/abajo, en Desktop la rueda del ratón.\nLos perros con correa no van a buscarlo. Suéltalos antes.\nEn el río el disco flota y el perro se lanza a por él."
+          "text": "Un disco por perro. También hay algunos en la Plaza.\nFuerza: en VR stick derecho arriba/abajo, en Desktop la rueda del ratón.\nLos perros con correa no van a buscarlo. Suéltalos antes.\nEl disco flota en el río. El perro se lanza a por él."
         },
         {
           "key": "guide.ball.title",
@@ -29839,7 +29839,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Pasear, acariciar, pelotas, frisbee y bañar son gratis para todos.\n<color=#B5432A>Puntos</color>\nHabla con el abuelo de la puerta: 200 pt (una vez). Aquí ganas 1 pt por minuto.\nCámbialos en Adornos, Llamar y Premios por adornos, efectos de caricia, poses y premios.\n<color=#B5432A>VAnimal Trainer</color> (por tiempo limitado, Credits)\nReúne a los perros para una foto de grupo para todos. ¿Te uniste en la casa de campo? También sirve aquí.\nUnirse: menú Jugar → [Abrir la tienda]\nUsar: en Jugar elige una formación → [Reunirlos aquí]"
+          "text": "Pasear, acariciar, pelotas, frisbee y bañar son gratis para todos.\n<color=#B5432A>Puntos</color>\nHabla con el abuelo de la puerta: 200 pt (una vez). Aquí ganas 1 pt por minuto.\nCámbialos en Adornos, Llamar y Premios por adornos, efectos de caricia, poses y premios.\n<color=#B5432A>VAnimal Trainer</color> (por tiempo limitado, Credits)\nPon a los perros en fila para una foto de grupo y cambia cómo atrapan el frisbee. ¿Ya eres Trainer en Kominka Dog Run? También sirve aquí.\nUnirse: menú Jugar → [Abrir la tienda]\nUsar: en Jugar elige una formación → [Reunirlos aquí]"
         },
         {
           "key": "guide.map.title",
@@ -29871,7 +29871,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La casa de campo tras la puerta es Kominka Dog Run, el mundo anterior con los mismos seis perros.\n<color=#B5432A>Pulsa este tablero y aparecerá un portal a su lado.</color>\nVR: apunta y aprieta el gatillo / Desktop: clic / Móvil: toca\nPulsa otra vez para quitarlo. También se quita solo al minuto.\nLos puntos y objetos son distintos en cada mundo.\nEl VAnimal Trainer sirve en ambos, te unas donde te unas."
+          "text": "La casa de campo tras la puerta es Kominka Dog Run, el mundo anterior donde viven los mismos seis perros.\n<color=#B5432A>Pulsa este tablero y aparecerá un portal a su lado.</color>\nPulsa otra vez o espera 1 minuto y desaparecerá.\nLos puntos y objetos son distintos en cada mundo.\nEl VAnimal Trainer sirve en ambos mundos, sin importar dónde te hiciste Trainer."
         },
         {
           "key": "guide.kominka.interact",
@@ -30750,11 +30750,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Bienvenue. Ici, c'est la colline derrière la vieille ferme. Promène-toi tranquillement avec les chiens.\n\nLe panneau derrière moi explique comment jouer et comment ouvrir ton menu personnel. Pour les promenades, va voir le porte-laisses. Pour la toilette, le poste de lavage près du mur. Pour les chemins, le panneau de la carte.\n\nSi tu veux me demander quelque chose, choisis à gauche."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Bienvenue. Une nouvelle tête, à ce que je vois. Ici, c'est la colline derrière la vieille ferme. Prends ça pour préparer ta promenade : {0} pt, juste cette fois. Dépense-les dans Accessoires, Friandises ou Appeler de ton menu personnel.\n\nLe panneau derrière moi explique comment jouer. Pour les promenades, va voir le porte-laisses. Pour la toilette, le poste de lavage près du mur. Pour les chemins, le panneau de la carte.\n\nSi tu veux me demander quelque chose, choisis à gauche."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -30810,11 +30810,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Ouvre Friandises dans ton menu personnel et appuie sur Sortir. Le menu se ferme dès que la friandise sort.\n\nTiens-la, et les chiens s'approchent. Lâche-la, et le chien le plus proche la mange. Une friandise à la fois.\n\nJe t'en ai donné 5 pour commencer. Quand il n'y en a plus, échange des points contre d'autres dans Friandises."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Ouvre Appeler dans ton menu personnel, choisis un chien et une pose, puis l'endroit et la direction où il regarde. Le chien vient s'y reposer. Quand tu as fini, appuie sur Libérer pour ce chien.\n\nOn ne peut pas appeler un chien en laisse. Détache-le d'abord.\n\nSur le côté, Couché, Assis et En boule sont gratuits. Les autres poses s'ajoutent avec des points.\n\nC'est le propriétaire de l'instance (ou le Master s'il n'y en a pas) qui peut appeler. Avec Appel ouvert à tous activé, tout le monde peut."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -31578,7 +31578,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Voilà comment passer ton temps ici. Dans l'ordre que tu veux.\n\nMets un chien en laisse et va te promener. Caresse un chien. Lance une balle ou un disque. Donne une friandise. Après la promenade, lave-les au poste de lavage.\n\nDu haut de la colline, on voit la vieille ferme en bas. Retourne-toi de temps en temps.\n\nPas besoin de tout faire. Rien que regarder, c'est bien aussi."
         },
         {
           "key": "gallery.bedroom.title",
@@ -31626,7 +31626,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Pas besoin de points pour commencer à jouer\n- Caresser : caresse la tête, les joues ou le menton, et le chien est content\n- Lancer une balle ou un disque : sors-le dans Jouets, lance-le, et le chien le rapporte\n- Se promener ensemble : mets les chiens en laisse dans Walk et promène-toi sur la colline\n- Faire la sieste : dans Appeler, un chien vient dormir à côté de toi\n- Toilette : après la promenade, va à un poste de lavage\n\nCe que fait ce panneau\n- Walk, Friandises, Accessoires : depuis les onglets du haut, mets en laisse, sors des friandises, pare un chien\n- Points et grand-père : les points s'accumulent rien qu'en étant ici et s'affichent dans Points, en haut à droite. Parle au grand-père du portail, il te donne des points pour préparer la promenade"
         },
         {
           "key": "welcome.footer.vr",
@@ -32478,7 +32478,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Les photos sont prises automatiquement quand tu joues et te promènes avec les chiens (il n'y a pas de déclencheur) : quand un chien rapporte une balle, quand tu caresses un chien, quand les chiens courent ou jouent ensemble, quand un chien attrape un frisbee en sautant, et pendant la photo de groupe.\n\nPendant une promenade en laisse, des photos sont aussi prises aux haltes, aux points de vue et de temps en temps : la vue à travers les yeux du chien, ou une photo façon selfie.\n\nJusqu'à 24 photos sont gardées (promenade 10, caresses 4, jeu 4, bain 6). Quand un type est plein, sa plus ancienne est remplacée. La plus récente est en haut à gauche ; change de page avec ◀ ▶.\n\nLes photos restent sur ton appareil uniquement ; les autres voient d'autres photos. Elles disparaissent quand tu pars.\n\nPour en garder une sur PC ou Quest, approche ta caméra VRChat d'une photo du tableau près du portail ou de la liste ici : elle remplit le cadre. Sur téléphone, affiche la photo en grand (appuie dessus ici ou touche-la sur le tableau) et fais une capture d'écran.\n\nActive ou coupe les photos automatiques avec [Photos: ON / OFF] dans les Réglages."
+          "text": "Quand tu joues et te promènes avec les chiens, les beaux moments deviennent des photos tout seuls : quand un chien rapporte une balle, quand tu caresses, quand les chiens jouent ensemble, quand un chien saute vers un frisbee, et pendant les photos de groupe. En promenade, les haltes et les points de vue sont aussi photographiés.\n\nJusqu'à 24 photos sont gardées (promenade 10, caresses 4, jeu 4, bain 6). Quand c'est plein, la plus ancienne de ce type est remplacée. La plus récente est en haut à gauche ; change de page avec ◀ ▶.\n\nTes photos ne sont visibles que par toi. Les autres voient les leurs. Elles disparaissent quand tu quittes ce monde.\n\nPour en garder une sur PC ou Quest, approche la caméra VRChat du tableau photo près du portail ou d'une photo ici : elle remplit le cadre, puis déclenche. Sur téléphone, agrandis la photo et fais une capture d'écran.\n\nActive ou coupe les photos automatiques dans Réglages → Photos: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -33034,7 +33034,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Pas besoin de points pour commencer à jouer</b>\nTu peux jouer tout de suite, sans aucun point.\n\n<b>Caresser un chien</b>\nCaresse la tête, les joues ou le menton, et le chien est content.\n\n<b>Lancer une balle ou un disque</b>\nSors-le dans Jouets et lance-le. Le chien le rapporte.\n\n<b>Se promener ensemble</b>\nMets les chiens en laisse dans Walk et promène-toi sur la colline.\n\n<b>Faire la sieste ensemble</b>\nDans Appeler, un chien vient dormir à côté de toi.\n\n<b>Toilette</b>\nAprès la promenade, va à un poste de lavage.\n\n<b>Ce que fait le menu</b>\nDepuis les onglets du haut, mets en laisse, sors des friandises ou pare un chien.\nLes points s'accumulent rien qu'en étant ici, et tu les échanges contre ce qui te plaît.\n\n<b>Points et grand-père</b>\nPoints, en haut à droite, montre combien tu en as et comment en gagner.\nParle au grand-père du portail, il te donne des points pour préparer la promenade.\n\n<b>Rappeler le menu</b>\nVR : stick droit maintenu vers le bas\nDesktop : touche T\nTéléphone : [Menu] à l'écran"
         },
         {
           "key": "photo.frame.halloween",
@@ -33206,7 +33206,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Impossible de savoir si ça a marché. Réessaie"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -33286,7 +33286,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Un jouet par chien, posé devant toi. Tiens un disque pour voir sa trajectoire, puis Use pour lancer"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -33310,7 +33310,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Choisis une forme, regarde les marques à tes pieds, puis appuie sur « Les rassembler ici ». Pas de marque, pas de place. Les pentes conviennent. Après 1 minute, ils se dispersent et retournent jouer"
         },
         {
           "key": "activities.hillside.perk",
@@ -33318,11 +33318,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Avec Trainer, tu alignes les chiens pour la photo de groupe et changes la prise du frisbee. Le Trainer de Kominka Dog Run vaut aussi ici.\n500 Credits pour 1 mois / 1 350 pour 3 / 2 550 pour 6 / 4 800 pour 12. Sans reconduction ; prolongations cumulées."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Si tu étais Trainer en entrant, ça reste actif jusqu'à ton départ. Tout le monde sur place peut participer au rassemblement."
         },
         {
           "key": "activities.hillside.started",
@@ -33346,7 +33346,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Impossible de savoir si ça a marché. Réessaie"
         },
         {
           "key": "activities.hillside.requesting",
@@ -33454,7 +33454,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Comment mettre un chien en laisse, c'est expliqué au porte-laisses.\n\nChoisis où aller dans Walk, dans ton menu personnel. Les chemins sont sur le panneau de la carte. Les chiens en laisse s'arrêtent renifler en route. Prends ton temps avec eux.\n\nSeul celui qui a mis un chien en laisse peut le détacher."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -33634,7 +33634,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Chaque chien a son disque. Il y en a aussi sur la Plaza.\nForce : en VR stick droit haut/bas, sur Desktop molette de la souris.\nUn chien en laisse ne va pas le chercher. Détache-le d'abord.\nDans la rivière le disque flotte et le chien plonge le chercher."
+          "text": "Un disque par chien. Il y en a aussi sur la Plaza.\nForce : en VR stick droit haut/bas, sur Desktop molette de la souris.\nUn chien en laisse ne va pas le chercher. Détache-le d'abord.\nLe disque flotte sur la rivière. Le chien plonge le chercher."
         },
         {
           "key": "guide.ball.title",
@@ -33670,7 +33670,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Promenade, caresses, balles, frisbee et bain sont gratuits pour tous.\n<color=#B5432A>Points</color>\nParle au grand-père du portail : 200 pt (une fois). Ici, 1 pt par minute.\nÉchange-les dans Accessoires, Appeler et Friandises contre des accessoires, effets de caresse, poses et friandises.\n<color=#B5432A>VAnimal Trainer</color> (durée limitée, Credits)\nRassemble les chiens pour une photo de groupe à partager. Inscrit à la ferme ? Ça marche ici aussi.\nS'inscrire : menu Jouer → [Ouvrir la boutique]\nUtiliser : dans Jouer, choisis une formation → [Les rassembler ici]"
+          "text": "Promenade, caresses, balles, frisbee et bain sont gratuits pour tous.\n<color=#B5432A>Points</color>\nParle au grand-père du portail : 200 pt (une fois). Ici, 1 pt par minute.\nÉchange-les dans Accessoires, Appeler et Friandises contre des accessoires, effets de caresse, poses et friandises.\n<color=#B5432A>VAnimal Trainer</color> (durée limitée, Credits)\nAligne les chiens pour une photo de groupe et change leur façon d'attraper le frisbee. Inscrit à Kominka Dog Run ? Ça marche ici aussi.\nS'inscrire : menu Jouer → [Ouvrir la boutique]\nUtiliser : dans Jouer, choisis une formation → [Les rassembler ici]"
         },
         {
           "key": "guide.map.title",
@@ -33702,7 +33702,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La ferme derrière le portail, c'est Kominka Dog Run, le monde précédent avec les mêmes six chiens.\n<color=#B5432A>Appuie sur ce panneau et un portail apparaît à côté.</color>\nVR : vise et gâchette / Desktop : clic / Téléphone : touche\nAppuie encore pour le ranger. Il disparaît aussi au bout d'1 minute.\nLes points et objets sont séparés dans chaque monde.\nLe VAnimal Trainer marche dans les deux, où que tu te sois inscrit."
+          "text": "La ferme derrière le portail, c'est Kominka Dog Run, le monde précédent où vivent les mêmes six chiens.\n<color=#B5432A>Appuie sur ce panneau et un portail apparaît à côté.</color>\nAppuie encore, ou attends 1 minute, et il disparaît.\nLes points et objets sont séparés dans chaque monde.\nLe VAnimal Trainer marche dans les deux, où que tu te sois inscrit."
         },
         {
           "key": "guide.kominka.interact",
@@ -34581,11 +34581,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Que bom que você veio. Aqui é a colina atrás da velha casa de fazenda. Dê uma caminhada sem pressa com os cachorros.\n\nA placa atrás de mim explica como brincar e como abrir seu menu de mão. Para passear, veja o suporte de guias. Para dar banho, a estação de banho perto do muro. Para os caminhos, a placa do mapa.\n\nSe quiser perguntar alguma coisa, escolha à esquerda."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Que bom que você veio. Rosto novo, pelo que vejo. Aqui é a colina atrás da velha casa de fazenda. Leve isto para se preparar para o passeio: {0} pt, só desta vez. Use em Enfeites, Petiscos ou Chamar no seu menu de mão.\n\nA placa atrás de mim explica como brincar. Para passear, veja o suporte de guias. Para dar banho, a estação de banho perto do muro. Para os caminhos, a placa do mapa.\n\nSe quiser perguntar alguma coisa, escolha à esquerda."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -34641,11 +34641,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Abra Petiscos no seu menu de mão e aperte Dar. O menu fecha assim que o petisco sai.\n\nSegure e os cachorros vêm chegando. Solte e o cachorro mais perto come. Um petisco por vez.\n\nJá te dei 5 para começar. Quando acabarem, troque pontos por mais em Petiscos."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Abra Chamar no seu menu de mão, escolha um cachorro e uma pose, depois o lugar e para onde ele olha. O cachorro vai até lá e descansa. Quando terminar, aperte Deixar livre nesse cachorro.\n\nCachorros na guia não podem ser chamados. Tire a guia primeiro.\n\nDe lado, Deitado, Sentado e Enroscado são de graça. Outras poses podem ser adicionadas com pontos.\n\nQuem pode chamar é o dono da instância (ou o Master, se não houver). Com Todos podem chamar ligado, qualquer um pode."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -35409,7 +35409,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Assim você pode passar o tempo aqui. Na ordem que quiser.\n\nPonha a guia num cachorro e vá passear. Faça carinho num cachorro. Jogue uma bola ou um disco. Dê um petisco. Depois do passeio, dê banho neles na estação de banho.\n\nLá do alto da colina dá para ver a velha casa lá embaixo. Olhe para trás de vez em quando.\n\nNão precisa fazer tudo. Só ficar olhando também é bom."
         },
         {
           "key": "gallery.bedroom.title",
@@ -35457,7 +35457,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Não precisa de pontos para começar a brincar\n- Carinho: acaricie a cabeça, as bochechas ou o queixo e o cachorro fica feliz\n- Jogar bola ou disco: pegue um em Brinquedos, jogue, e o cachorro traz de volta\n- Passear juntos: coloque a guia nos cachorros em Walk e passeie pela colina\n- Cochilar juntos: em Chamar, um cachorro vem e dorme ao seu lado\n- Banho: depois do passeio, vá a uma estação de banho\n\nO que este painel faz\n- Walk, Petiscos, Enfeites: pelas abas de cima, coloque a guia, pegue petiscos, enfeite um cachorro\n- Pontos e vovô: os pontos se acumulam só de estar aqui e aparecem em Pontos, no canto superior direito. Fale com o vovô no portão e ele dá pontos para preparar o passeio"
         },
         {
           "key": "welcome.footer.vr",
@@ -36309,7 +36309,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "As fotos saem sozinhas enquanto você brinca e passeia com os cachorros (não há botão de disparo): quando um cachorro traz a bola, enquanto você faz carinho, quando os cachorros correm ou brincam juntos, quando um cachorro pega o frisbee num salto e na foto em grupo.\n\nNo passeio com guia, também saem fotos nas paradas, nos mirantes e de vez em quando: a vista pelos olhos do cachorro ou uma foto estilo selfie.\n\nFicam até 24 fotos (passeio 10, carinho 4, brincadeira 4, banho 6). Quando um tipo enche, a mais antiga dele é trocada. A mais nova fica no canto superior esquerdo; troque de página com ◀ ▶.\n\nAs fotos ficam só no seu aparelho; as outras pessoas veem outras fotos. Elas somem quando você sai.\n\nPara ficar com uma no PC ou no Quest, aproxime a câmera do VRChat de uma foto do painel perto do portão ou da lista aqui: ela preenche o quadro. No celular, mostre a foto grande (toque nela aqui ou no painel) e faça uma captura de tela.\n\nLigue ou desligue as fotos automáticas em [Fotos: ON / OFF] nos Ajustes."
+          "text": "Enquanto você brinca e passeia com os cachorros, os bons momentos viram fotos sozinhos: quando um cachorro traz a bola, enquanto você faz carinho, quando os cachorros brincam juntos, quando um cachorro salta atrás do frisbee e nas fotos em grupo. Nos passeios, as paradas e os mirantes também são fotografados.\n\nFicam até 24 fotos (passeio 10, carinho 4, brincadeira 4, banho 6). Quando enche, a mais antiga daquele tipo é trocada. A mais nova fica no canto superior esquerdo; troque de página com ◀ ▶.\n\nSó você vê suas fotos. Os outros veem as deles. Elas somem quando você sai deste mundo.\n\nPara ficar com uma no PC ou no Quest, aproxime a câmera do VRChat do painel de fotos perto do portão ou de uma foto aqui: ela preenche o quadro, aí é só fotografar. No celular, amplie a foto e faça uma captura de tela.\n\nLigue ou desligue as fotos automáticas em Ajustes → Fotos: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -36865,7 +36865,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Não precisa de pontos para começar a brincar</b>\nVocê pode brincar agora mesmo, sem nenhum ponto.\n\n<b>Fazer carinho</b>\nAcaricie a cabeça, as bochechas ou o queixo e o cachorro fica feliz.\n\n<b>Jogar bola ou disco</b>\nPegue um em Brinquedos e jogue. O cachorro traz de volta.\n\n<b>Passear juntos</b>\nColoque a guia nos cachorros em Walk e passeie pela colina.\n\n<b>Cochilar juntos</b>\nEm Chamar, um cachorro vem e dorme ao seu lado.\n\n<b>Banho</b>\nDepois do passeio, vá a uma estação de banho.\n\n<b>O que o menu faz</b>\nPelas abas de cima, coloque a guia, pegue petiscos ou enfeite um cachorro.\nOs pontos se acumulam só de estar aqui, e você troca por coisas de que gosta.\n\n<b>Pontos e vovô</b>\nEm Pontos, no canto superior direito, você vê quantos tem e como ganhar.\nFale com o vovô no portão e ele dá pontos para preparar o passeio.\n\n<b>Trazer o menu</b>\nVR: segure o analógico direito para baixo\nDesktop: tecle T\nCelular: toque em [Menu] na tela"
         },
         {
           "key": "photo.frame.halloween",
@@ -37037,7 +37037,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Não deu para saber se funcionou. Tente de novo"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -37117,7 +37117,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Um brinquedo por cachorro, na sua frente. Segure um disco para ver a trajetória e aperte Use para jogar"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -37141,7 +37141,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Escolha uma forma, olhe as marcas aos seus pés e toque em “Reunir todos aqui”. Sem marca, sem lugar. Ladeiras também servem. Depois de 1 minuto eles se espalham e voltam a brincar"
         },
         {
           "key": "activities.hillside.perk",
@@ -37149,11 +37149,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Como Trainer você enfileira os cachorros para fotos em grupo e troca o jeito de pegar o frisbee. Um Trainer do Kominka Dog Run vale aqui.\n500 Credits por 1 mês / 1.350 por 3 / 2.550 por 6 / 4.800 por 12. Não renova sozinho; prorrogar soma ao que falta."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Se você já tinha Trainer na entrada, ele vale até você sair. Todo mundo por perto pode participar da reunião."
         },
         {
           "key": "activities.hillside.started",
@@ -37177,7 +37177,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Não deu para saber se funcionou. Tente de novo"
         },
         {
           "key": "activities.hillside.requesting",
@@ -37285,7 +37285,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Como pôr a guia num cachorro está explicado no suporte de guias.\n\nEscolha aonde ir em Walk, no seu menu de mão. Os caminhos estão na placa do mapa. Cachorros na guia param para farejar pelo caminho. Vá no ritmo deles.\n\nSó quem pôs a guia num cachorro pode tirá-la."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -37465,7 +37465,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Cada cachorro tem seu próprio disco. Alguns ficam na Plaza.\nForça: no VR analógico direito para cima/baixo, no Desktop a roda do mouse.\nCachorro na guia não vai buscar. Solte antes.\nNo rio o disco flutua e o cachorro pula para buscar."
+          "text": "Um disco por cachorro. Alguns ficam na Plaza também.\nForça: no VR analógico direito para cima/baixo, no Desktop a roda do mouse.\nCachorro na guia não vai buscar. Solte antes.\nO disco flutua no rio. O cachorro pula para buscar."
         },
         {
           "key": "guide.ball.title",
@@ -37501,7 +37501,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Passear, fazer carinho, bolas, frisbee e dar banho são grátis para todos.\n<color=#B5432A>Pontos</color>\nFale com o vovô no portão: 200 pt (uma vez). Aqui você ganha 1 pt por minuto.\nTroque em Enfeites, Chamar e Petiscos por enfeites, efeitos de carinho, poses e petiscos.\n<color=#B5432A>VAnimal Trainer</color> (por tempo limitado, Credits)\nReúna os cachorros para uma foto em grupo para todos. Entrou na casa de fazenda? Vale aqui também.\nEntrar: menu Brincar → [Abrir a loja]\nUsar: em Brincar escolha uma formação → [Reunir todos aqui]"
+          "text": "Passear, fazer carinho, bolas, frisbee e dar banho são grátis para todos.\n<color=#B5432A>Pontos</color>\nFale com o vovô no portão: 200 pt (uma vez). Aqui você ganha 1 pt por minuto.\nTroque em Enfeites, Chamar e Petiscos por enfeites, efeitos de carinho, poses e petiscos.\n<color=#B5432A>VAnimal Trainer</color> (por tempo limitado, Credits)\nAlinhe os cachorros para uma foto em grupo e mude o jeito de pegar o frisbee. Quem já é Trainer no Kominka Dog Run também pode usar aqui.\nEntrar: menu Brincar → [Abrir a loja]\nUsar: em Brincar escolha uma formação → [Reunir todos aqui]"
         },
         {
           "key": "guide.map.title",
@@ -37533,7 +37533,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "A casa de fazenda além do portão é o Kominka Dog Run, o mundo anterior com os mesmos seis cachorros.\n<color=#B5432A>Aperte esta placa e um portal aparece ao lado.</color>\nVR: aponte e puxe o gatilho / Desktop: clique / Celular: toque\nAperte de novo para guardar. Ele também some depois de 1 minuto.\nPontos e itens são separados em cada mundo.\nO VAnimal Trainer vale nos dois, onde quer que você tenha entrado."
+          "text": "A casa de fazenda além do portão é o Kominka Dog Run, o mundo anterior onde vivem os mesmos seis cachorros.\n<color=#B5432A>Aperte esta placa e um portal aparece ao lado.</color>\nAperte de novo ou espere 1 minuto, e ele some.\nPontos e itens são separados em cada mundo.\nO VAnimal Trainer vale nos dois mundos, não importa onde você virou Trainer."
         },
         {
           "key": "guide.kominka.interact",
@@ -38412,11 +38412,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Che piacere vederti. Questa è la collina dietro la vecchia casa di campagna. Fatti una passeggiata tranquilla con i cani.\n\nIl cartello dietro di me spiega come si gioca e come aprire il tuo menu a mano. Per le passeggiate, guarda il portaguinzagli. Per lavarli, la postazione di lavaggio vicino al muro. Per i sentieri, il cartello della mappa.\n\nSe vuoi chiedermi qualcosa, scegli a sinistra."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Che piacere vederti. Una faccia nuova, vedo. Questa è la collina dietro la vecchia casa di campagna. Prendi questi per prepararti alla passeggiata: {0} pt, solo per questa volta. Spendili in Accessori, Snack o Chiama nel tuo menu a mano.\n\nIl cartello dietro di me spiega come si gioca. Per le passeggiate, guarda il portaguinzagli. Per lavarli, la postazione di lavaggio vicino al muro. Per i sentieri, il cartello della mappa.\n\nSe vuoi chiedermi qualcosa, scegli a sinistra."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -38472,11 +38472,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Apri Snack nel tuo menu a mano e premi Dai. Appena esce lo snack, il menu si chiude.\n\nTienilo in mano e i cani si avvicinano. Lascialo andare e se lo mangia il cane più vicino. Uno snack alla volta.\n\nTe ne ho dati 5 per cominciare. Quando finiscono, scambia dei punti per averne altri in Snack."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Apri Chiama nel tuo menu a mano, scegli un cane e una posa, poi il posto e la direzione in cui guarda. Il cane ci va e si riposa lì. Quando hai finito, premi Lascia libero per quel cane.\n\nI cani al guinzaglio non si possono chiamare. Prima togli il guinzaglio.\n\nSu un fianco, Terra, Seduto e Rannicchiato sono gratis. Le altre pose si aggiungono con i punti.\n\nPuò chiamare il proprietario dell'istanza (o il Master, se non c'è). Con Tutti possono chiamare attivo, può chiunque."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -39240,7 +39240,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Ecco come passare il tempo qui. Nell'ordine che vuoi.\n\nMetti il guinzaglio a un cane e vai a passeggio. Accarezza un cane. Lancia una palla o un disco. Dai uno snack. Dopo la passeggiata, lavali alla postazione di lavaggio.\n\nDall'alto della collina si vede la vecchia casa giù in basso. Voltati ogni tanto.\n\nNon devi fare tutto per forza. Anche solo guardare va bene."
         },
         {
           "key": "gallery.bedroom.title",
@@ -39288,7 +39288,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Non servono punti per iniziare a giocare\n- Accarezzare: accarezza la testa, le guance o il mento e il cane è felice\n- Lanciare palla o disco: tiralo fuori in Giochi, lancialo e il cane lo riporta\n- Passeggiare insieme: metti il guinzaglio ai cani in Walk e passeggia sulla collina\n- Pisolino insieme: in Chiama un cane arriva e dorme accanto a te\n- Lavare: dopo la passeggiata, vai a una postazione di lavaggio\n\nCosa fa questo pannello\n- Walk, Snack, Accessori: dalle schede in alto metti il guinzaglio, tira fuori gli snack, decora un cane\n- Punti e nonno: i punti si accumulano solo stando qui e appaiono in Punti, in alto a destra. Parla con il nonno al cancello e ti darà punti per prepararti alla passeggiata"
         },
         {
           "key": "welcome.footer.vr",
@@ -40140,7 +40140,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Le foto si scattano da sole mentre giochi e passeggi con i cani (non c'è un pulsante di scatto): quando un cane riporta la palla, mentre lo accarezzi, quando i cani corrono o giocano insieme, quando un cane afferra un frisbee al volo e durante la foto di gruppo.\n\nDurante la passeggiata al guinzaglio si scattano foto anche alle soste, nei punti panoramici e ogni tanto: la vista con gli occhi del cane o uno scatto stile selfie.\n\nSi tengono fino a 24 foto (passeggiata 10, coccole 4, gioco 4, bagno 6). Quando un tipo è pieno, si sostituisce la sua più vecchia. La più recente è in alto a sinistra; cambia pagina con ◀ ▶.\n\nLe foto restano solo sul tuo dispositivo; le altre persone vedono foto diverse. Spariscono quando esci.\n\nPer tenerne una su PC o Quest, avvicina la fotocamera di VRChat a una foto della bacheca vicino al cancello o dell'elenco qui: riempie l'inquadratura. Su telefono, mostra la foto in grande (premila qui o toccala sulla bacheca) e fai uno screenshot.\n\nAttiva o disattiva le foto automatiche con [Foto: ON / OFF] nelle Impostazioni."
+          "text": "Mentre giochi e passeggi con i cani, i bei momenti diventano foto da soli: quando un cane riporta la palla, mentre lo accarezzi, quando i cani giocano insieme, quando un cane salta verso un frisbee e nelle foto di gruppo. Durante le passeggiate si fotografano anche le soste e i punti panoramici.\n\nSi tengono fino a 24 foto (passeggiata 10, coccole 4, gioco 4, bagno 6). Quando è pieno, si sostituisce la più vecchia di quel tipo. La più recente è in alto a sinistra; cambia pagina con ◀ ▶.\n\nLe tue foto le vedi solo tu. Gli altri vedono le loro. Spariscono quando esci da questo mondo.\n\nPer tenerne una su PC o Quest, avvicina la fotocamera di VRChat alla bacheca delle foto vicino al cancello o a una foto qui: riempie l'inquadratura, poi scatta. Su telefono, ingrandisci la foto e fai uno screenshot.\n\nAttiva o disattiva le foto automatiche in Impostazioni → Foto: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -40696,7 +40696,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Non servono punti per iniziare a giocare</b>\nPuoi giocare subito, senza alcun punto.\n\n<b>Accarezzare un cane</b>\nAccarezza la testa, le guance o il mento e il cane è felice.\n\n<b>Lanciare palla o disco</b>\nTiralo fuori in Giochi e lancialo. Il cane lo riporta.\n\n<b>Passeggiare insieme</b>\nMetti il guinzaglio ai cani in Walk e passeggia sulla collina.\n\n<b>Pisolino insieme</b>\nIn Chiama un cane arriva e dorme accanto a te.\n\n<b>Lavare</b>\nDopo la passeggiata, vai a una postazione di lavaggio.\n\n<b>Cosa fa il menu</b>\nDalle schede in alto metti il guinzaglio, tira fuori gli snack o decora un cane.\nI punti si accumulano solo stando qui e li scambi con ciò che ti piace.\n\n<b>Punti e nonno</b>\nIn Punti, in alto a destra, vedi quanti ne hai e come guadagnarli.\nParla con il nonno al cancello e ti darà punti per prepararti alla passeggiata.\n\n<b>Richiamare il menu</b>\nVR: tieni la levetta destra verso il basso\nDesktop: premi T\nTelefono: tocca [Menu] sullo schermo"
         },
         {
           "key": "photo.frame.halloween",
@@ -40868,7 +40868,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Non si è capito se ha funzionato. Riprova"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -40948,7 +40948,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Un gioco per cane, davanti a te. Tieni un disco per vederne la traiettoria, poi Use per lanciarlo"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -40972,7 +40972,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Scegli una forma, guarda i segni ai tuoi piedi e premi «Radunali qui». Senza segno, niente posto. Anche i pendii vanno bene. Dopo 1 minuto si sciolgono e tornano a giocare"
         },
         {
           "key": "activities.hillside.perk",
@@ -40980,11 +40980,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Come Trainer metti in fila i cani per le foto di gruppo e cambi la presa del frisbee. Un Trainer di Kominka Dog Run vale anche qui.\n500 Credits per 1 mese / 1.350 per 3 / 2.550 per 6 / 4.800 per 12. Nessun rinnovo automatico; le proroghe si sommano."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Se avevi Trainer all'ingresso, resta attivo finché non esci. Al raduno può partecipare chi si trova qui."
         },
         {
           "key": "activities.hillside.started",
@@ -41008,7 +41008,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Non si è capito se ha funzionato. Riprova"
         },
         {
           "key": "activities.hillside.requesting",
@@ -41116,7 +41116,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Come mettere il guinzaglio a un cane è spiegato al portaguinzagli.\n\nScegli dove andare in Walk, nel tuo menu a mano. I sentieri sono sul cartello della mappa. I cani al guinzaglio si fermano ad annusare lungo la strada. Prenditela comoda con loro.\n\nSolo chi ha messo il guinzaglio a un cane può toglierglielo."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -41296,7 +41296,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Ogni cane ha il suo disco. Alcuni sono anche nella Plaza.\nForza: in VR levetta destra su/giù, su Desktop rotella del mouse.\nI cani al guinzaglio non vanno a prenderlo. Sganciali prima.\nNel fiume il disco galleggia e il cane si tuffa a prenderlo."
+          "text": "Un disco per cane. Alcuni sono anche nella Plaza.\nForza: in VR levetta destra su/giù, su Desktop rotella del mouse.\nI cani al guinzaglio non vanno a prenderlo. Sganciali prima.\nIl disco galleggia sul fiume. Il cane si tuffa a prenderlo."
         },
         {
           "key": "guide.ball.title",
@@ -41332,7 +41332,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Passeggiare, accarezzare, palline, frisbee e bagno sono gratis per tutti.\n<color=#B5432A>Punti</color>\nParla con il nonno al cancello: 200 pt (una volta). Qui guadagni 1 pt al minuto.\nScambiali in Accessori, Chiama e Snack con accessori, effetti carezza, pose e snack.\n<color=#B5432A>VAnimal Trainer</color> (a tempo, Credits)\nRaduna i cani per una foto di gruppo per tutti. Iscritto alla casa di campagna? Vale anche qui.\nIscriviti: menu Attività → [Apri il negozio]\nUsa: in Attività scegli una formazione → [Radunali qui]"
+          "text": "Passeggiare, accarezzare, palline, frisbee e bagno sono gratis per tutti.\n<color=#B5432A>Punti</color>\nParla con il nonno al cancello: 200 pt (una volta). Qui guadagni 1 pt al minuto.\nScambiali in Accessori, Chiama e Snack con accessori, effetti carezza, pose e snack.\n<color=#B5432A>VAnimal Trainer</color> (a tempo, Credits)\nMetti in fila i cani per una foto di gruppo e cambia il modo di prendere il frisbee. Iscritto a Kominka Dog Run? Vale anche qui.\nIscriviti: menu Attività → [Apri il negozio]\nUsa: in Attività scegli una formazione → [Radunali qui]"
         },
         {
           "key": "guide.map.title",
@@ -41364,7 +41364,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La casa di campagna oltre il cancello è Kominka Dog Run, il mondo precedente con gli stessi sei cani.\n<color=#B5432A>Premi questo pannello e accanto appare un portale.</color>\nVR: punta e premi il grilletto / Desktop: clic / Telefono: tocca\nPremi di nuovo per toglierlo. Sparisce anche da solo dopo 1 minuto.\nPunti e oggetti sono separati in ogni mondo.\nIl VAnimal Trainer vale in entrambi, ovunque ti sia iscritto."
+          "text": "La casa di campagna oltre il cancello è Kominka Dog Run, il mondo precedente dove vivono gli stessi sei cani.\n<color=#B5432A>Premi questo pannello e accanto appare un portale.</color>\nPremi di nuovo, o aspetta 1 minuto, e sparisce.\nPunti e oggetti sono separati in ogni mondo.\nIl VAnimal Trainer vale in entrambi, ovunque ti sia iscritto."
         },
         {
           "key": "guide.kominka.interact",
@@ -42243,11 +42243,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Dobrze, że jesteś. To wzgórze za starym wiejskim domem. Przejdź się spokojnie z psami.\n\nNa tablicy za mną jest napisane, jak się bawić i jak otworzyć menu podręczne. Na spacer zajrzyj do stojaka na smycze. Do mycia jest myjnia przy murze. Trasy znajdziesz na tablicy z mapą.\n\nJak chcesz o coś zapytać, wybierz po lewej."
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "Dobrze, że jesteś. Nowa twarz, widzę. To wzgórze za starym wiejskim domem. Weź to na przygotowanie do spaceru: {0} pt, tylko ten jeden raz. Wydaj je w zakładkach Ozdoby, Smakołyki albo Zawołaj w menu podręcznym.\n\nNa tablicy za mną jest napisane, jak się bawić. Na spacer zajrzyj do stojaka na smycze. Do mycia jest myjnia przy murze. Trasy znajdziesz na tablicy z mapą.\n\nJak chcesz o coś zapytać, wybierz po lewej."
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -42303,11 +42303,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "Otwórz Smakołyki w menu podręcznym i naciśnij Podaj. Kiedy smakołyk się pojawi, menu się zamknie.\n\nTrzymaj go, a psy podejdą. Puść, a zje go najbliższy pies. Jeden smakołyk naraz.\n\nNa początek dałem ci 5. Jak się skończą, wymień punkty na nowe w zakładce Smakołyki."
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "Otwórz Zawołaj w menu podręcznym, wybierz psa i pozę, a potem miejsce i kierunek, w którym ma patrzeć. Pies przyjdzie i tam odpocznie. Kiedy skończysz, naciśnij Puść wolno przy tym psie.\n\nPsa na smyczy nie da się zawołać. Najpierw go odepnij.\n\nNa boku, Waruj, Siad i W kłębek są za darmo. Inne pozy możesz dodać za punkty.\n\nWołać może właściciel instancji (albo Master, jeśli go nie ma). Gdy Wszyscy mogą wołać jest włączone, może każdy."
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -43071,7 +43071,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "Oto jak możesz tu spędzić czas. W dowolnej kolejności.\n\nWeź psa na smycz i idź na spacer. Pogłaszcz psa. Rzuć piłkę albo dysk. Daj smakołyk. Po spacerze umyj psy w myjni.\n\nZ góry widać w dole stary dom. Oglądaj się czasem za siebie.\n\nNie musisz robić wszystkiego. Samo patrzenie też jest fajne."
         },
         {
           "key": "gallery.bedroom.title",
@@ -43119,7 +43119,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "Nie potrzebujesz punktów, by zacząć zabawę\n- Głaskanie: pogłaszcz głowę, policzki lub podbródek, a pies się ucieszy\n- Rzucanie piłki lub dysku: wyjmij w Zabawki, rzuć, a pies przyniesie z powrotem\n- Wspólny spacer: w Walk weź psy na smycz i spaceruj po wzgórzu\n- Wspólna drzemka: w Zawołaj pies przyjdzie i zaśnie obok ciebie\n- Mycie: po spacerze idź do myjni\n\nCo robi ta tablica\n- Walk, Smakołyki, Ozdoby: w kartach u góry weź psa na smycz, wyjmij smakołyki, przystrój psa\n- Punkty i dziadek: punkty zbierają się, po prostu gdy tu jesteś, i widać je w Punkty w prawym górnym rogu. Porozmawiaj z dziadkiem przy bramie, a da ci punkty na przygotowanie do spaceru"
         },
         {
           "key": "welcome.footer.vr",
@@ -43971,7 +43971,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Zdjęcia robią się same, gdy bawisz się i spacerujesz z psami (nie ma spustu): gdy pies przynosi piłkę, gdy go głaszczesz, gdy psy biegają lub bawią się razem, gdy pies złapie frisbee w skoku oraz podczas zdjęcia grupowego.\n\nNa spacerze na smyczy zdjęcia powstają też na postojach, w punktach widokowych i co jakiś czas: widok oczami psa albo ujęcie w stylu selfie.\n\nZostaje do 24 zdjęć (spacer 10, głaskanie 4, zabawa 4, mycie 6). Gdy dany rodzaj się zapełni, zastępowane jest jego najstarsze. Najnowsze jest w lewym górnym rogu; strony zmieniasz przyciskami ◀ ▶.\n\nZdjęcia są tylko na twoim urządzeniu; inni widzą inne zdjęcia. Znikają po wyjściu.\n\nŻeby zachować któreś na PC lub Quest, podsuń aparat VRChat blisko zdjęcia na tablicy przy bramie albo dowolnego zdjęcia tutaj: wypełni cały kadr. Na telefonie pokaż zdjęcie w dużym rozmiarze (naciśnij je tutaj lub dotknij na tablicy) i zrób zrzut ekranu.\n\nAutomatyczne zdjęcia włączysz lub wyłączysz przyciskiem [Zdjęcia: ON / OFF] w Ustawieniach."
+          "text": "Gdy bawisz się i spacerujesz z psami, dobre chwile same stają się zdjęciami: gdy pies przynosi piłkę, gdy go głaszczesz, gdy psy bawią się razem, gdy pies skacze po frisbee oraz przy zdjęciach grupowych. Na spacerach fotografowane są też postoje i punkty widokowe.\n\nZostaje do 24 zdjęć (spacer 10, głaskanie 4, zabawa 4, mycie 6). Gdy się zapełni, zastępowane jest najstarsze zdjęcie danego rodzaju. Najnowsze jest w lewym górnym rogu; strony zmieniasz przyciskami ◀ ▶.\n\nTwoje zdjęcia widzisz tylko ty. Inni widzą swoje. Znikają, gdy opuścisz ten świat.\n\nŻeby zachować któreś na PC lub Quest, podsuń aparat VRChat blisko tablicy ze zdjęciami przy bramie albo zdjęcia tutaj: wypełni cały kadr, wtedy zrób zdjęcie. Na telefonie powiększ zdjęcie i zrób zrzut ekranu.\n\nAutomatyczne zdjęcia włączysz lub wyłączysz w Ustawienia → Zdjęcia: ON / OFF."
         },
         {
           "key": "photo.help.close",
@@ -44527,7 +44527,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Nie potrzebujesz punktów, by zacząć zabawę</b>\nMożesz bawić się od razu, bez żadnych punktów.\n\n<b>Głaskanie psa</b>\nPogłaszcz głowę, policzki lub podbródek, a pies się ucieszy.\n\n<b>Rzucanie piłki lub dysku</b>\nWyjmij w Zabawki i rzuć. Pies przyniesie z powrotem.\n\n<b>Wspólny spacer</b>\nW Walk weź psy na smycz i spaceruj po wzgórzu.\n\n<b>Wspólna drzemka</b>\nW Zawołaj pies przyjdzie i zaśnie obok ciebie.\n\n<b>Mycie</b>\nPo spacerze idź do myjni.\n\n<b>Co robi menu</b>\nW kartach u góry weź psa na smycz, wyjmij smakołyki lub przystrój psa.\nPunkty zbierają się, po prostu gdy tu jesteś, i wymieniasz je na to, co lubisz.\n\n<b>Punkty i dziadek</b>\nW Punkty w prawym górnym rogu widać, ile ich masz i jak je zdobyć.\nPorozmawiaj z dziadkiem przy bramie, a da ci punkty na przygotowanie do spaceru.\n\n<b>Jak przywołać menu</b>\nVR: przytrzymaj prawą gałkę w dół\nDesktop: naciśnij T\nTelefon: dotknij [Menu] na ekranie"
         },
         {
           "key": "photo.frame.halloween",
@@ -44699,7 +44699,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Nie wiadomo, czy się udało. Spróbuj ponownie"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -44779,7 +44779,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "Jedna zabawka na psa, tuż przed tobą. Trzymaj dysk, by zobaczyć tor, i Use, by rzucić"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -44803,7 +44803,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "Wybierz układ, zobacz znaczniki pod stopami i naciśnij Zbiórka tutaj. Bez znacznika nie ma miejsca. Zbocza też są w porządku. Po 1 minucie psy się rozchodzą i wracają do zabawy"
         },
         {
           "key": "activities.hillside.perk",
@@ -44811,11 +44811,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "Z Trainer ustawisz psy do zdjęcia grupowego i zmienisz sposób łapania frisbee. Trainer z Kominka Dog Run działa też tutaj.\n500 Credits za 1 miesiąc / 1 350 za 3 / 2 550 za 6 / 4 800 za 12. Bez autoodnawiania; przedłużenie się sumuje."
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "Trainer aktywny przy wejściu działa aż do wyjścia. W zbiórce może wziąć udział każdy obecny."
         },
         {
           "key": "activities.hillside.started",
@@ -44839,7 +44839,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "Nie wiadomo, czy się udało. Spróbuj ponownie"
         },
         {
           "key": "activities.hillside.requesting",
@@ -44947,7 +44947,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Jak wziąć psa na smycz, pokazuje stojak na smycze.\n\nDokąd iść, wybierasz w zakładce Walk w menu podręcznym. Trasy są na tablicy z mapą. Psy na smyczy po drodze przystają, żeby wszystko obwąchać. Nie poganiaj ich.\n\nOdpiąć psa może tylko ten, kto go przypiął."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -45127,7 +45127,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "Każdy pies ma swój dysk. Kilka leży też na Plaza.\nSiła: w VR prawa gałka góra/dół, na Desktop kółko myszy.\nPies na smyczy nie pobiegnie po dysk. Najpierw go odepnij.\nW rzece dysk pływa, a pies wskakuje po niego."
+          "text": "Jeden dysk na psa. Kilka leży też na Plaza.\nSiła: w VR prawa gałka góra/dół, na Desktop kółko myszy.\nPies na smyczy nie pobiegnie po dysk. Najpierw go odepnij.\nDysk pływa po rzece. Pies wskakuje po niego."
         },
         {
           "key": "guide.ball.title",
@@ -45163,7 +45163,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Spacer, głaskanie, piłki, frisbee i kąpiel są darmowe dla wszystkich.\n<color=#B5432A>Punkty</color>\nPorozmawiaj z dziadkiem przy bramie: 200 pt (raz). Tu dostajesz 1 pt na minutę.\nWymieniaj je w Ozdoby, Zawołaj i Smakołyki na ozdoby, efekty głaskania, pozy i smakołyki.\n<color=#B5432A>VAnimal Trainer</color> (czasowy, Credits)\nZbierz psy do wspólnego zdjęcia dla wszystkich. Dołączyłeś w wiejskim domu? Działa też tutaj.\nDołącz: menu Zabawa → [Otwórz sklep]\nUżywaj: w Zabawa wybierz szyk → [Zbiórka tutaj]"
+          "text": "Spacer, głaskanie, piłki, frisbee i kąpiel są darmowe dla wszystkich.\n<color=#B5432A>Punkty</color>\nPorozmawiaj z dziadkiem przy bramie: 200 pt (raz). Tu dostajesz 1 pt na minutę.\nWymieniaj je w Ozdoby, Zawołaj i Smakołyki na ozdoby, efekty głaskania, pozy i smakołyki.\n<color=#B5432A>VAnimal Trainer</color> (czasowy, Credits)\nUstaw psy do wspólnego zdjęcia i zmieniaj styl łapania frisbee. Trainer z Kominka Dog Run działa też tutaj.\nDołącz: menu Zabawa → [Otwórz sklep]\nUżywaj: w Zabawa wybierz szyk → [Zbiórka tutaj]"
         },
         {
           "key": "guide.map.title",
@@ -45195,7 +45195,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Wiejski dom za bramą to Kominka Dog Run, poprzedni świat z tymi samymi sześcioma psami.\n<color=#B5432A>Naciśnij tę tablicę, a obok pojawi się portal.</color>\nVR: wskaż i naciśnij spust / Desktop: kliknij / Telefon: dotknij\nNaciśnij ponownie, aby go schować. Po 1 minucie zniknie sam.\nPunkty i przedmioty są osobne w każdym świecie.\nVAnimal Trainer działa w obu światach, niezależnie od tego, gdzie dołączyłeś."
+          "text": "Wiejski dom za bramą to Kominka Dog Run, poprzedni świat, w którym mieszka tych samych sześć psów.\n<color=#B5432A>Naciśnij tę tablicę, a obok pojawi się portal.</color>\nNaciśnij ponownie albo odczekaj 1 minutę, a zniknie.\nPunkty i przedmioty są osobne w każdym świecie.\nVAnimal Trainer działa w obu światach, niezależnie od tego, gdzie go kupiłeś."
         },
         {
           "key": "guide.kominka.interact",
@@ -46078,11 +46078,11 @@
         },
         {
           "key": "KD_ShopKeeper.WordGreeting",
-          "text": "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "來啦。這裡是老宅的後山。帶著狗狗們慢慢走走吧。\n\n我身後的告示牌上寫著怎麼玩，還有怎麼打開手邊選單。散步去牽繩架，洗澡去圍牆邊的洗澡處，路線看地圖告示牌。\n\n想問甚麼，就從左邊選吧。"
         },
         {
           "key": "KD_ShopKeeper.WordGreetingGift",
-          "text": "Welcome. First time here? Take these for getting ready for a walk: {0} points. Just this once.\n\nYou can get the dogs ready in Dress in your personal menu. In VR, hold the right stick down. On Desktop, press T. On mobile, tap Menu on the screen.\n\nIf there is anything you want to know, choose it on the left."
+          "text": "來啦。是張新面孔啊。這裡是老宅的後山。這些拿去，準備散步用：{0} pt，只給這一次。在手邊選單的「裝飾」「零食」「呼喚」裡用吧。\n\n我身後的告示牌上寫著怎麼玩。散步去牽繩架，洗澡去圍牆邊的洗澡處，路線看地圖告示牌。\n\n想問甚麼，就從左邊選吧。"
         },
         {
           "key": "KD_ShopKeeper.WordHowTo",
@@ -46138,11 +46138,11 @@
         },
         {
           "key": "KD_ShopKeeper.InfoTreats",
-          "text": "Choose Treats in your personal menu, then press Give. The menu closes when the treat is ready, so go ahead and offer it to a dog.\n\nHold it and dogs come closer. Let go and the nearest dog eats it. You can have one treat out at a time. I have given you 5 treats to start with. When you run out, exchange points for more in Treats."
+          "text": "在手邊選單的「零食」裡按「取出」。零食一出來，選單就會關上。\n\n拿在手裡，狗狗們就會湊過來。一鬆手，離得最近的狗狗就會吃掉。一次只能拿出一個。\n\n一開始給了你5個。吃完了，就在「零食」裡用積分換。"
         },
         {
           "key": "KD_ShopKeeper.InfoCall",
-          "text": "Open Call in your personal menu, choose a dog and a pose, then decide where it should go and which way it should face. The dog walks over and rests there. To let it roam freely again, select it in Call and press Let roam.\n\nDogs on a leash cannot be called. Release them first.\n\nSide sleep, Lie down, Sit, and Curl up are free. Other poses and actions can be added with points.\n\nDogs can be called by the room owner (or the Master if the owner is absent), and by everyone when Calling open to all is ON."
+          "text": "在手邊選單的「呼喚」裡選好狗狗和姿勢，再定好位置和朝向。狗狗會走過來，在那兒歇著。想結束的話，就按那隻狗狗的「讓牠自由」。\n\n繫著牽繩的狗狗叫不來。先解開吧。\n\n「側躺」「趴下」「坐下」「蜷縮」是免費的。別的姿勢可以用積分增加。\n\n能呼喚的是房間的主人(不在的話就是 Master)。「允許所有人呼喚」是 ON 的話，誰都能叫。"
         },
         {
           "key": "KD_SleepPlacement.Place",
@@ -46906,7 +46906,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWays",
-          "text": "Here are a few ways to spend your time. Try them in any order you like.\n\nPut a dog on a leash and go for a walk. Pet a dog. Throw a ball or a disc. Offer a treat.\n\nFrom up on the hill, you can see the old farmhouse below. Look back now and then.\n\nIn Dress, you can dress up a dog and choose the light that appears when you pet it. With Call, you can call a dog over and let it rest beside you.\n\nYou do not have to do everything. Just watching is fine, too."
+          "text": "在這兒可以這麼過。順序隨你。\n\n給狗狗繫上牽繩去散步。摸摸狗狗。扔個球或飛盤。餵點零食。散完步，到洗澡處給牠們洗洗。\n\n從山上能看到山腳下的老宅。時不時回頭看看吧。\n\n不用樣樣都做。光是看看也挺好的。"
         },
         {
           "key": "gallery.bedroom.title",
@@ -46954,7 +46954,7 @@
         },
         {
           "key": "welcome.body",
-          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
+          "text": "不需要積分，馬上就能玩\n- 撫摸：摸摸頭、臉頰或下巴，狗狗會很開心\n- 扔球或飛盤：在「玩具」裡拿出來扔出去，狗狗會叼回來\n- 一起散步：在「Walk」裡給狗狗繫上牽繩，在後山散步\n- 陪在身邊睡覺：在「呼喚」裡狗狗會過來，在你身邊睡覺\n- 洗澡：散步之後，去洗澡處\n\n這塊板能做的事\n- Walk・零食・裝飾：從上方的分頁給狗狗繫牽繩、拿出零食、給狗狗戴裝飾\n- 積分和爺爺：只要待在這裡積分就會累積，顯示在右上角的「積分」。和門邊的爺爺說話，他會給你散步準備用的積分"
         },
         {
           "key": "welcome.footer.vr",
@@ -47806,7 +47806,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "和狗狗玩耍、散步時會自動拍照（沒有快門）。狗狗叼球回來、你撫摸狗狗、狗狗奔跑或一起嬉戲、狗狗跳起來接住飛盤，以及合照的時候都會拍。\n\n拖著狗繩散步時，在狗狗停留的地方、景色好的地方，以及走了一段時間後，也會拍下狗狗視角的風景，或像自拍一樣的相片。\n\n最多保留 24 張（散步 10・撫摸 4・玩耍 4・洗澡 6）。某一類滿了，會取代該類最舊的一張。最新的排在左上角，用 ◀ ▶ 翻頁。\n\n相片只保存在你自己的裝置裡，別人看到的是另外的相片。退出世界後就會消失。\n\n想留下的相片，在 PC 和 Quest 上把 VRChat 相機湊近大門旁相片板上的相片，或這裡的任一張，就能拍下鋪滿畫面的那一張。在手機上請把相片放大（在這裡按下，或點一下相片板上的相片）再截圖帶回去。\n\n自動拍照可以在「設定」裡的［相片: ON / OFF］切換。"
+          "text": "和狗狗玩耍、散步時，美好的瞬間會自動變成相片。狗狗叼球回來、你撫摸狗狗、狗狗們一起嬉戲、狗狗跳起來接飛盤，以及合照的時候都會拍。散步時，在停留的地方和景色好的地方也會拍。\n\n最多保留 24 張（散步 10・撫摸 4・玩耍 4・洗澡 6）。滿了以後，會取代同類中最舊的一張。最新的排在左上角，用 ◀ ▶ 翻頁。\n\n相片只有你自己看得到，別人看到的是他們自己的相片。離開這個世界後就會消失。\n\n想留下的相片，在 PC 和 Quest 上把 VRChat 相機湊近大門旁的相片板或這裡的相片，那一張就會鋪滿畫面，直接拍下即可。在手機上請把相片放大，再截圖帶回去。\n\n自動拍照可以在「設定 → 相片: ON / OFF」切換。"
         },
         {
           "key": "photo.help.close",
@@ -48362,7 +48362,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>不需要積分，馬上就能玩</b>\n沒有積分也能立刻開始玩。\n\n<b>撫摸狗狗</b>\n摸摸頭、臉頰或下巴，狗狗會很開心。\n\n<b>扔球或飛盤</b>\n在「玩具」裡拿出來扔出去。狗狗會叼回來。\n\n<b>一起散步</b>\n在「Walk」裡給狗狗繫上牽繩，在後山散步。\n\n<b>陪在身邊睡覺</b>\n在「呼喚」裡狗狗會過來，在你身邊睡覺。\n\n<b>洗澡</b>\n散步之後，去洗澡處吧。\n\n<b>選單能做的事</b>\n從上方的分頁可以給狗狗繫牽繩、拿出零食，或給狗狗戴裝飾。\n只要待在這裡積分就會累積，可以換取喜歡的東西。\n\n<b>積分和爺爺</b>\n右上角的「積分」裡可以看到現有積分和獲取方法。\n和門邊的爺爺說話，他會給你散步準備用的積分。\n\n<b>把選單叫到手邊</b>\nVR：長按右搖桿向下\nDesktop：T 鍵\n手機：畫面上的 [選單]"
         },
         {
           "key": "photo.frame.halloween",
@@ -48534,7 +48534,7 @@
         },
         {
           "key": "KD_TreatPouch.WordWalkUnknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "不確定是否成功。請再試一次"
         },
         {
           "key": "KD_TreatPouch.WordToyBall",
@@ -48614,7 +48614,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyHelp",
-          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+          "text": "每隻狗一個玩具，放在你面前。拿起飛盤會顯示路線，按 Use 擲出"
         },
         {
           "key": "KD_TreatPouch.WordPreparing",
@@ -48638,7 +48638,7 @@
         },
         {
           "key": "activities.hillside.formationHelp",
-          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+          "text": "選好隊形，看著腳下的標記按「在這裡集合」。沒有標記的地方不能站。斜坡上也可以。1 分鐘後解散，各自回去玩"
         },
         {
           "key": "activities.hillside.perk",
@@ -48646,11 +48646,11 @@
         },
         {
           "key": "activities.hillside.trainerIntro",
-          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+          "text": "成為 Trainer 後，可以讓狗狗們排好隊拍合照，也能切換接飛盤的方式。在 Kominka Dog Run 成為 Trainer 的人，在這裡也能用。\n1 個月 500 / 3 個月 1,350 / 6 個月 2,550 / 12 個月 4,800 Credits。沒有自動續訂，續期會累加到剩餘天數上。"
         },
         {
           "key": "activities.hillside.trainerActive",
-          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+          "text": "進入這個世界時是 Trainer 的話，離開前都能繼續使用。集合時，在場的所有人都能一起享受。"
         },
         {
           "key": "activities.hillside.started",
@@ -48674,7 +48674,7 @@
         },
         {
           "key": "activities.hillside.unknown",
-          "text": "Could not confirm the result. Check the board and try again"
+          "text": "不確定是否成功。請再試一次"
         },
         {
           "key": "activities.hillside.requesting",
@@ -48782,7 +48782,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "怎麼繫牽繩，牽繩架上寫著呢。\n\n去哪兒，在手邊選單的「Walk」裡選。路線在地圖告示牌上。繫上牽繩的狗狗一路上會停下來到處聞聞。別催，陪著牠慢慢走。\n\n只有繫上牽繩的人自己才能解開。"
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -48962,7 +48962,7 @@
         },
         {
           "key": "guide.frisbee.more",
-          "text": "每隻狗狗都有自己的飛盤。Plaza 也放著幾個。\n力度：VR 用右搖桿上下，Desktop 用滑鼠滾輪。\n牽著的狗狗不會去撿。先解開牽繩。\n在河裡飛盤會浮起來，狗狗會跳進水裡叼回來。"
+          "text": "每隻狗狗一個飛盤。Plaza 也有。\n力度：VR 用右搖桿上下，Desktop 用滑鼠滾輪。\n牽著的狗狗不會去撿。先解開牽繩。\n飛盤會浮在河上。狗狗會跳進水裡叼回來。"
         },
         {
           "key": "guide.ball.title",
@@ -48998,7 +48998,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "散步・撫摸・球・飛盤・洗澡，所有人都免費。\n<color=#B5432A>積分</color>\n和入口的爺爺說話可得 200pt (僅一次)。待在這裡每分鐘 1pt。\n在「裝飾」「呼喚」「零食」裡換取飾品・撫摸光效・姿勢・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n讓狗狗們集合，大家一起拍合照。在古民家加入過的話，這裡也能直接用。\n加入: 手邊選單「玩耍」→ [打開購買介面]\n使用: 在「玩耍」選隊形 → [在這裡集合]"
+          "text": "散步・撫摸・球・飛盤・洗澡，所有人都免費。\n<color=#B5432A>積分</color>\n和門邊的爺爺說話可得 200pt (僅一次)。待在這裡每分鐘 1pt。\n在「裝飾」「呼喚」「零食」裡換取飾品・撫摸光效・姿勢・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n讓狗狗們排好隊拍合照，還能更換接飛盤的方式。在 Kominka Dog Run 成為 Trainer 的話，這裡也能直接用。\n加入: 手邊選單「玩耍」→ [打開購買介面]\n使用: 在「玩耍」選隊形 → [在這裡集合]"
         },
         {
           "key": "guide.map.title",
@@ -49030,7 +49030,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "門那邊看到的古民家就是 Kominka Dog Run，有同樣 6 隻狗狗的前作世界。\n<color=#B5432A>按一下這塊牌子，旁邊會出現傳送門。</color>\nVR: 指向後扣扳機 / Desktop: 點擊 / 手機: 輕觸\n再按一次就收起。1 分鐘後也會自動收起。\n積分和物品在每個世界是分開的。\nVAnimal Trainer 不論在哪邊加入，兩邊都能用。"
+          "text": "門那邊看到的古民家就是 Kominka Dog Run，同樣 6 隻狗狗生活的前作世界。\n<color=#B5432A>按一下這塊牌子，旁邊會出現傳送門。</color>\n再按一次，或等 1 分鐘，就會消失。\n積分和物品在每個世界是分開的。\nVAnimal Trainer 不論在哪邊購買，兩邊都能用。"
         },
         {
           "key": "guide.kominka.interact",

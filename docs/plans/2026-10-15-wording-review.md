@@ -13,9 +13,9 @@
 | おじいさんは (49.9, 42.8) 向き 235°、看板 A「あそびかた」は (53.0, 44.5) 向き 55°。おじいさんは A の 11° 左前に立つ = A は彼のうしろ | [門前の配置 §6](2026-10-06-spawn-area-layout.md) |
 | 支度ポイントは 200pt 一度きり。初期配布は 0。滞在 1 分で 1pt | `KD_ProgressLedger.HillsideKeeperPoints`、`KD_TreatPouch.WordPointsStaySub` |
 | おやつは初期 5 個 (bone_biscuit、1pt × 5 個パック)。出すボタンは「出す」 | `KD_ProductDefinitions.cs` 86 行、`KD_TreatPouch.WordDispense` |
-| 呼ぶ: 無料ポーズは ごろん / ふせ / おすわり / うずくまる (へそ天ほかはポイント)。戻すボタンは「自由にする」。権限のトグルは「みんなにも開放」(オーナー、いなければ Master)。芸 (バーン / ジャンプ) はトレーナー特典で、提供前は販売説明に載せない | `call.pose0-4`、`KD_TreatPouch.WordSleepWake` / `WordSleepOpenToAll` / `WordSleepOwnerOnly`、DES-UI-005 |
+| 呼ぶ: 無料ポーズは ごろん / ふせ / おすわり / うずくまる (へそ天ほかはポイント)。戻すボタンは「自由にする」。権限のトグルは設定ホームの「呼ぶを全員に許可: ON / OFF」(`WordOpenOn` / `WordOpenOff`、オーナー、いなければ Master)。「みんなにも開放」(`WordSleepOpenToAll`) は画面に出ない (字形の宣言と Verify のメッセージだけ。**起票時の表は誤り。実装レビューで訂正**)。芸 (バーン / ジャンプ) はトレーナー特典で、提供前は販売説明に載せない | `call.pose0-4`、`KD_TreatPouch.WordSleepWake` / `WordOpenOn`、`KD_MenuFinishEditor.cs` 184 行、DES-UI-005 |
 | さんぽの行き先 6 つ: 広場 / 古民家側の入口 / 奥の広場 / 川辺 / 山道から周回 / 川から周回。つなぐのは「左につなぐ」「右につなぐ」、外すのは「はずす」。片手 3 匹・両手 6 匹 | `KD_TreatPouch.WordWalk*`、`course.walk.*` |
-| 手元メニューのタブ 7 つ: おやつ / おもちゃ / さんぽ / 呼ぶ / ライブ / かざり / あそぶ。パーティクル (なでた時の光) は かざり の中 | `KD_TreatPouch.cs` Tab*、`KD_TreatSetupEditor.Hillside.cs` |
+| 手元メニューのタブ 7 つ: おやつ / おもちゃ / さんぽ / 呼ぶ / ライブ / かざり / あそぶ。なでた時の光は かざり タブの中の群「撫でエフェクト」(`WordFxGroup`。古民家の「パーティクル」タブは裏山に無い。**起票時の表は誤り。実装レビューで訂正**) | `KD_TreatPouch.cs` Tab*、`KD_TreatSetupEditor.Hillside.cs` 566 行 |
 | トレーナーの特典 (裏山): 集合 + フリスビーの取り方の切り替え (`あそぶ`)。かけっこ・2 匹の遊び・犬目線カメラは裏山に無い | `KD_ActivitiesMenu.cs` 裏山改変、`KH_FrisbeeCatch.cs` |
 | 看板 A の帯 `guide.menu` が手元メニューの開き方 (VR / Desktop / スマホ) の正本。看板 A の紙は フリスビー / ボール / ポイントとトレーナー の 3 枚 (設計書 §7 の「Credits のかざり」は JSON に無い = 設計書が古い) | `KH_GuideBoardsEditor.cs`、`guide.*` |
 | 共有フォント (KD_NotoSerif SDF、48pt、2048²) の字形は 873。新しい字は各 Setup が AddGlyphs で足す (例: 「帯」は未収録) | `Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset` |
@@ -24,13 +24,14 @@
 
 | 面 | 口調 | 長さ | 書かない |
 |---|---|---|---|
-| 看板・帯 (`guide.*` `walk.guide.*` `wash.guide.*`) | 短い動詞と体言止め。ひらがな多め。手順は ①②③ か 1 2 3 | 1 行 ≤ 24 字、紙 1 枚 ≤ 8 行 | 「〜することができます」、端末ごとの開き方の重複 (`guide.menu` だけ)、Interact の操作説明 (トリガー / クリック / タップ) |
-| 手元メニューの説明 (`welcome.*` `*.help` `*Help` `*.hint`) | です/ます。1 文 1 操作。見出しは体言止め | 1 項目 2 行まで。？の本文は 5 段落まで | 「ご確認ください」「お試しください」「利用できません」「反映」「入手経路」「あらためて」、記号の見出し (— や →) |
-| おじいさん (`KD_ShopKeeper.*`) | 「〜だよ / 〜しな / 〜おくれ / 〜もんだよ」(既存)。短い文を改行で区切る | 1 行 ≤ 16 全角、1 話題 ≤ 18 行 | 看板や帯にある操作の手順、端末の列挙、メニューの階層 (「設定 → …」)、価格表 |
+| 看板・帯 (`guide.*` `walk.guide.*` `wash.guide.*`) | 体言止め、または常体の言い切り。です/ます は使わない (既存の `guide.menu` / `guide.items.subtitle` / `wash.line` の です/ます は今回は据え置き)。ひらがな多め。手順は ①②③ か 1 2 3 | 帯・キャプション・箇条の 1 行は 24 字を目安 (本文 `guide.shop.body` `guide.kominka.body` `guide.frisbee.more` は折り返す前提で例外。表示の収まりは Guide/2 の実測が正)、紙 1 枚 ≤ 8 行 | 「〜することができます」とその言い換え (〜られます・〜てあげられます)、端末ごとの開き方の重複 (`guide.menu` だけ)、Interact の操作説明 (トリガー / クリック / タップ)、画面に見えているタブ名の列挙 |
+| 手元メニューの説明 (`welcome.*` `*.help` `*Help` `*.hint`) | です/ます。1 文 1 操作。見出しは体言止め | 1 項目 2 行まで。？の本文は 5 段落まで | 「ご確認ください」「お試しください」「利用できません」「反映」「入手経路」「あらためて」、記号の見出し (— や →)、同じ語の重なり (集合させて集合写真) |
+| おじいさん (`KD_ShopKeeper.*`) | 「〜だよ / 〜しな / 〜おくれ / 〜もんだよ」(既存)。一人称は「わし」、相手は呼ばない。短い文を改行で区切り、大事な行と締めの行は よ / しな で終える | 1 行 ≤ 16 全角 (半角 0.5)、1 話題 ≤ 18 行 (空行を除く) | 看板や帯にある操作の手順、端末の列挙、メニューの階層 (「設定 → …」)、価格表、来場者の向きで変わる方角 (左・右。固定の目印で言う: わしのうしろ・塀ぎわ・地図の看板) |
+| カートの看板 (`cart.board.*`) | 「〜てね」(DES-UI-007 承認済み) | — | です/ます との混在 |
 | 状態・結果の 1 行 (`*.state.*` `*.result.*` `course.travel.*`) | 体言止め、または「〜してから」「〜まで待って」 | 1 行 | 「ご確認ください」「お試しください」「利用できません」「応答」「結果を確認」 |
 | 初回の帯 (`walkIntro.*`) | 「〜しよう / 〜してみて」(既存。ゲームの誘導) | 1 文 | 説明の追加 |
 
-共通: 名詞は手元メニューの札の表記に合わせる (さんぽ・おやつ・かざり・呼ぶ・おもちゃ・あそぶ。「なでた時の光」。「お散歩」は固有名の「おさんぽカート」以外では「さんぽ」)。数字は半角。「犬たち」は複数のとき。
+共通: 名詞は手元メニューの札の表記に合わせる (さんぽ・おやつ・かざり・呼ぶ・おもちゃ・あそぶ。「お散歩」「散歩」は固有名の「おさんぽカート」以外では「さんぽ」)。なでる (撫でる は ようこその行の題だけ = Menu/11c が要求する既存の語)。ポーズ (姿勢・動作は使わない)。「入る」はトレーナーの加入だけに使い、入室は「来たとき」。おじいさんの場所は「門のそば」。数字は半角、看板とおじいさんは「1分」、メニューの説明は「1 分」。「犬たち」は複数のとき。古民家の呼び方: 景色とおじいさんは「古民家」、ワールドをまたぐ話 (ポータル・トレーナー) は「古民家ドッグラン」、「前作」は `guide.kominka.body` だけ。
 
 ## 2. おじいさん (`KD_ShopKeeper.*`、Tier 1、6 キー)
 
@@ -93,7 +94,7 @@ en:
 現状:
 > 手元のメニューで「おやつ」を\n選び、「出す」を押しな。\nおやつが出るとメニューは\n閉じるから、犬にあげておくれ。\n\n手に持っていると犬が寄ってきて、\n手放すと、一番近くにいる犬が\n食べてくれるよ。\n一度に出せるのはひとつだけ。\nはじめに5個持たせてあるから、\nなくなったら「おやつ」で\nポイントと交換しな。
 
-問題: 看板に無い話題なので本人が説明するのは正しい。「手に持っていると犬が寄ってきて、」が 16 全角を超える (Menu/4e の行幅規約)。「閉じるから」の因果が冗長。
+問題: 看板に無い話題なので本人が説明するのは正しい。「手に持っていると犬が寄ってきて、」はちょうど 16 全角で規約の上限 (超えてはいない。起票時の「超える」は誤り)。「閉じるから」の因果が冗長。
 
 改善案 (ja):
 > 手元メニューの「おやつ」で\n「出す」を押しな。\nおやつが出ると、メニューは\n閉じるよ。\n\n手に持つと犬が寄ってくる。\n放すと、いちばん近くの\n犬が食べるよ。\n出せるのは一度に一つだ。\n\nはじめに5個持たせてある。\nなくなったら「おやつ」で\nポイントと交換しな。
@@ -106,7 +107,7 @@ en:
 現状:
 > 手元メニューの「呼ぶ」で\n犬を選び、ポーズを選んで、\n場所と向きを決める。\n犬が歩いてきて、そこで\n休んでくれるよ。\n自由にするなら、「呼ぶ」で\nその犬を選び、\n「自由にする」を押しな。\n\nリードでつないでいる犬は\n呼べない。先に外しな。\n\nごろん、ふせ、おすわり、\nうずくまるの4つは無料だ。\nほかの姿勢や動作は、\nポイントで増やせるよ。\n\n呼べるのは部屋のオーナー\n(いなければMaster) と、\n「呼ぶを全員に許可」が\nONのときの参加者だよ。
 
-問題: トグルの名前が古い (実物は「みんなにも開放」)。「ほかの姿勢や動作」の「動作」= 芸はトレーナー特典で提供前 (DES-UI-005: 載せない)。最後の段落が設定画面の説明になっている。
+問題 (起票時の記述。**トグル名の指摘は誤認**: 画面の実物は「呼ぶを全員に許可: ON」で現状の文が正しい。実装レビューで判明 → §0・§12): 「ほかの姿勢や動作」の「動作」= 芸はトレーナー特典で提供前 (DES-UI-005: 載せない)。「戻すときは」の行き先が不明。最後の段落が設定画面の説明になっている。下の改善案は起票時のもので、**採用した文は §12** (トグル名「呼ぶを全員に許可」と「いなければMaster」を残した)。
 
 改善案 (ja):
 > 手元メニューの「呼ぶ」で\n犬とポーズを選び、\n場所と向きを決める。\n犬が歩いてきて、そこで\n休んでくれるよ。\n戻すときは、その犬の\n「自由にする」だ。\n\nつないでいる犬は呼べない。\n先に外しな。\n\nごろん、ふせ、おすわり、\nうずくまるは無料だ。\nほかの姿勢は、ポイントで\n増やせるよ。\n\n呼べるのは部屋のオーナーだ。\n「みんなにも開放」なら、\nだれでも呼べる。
@@ -144,7 +145,7 @@ en:
 | `treat.line` | おやつを出して、手から犬にあげる | 問題なし | 変えない | — |
 | `toy.line` | ボールやディスクを出して、投げて遊ぶ | 問題なし | 変えない | — |
 | `call.line` | 犬を呼んで、好きな場所でポーズをとってもらう | 問題なし | 変えない | — |
-| `acc.line` | かざり・撫でエフェクト・首輪とリードで、犬におめかし | 「撫でエフェクト」は開発の語。メニューの札は「パーティクル」、看板 A は「なでた時の光」 | かざり・なでた時の光・首輪とリードで、犬におめかし | Dress the dogs: accessories, petting glow, collar and leash |
+| `acc.line` | かざり・撫でエフェクト・首輪とリードで、犬におめかし | (起票時: 「撫でエフェクト」は開発の語と判断) → **却下**。実装レビューで、裏山の かざり タブの中の群見出しが「撫でエフェクト」(`WordFxGroup`) と判明。看板の語がメニューの見出しと一致しているので変えない。変えるなら `WordFxGroup` と一緒に (別件) | 変えない | — |
 | `trainer.name` / `trainer.line` | ばにまるトレーナー / 集合写真や、フリスビーの取り方の切り替え (Credits) | 問題なし | 変えない | — |
 | `photo.name` / `photo.line` | 写真と撮影カメラ / 自動で撮れた写真を見る。撮影カメラは PC のみ | 問題なし | 変えない | — |
 | `wash.name` / `wash.line` | 洗い場・おさんぽカート / 道具は洗い場の板で、カートは乗り場でえらびます | 問題なし | 変えない | — |
@@ -264,8 +265,103 @@ DES-UI-007 で 2026-10-14 にユーザーが HTML B 案の文面を承認済み�
 1. `UITranslations.json` と `CourseUITranslations.json` を Node (UTF-8) で書き換える (ja / en 自作、11 言語 AI 訳)。`KD_ShopKeeper.cs` の const を文言表 ja と同じ文字列にする (`\n` の位置も)。
 2. コンパイル (`bash scripts/unity-compile.sh --udon`) → Menu/4d → 4e、Guide/1 → 2、Guide/22 → 23、Menu/11 → 22 → 23 の順。字形の追加は各 Setup の AddGlyphs に任せ、FAIL なら Menu/2b を検討。
 3. 変更したキーの一覧と Verify の結果を Issue に記録し、移植記録の裏山改変へ const の変更を追記 (BUG-UI-001 の残りも)。
-4. `UITranslations.json` は別セッションの未コミット分 (`live.*`) を含むので、stage は HEAD + 本票のキーだけを合成した内容にする (`git hash-object -w` → `git update-index --cacheinfo`)。シーンも同様に、本票の焼き直し分だけを stage する。
+4. `UITranslations.json` は別セッションの未コミット分 (`live.*`) を含むので、stage は HEAD + 本票のキーだけを合成した内容にする (`git hash-object -w` → `git update-index --cacheinfo`)。**シーンは今回 stage しない** (2026-10-15 の決定。焼き直し後の保存で別セッションの未保存オブジェクトも出たため。焼かれたラベルは Menu/11 → 4d → Guide/1 で JSON から再現できる)。シーンの部分 stage はできないので、次の担当も「他セッションの変更が混ざるなら含めない」で判断する。
+
+## 12. 多角的ロールのレビュー結果と、採用した文 (2026-10-15)
+
+レビューは Opus 5 本を並列 (初見の来場者 / ゲーム UX ライター / 日本語の校正 / 実装の制約 / 世界観とおじいさん)。全文はセッションの作業領域 (scratchpad、repo 外)。要点と採否:
+
+| 指摘 (ロール) | 採否 | 反映 |
+|---|---|---|
+| `WordGreeting` は台帳の復元前なら はじめての人にも出る。「また来たね」の書き分けは不可 (世界観。コードで確認: Interact → WordGreeting → 付与できた時だけ Gift) | 採用 | 2.1 は中立のまま。場所の紹介を 2.2 にも入れ、2.2 は「はじめて見る顔だね」 |
+| 看板 A はおじいさんの背中側 (方位差 6°、3.5 m)。「わしのうしろ」は正しい。リード台・洗い場は来場者の向きで左右が変わるので固定の目印で (世界観・来場者・実装) | 採用 | 「わしのうしろの看板に、遊び方が書いてあるよ」「洗うのは塀ぎわの洗い場」。「左」は使わない |
+| 「帯」は来場者に通じず字形も未収録 (4 ロール一致) | 採用 | 「リード台に書いてあるよ」 |
+| 呼ぶの権限トグルは画面上「呼ぶを全員に許可: ON」(`WordOpenOn`)。「みんなにも開放」は画面に出ない (実装) | 採用 (起票時の §0 を訂正) | InfoCall は「呼ぶを全員に許可」が ON なら、だれでも呼べる。en は Calling open to all |
+| Public インスタンスにはオーナーがいないので「いなければ Master」を残す (UX・実装) | 採用 | 「呼べるのは部屋のオーナー (いなければMaster) だ」 |
+| 「戻すときは」はどこへ戻すのか不明 (校正・UX) | 採用 | 「終わりにするなら、その犬の「自由にする」を押しな」 |
+| 「ポーズ」と「姿勢」の混在 (UX・来場者) | 採用 | ポーズ に統一 |
+| Gift の使い道に「呼ぶ」が抜け、「散歩」が表記規則に反する (校正・来場者) | 採用 | 「かざり」や「おやつ」「呼ぶ」で使いな。さんぽの支度 |
+| InfoWays の「さんぽ。」だけ体言止め、「帰ったら、洗ってやる」はおじいさんが洗うとも読める (3 ロール) | 採用 | 「犬をつないで、さんぽに行く」「さんぽのあとは、洗い場で洗う」 |
+| InfoWalk 「見な。」の孤立行、「片手に3匹…」は指した先と重複 (校正・UX) | 採用 | 行を組み直し、匹数は落とす。世界観の「急かさず、付き合ってやりな」を足す |
+| InfoTreats 「いちばん近くの / 犬が」で名詞句が行をまたぐ (校正) | 採用 | 「放すと、いちばん近くの犬が / 食べてくれるよ」 |
+| welcome の本文は Menu/11c が行の題 (撫でる / ボールやディスクを投げる / 一緒に歩く / そばで寝てもらう / この板でできること / さんぽ・おやつ・かざり / ポイントとおじいさん) を要求し、「ライブ」を禁止する (実装) | 採用 | 行の題を残して中身を直す。タブの列挙はしない。見出しは「なにも持っていなくても、すぐに遊べます」 |
+| 「いつもの遊び」「この板」「支度のポイント」「入手経路」は初見に通じない (来場者・UX・世界観) | 採用 | 「ポイントがなくても、そのまま遊べます」「さんぽの支度にポイントをくれます」 |
+| `acc.line` の「撫でエフェクト」は裏山の かざり タブの群見出しと一致している (実装) | 却下 (起票時の案を取り下げ) | 変えない |
+| 「入る」が加入と入室の 2 義 (UX・来場者) | 採用 | 加入は「トレーナーになった人」、入室は「来たとき」。看板の「入る:」→「加入:」 |
+| 「集合させて集合写真」の重なり (校正・UX) | 採用 | 「並ばせて集合写真」 |
+| trainerIntro の en は 1040×84px・17pt で 3 行まで。案は 4 行 (実装) | 採用 | 2 行目を今の en の型で 1 行に |
+| `unknown` の「返事がありません」は犬が返事しなかったように読める (3 ロール) | 採用 | 「うまくいったか分かりませんでした。もう一度どうぞ」 |
+| `guide.kominka.body` は常体に。Interact の操作説明は消す (UX)。文が短くなり Guide/2 の CheckFit (fill ≥ 70%) が WARN になる (実装) | 採用 (WARN は許容) | 常体に書き直し |
+| `guide.frisbee.more` 「川に落ちると浮く」は主語が犬に見える (UX) | 採用 | 「ディスクは川に浮く。犬が飛びこんで取ってくる」 |
+| `photo.help.body` の案で「門の写真ボード」が消える (実装) | 採用 | 復活 |
+| walk.guide.vr.sub2 「緑になったら、そのまま」→「そのまま待つ」(来場者) | 保留 | 帯は変えない方針。IMP-UI-002 の Play 確認で判断 |
+| フリスビーの取り方を「走り込み・ひねりなど」と例示 (来場者) | 保留 | 取り方の名前は DES-UI-002 の確定待ち |
+| en の personal menu (8 件) と hand menu の混在 (校正) | 別件 | 新しい文は hand menu (看板 A が正本)。残り 8 件は IMP-UI-005 |
+| カートの看板・洗い場の商品板の案 (§9・§10) | 案のまま | ユーザー判断 |
+
+### 採用した文 (ja / en。11 言語は AI 訳・校正なし。おじいさんの const も同じ ja)
+
+- `KD_ShopKeeper.WordGreeting`
+  - ja: "よく来たね。\nここは古民家の裏山だよ。\n犬たちと、のんびり\n歩いていきな。\n\nわしのうしろの看板に、\n遊び方が書いてあるよ。\n手元メニューの出し方もな。\nさんぽはリード台、\n洗うのは塀ぎわの洗い場、\n道は地図の看板を見な。\n\n聞きたいことがあれば、\n左から選んでおくれ。"
+  - en: "Welcome. This is the hillside behind the old farmhouse. Take a slow walk with the dogs.\n\nThe board behind me tells you how to play, and how to open your hand menu. For walks, see the leash rack. For washing, the wash station by the wall. For the trails, the map board.\n\nIf you want to ask something, pick it on the left."
+- `KD_ShopKeeper.WordGreetingGift`
+  - ja: "よく来たね。\nはじめて見る顔だね。\nここは古民家の裏山だよ。\nさんぽの支度に、これを\n持っていきな。\n{0}ptだ。一度きりだよ。\n手元メニューの「かざり」や\n「おやつ」「呼ぶ」で使いな。\n\nわしのうしろの看板に、\n遊び方が書いてあるよ。\nさんぽはリード台、\n洗うのは塀ぎわの洗い場、\n道は地図の看板を見な。\n\n聞きたいことがあれば、\n左から選んでおくれ。"
+  - en: "Welcome. A new face, I see. This is the hillside behind the old farmhouse. Take these to get ready for a walk: {0} pt, just this once. Spend them in Dress, Treats or Call in your hand menu.\n\nThe board behind me tells you how to play. For walks, see the leash rack. For washing, the wash station by the wall. For the trails, the map board.\n\nIf you want to ask something, pick it on the left."
+- `KD_ShopKeeper.InfoWays`
+  - ja: "ここでの過ごし方だよ。\n好きな順でいい。\n\n犬をつないで、さんぽに行く。\n犬をなでる。\nボールやディスクを投げる。\nおやつをあげる。\nさんぽのあとは、洗い場で洗う。\n\n山の上からは、ふもとの\n古民家が見えるよ。\nときどき振り返ってみな。\n\nぜんぶやらなくていい。\nながめているだけでも\nいいもんだよ。"
+  - en: "Here is how to spend your time. Any order you like.\n\nLeash a dog and go for a walk. Pet a dog. Throw a ball or a disc. Give a treat. After the walk, wash them at the wash station.\n\nFrom up on the hill you can see the old farmhouse below. Look back now and then.\n\nYou do not have to do it all. Just watching is fine, too."
+- `KD_ShopKeeper.InfoWalk`
+  - ja: "つなぎ方は、リード台に\n書いてあるよ。\n\n行き先は、手元メニューの\n「さんぽ」で選べる。\n道は、地図の看板にあるよ。\nつないだ犬は、寄り道を\nしながら歩く。\n急かさず、付き合ってやりな。\n\n外せるのは、つないだ\n本人だけだよ。"
+  - en: "How to leash a dog is shown at the leash rack.\n\nPick where to go in Walk in your hand menu. The trails are on the map board. Leashed dogs stop to sniff around on the way. Take your time with them.\n\nOnly the person who leashed a dog can unleash it."
+- `KD_ShopKeeper.InfoTreats`
+  - ja: "手元メニューの「おやつ」で\n「出す」を押しな。\nおやつが出ると、メニューは\n閉じるよ。\n\n手に持つと、犬が寄ってくる。\n放すと、いちばん近くの犬が\n食べてくれるよ。\n一度に出せるのはひとつだけ。\n\nはじめに5個持たせてある。\nなくなったら「おやつ」で\nポイントと交換しな。"
+  - en: "Open Treats in your hand menu and press Give. The menu closes once the treat is out.\n\nHold it and the dogs come over. Let go, and the nearest dog eats it. One treat at a time.\n\nI have given you 5 to start with. When they run out, trade points for more in Treats."
+- `KD_ShopKeeper.InfoCall`
+  - ja: "手元メニューの「呼ぶ」で\n犬とポーズを選び、\n場所と向きを決める。\n犬が歩いてきて、そこで\n休んでくれるよ。\n終わりにするなら、その犬の\n「自由にする」を押しな。\n\nつないでいる犬は呼べない。\n先に外しな。\n\nごろん、ふせ、おすわり、\nうずくまるは無料だ。\nほかのポーズは、ポイントで\n増やせるよ。\n\n呼べるのは部屋のオーナー\n(いなければMaster) だ。\n「呼ぶを全員に許可」が\nONなら、だれでも呼べるよ。"
+  - en: "Open Call in your hand menu, pick a dog and a pose, then choose the spot and the way it faces. The dog walks over and rests there. When you are done, press Let roam for that dog.\n\nLeashed dogs cannot be called. Unleash them first.\n\nSide sleep, Lie down, Sit and Curl up are free. Other poses can be added with points.\n\nThe instance owner (or the Master if there is none) can call. With Calling open to all on, anyone can."
+- `guide.pointer`
+  - ja: "さんぽはリード台で、洗うのは洗い場で、道は地図の看板で"
+  - en: "Walks: see the leash racks. Washing: the wash stations. Trails: the map board"
+- `guide.frisbee.more`
+  - ja: "ディスクは犬ごとに1枚。広場にもある。\n強さ: VR は右スティック上下、Desktop はマウスホイール。\nつないだ犬は取りに行かない。はずしてから。\nディスクは川に浮く。犬が飛びこんで取ってくる。"
+  - en: "One disc per dog. Some wait at the Plaza too.\nPower: VR right stick up/down, Desktop mouse wheel.\nLeashed dogs won't fetch. Unleash first.\nA disc floats on the river. The dog dives in for it."
+- `guide.ball.more`
+  - ja: "ボールかディスク、犬ごとに1つ\nつないだ犬は取りに行かない"
+  - en: "One toy out per dog: ball or disc\nLeashed dogs won't fetch"
+- `guide.shop.body`
+  - ja: "さんぽ・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n門のそばのおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを並ばせて集合写真。フリスビーの取り方も変えられる。古民家ドッグランでトレーナーになった人も、ここで使える。\n加入: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］"
+  - en: "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa by the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nLine the dogs up for a group photo, and switch the Frisbee catch style. A Trainer from Kominka Dog Run works here too.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]"
+- `guide.kominka.body`
+  - ja: "門の向こうに見える古民家が「古民家ドッグラン」。\n同じ6匹の犬たちが暮らす、このワールドの前作。\n<color=#B5432A>この看板を押すと、となりにポータルが出る。</color>\nもう一度押すか、1分たつと消える。\nポイントと持ち物は、ワールドごとに別。\nばにまるトレーナーは、どちらで加入しても両方で使える。"
+  - en: "The farmhouse beyond the gate is Kominka Dog Run, the earlier world where the same six dogs live.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nPress again, or wait 1 minute, and it goes away.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined."
+- `welcome.body`
+  - ja: "なにも持っていなくても、すぐに遊べます\n・撫でる: 頭・ほっぺ・あごをなでると、犬がよろこびます\n・ボールやディスクを投げる: 「おもちゃ」で出して投げると、犬が持ってきます\n・一緒に歩く: 「さんぽ」で犬をつないで、裏山を歩けます\n・そばで寝てもらう: 「呼ぶ」で犬が来て、そばで寝ます\n・洗う: さんぽのあとは、洗い場へ\n\nこの板でできること\n・さんぽ・おやつ・かざり: 上のタブから、犬をつないだり、おやつを出したり、かざりをつけたりできます\n・ポイントとおじいさん: ここで過ごすだけでポイントがたまり、右上の「ポイント」に出ます。門のそばのおじいさんに話しかけると、さんぽの支度にポイントをくれます"
+  - en: "No points needed to start playing\n- Pet: stroke the head, cheeks or chin and the dog is happy\n- Throw a ball or disc: bring one out in Toys, throw it, and the dog brings it back\n- Walk together: leash dogs in Walk and walk the hillside\n- Nap together: in Call a dog comes and sleeps beside you\n- Wash: after a walk, head to a wash station\n\nWhat this board does\n- Walk, Treats, Dress: from the tabs above, leash dogs, bring out treats, dress a dog\n- Points and Grandpa: points add up just by being here and show at Points, top right. Talk to Grandpa by the gate and he gives you points to get ready for a walk"
+- `welcome.reread.body`
+  - ja: "<b>なにも持っていなくても、すぐに遊べます</b>\nポイントがなくても、そのまま遊べます。\n\n<b>撫でる</b>\n頭・ほっぺ・あごをなでると、犬がよろこびます。\n\n<b>ボールやディスクを投げる</b>\n「おもちゃ」で出して投げると、犬が持ってきます。\n\n<b>一緒に歩く</b>\n「さんぽ」で犬をつないで、裏山を歩けます。\n\n<b>そばで寝てもらう</b>\n「呼ぶ」で犬が来て、そばで寝ます。\n\n<b>洗う</b>\nさんぽのあとは、洗い場へ。\n\n<b>メニューでできること</b>\n上のタブから、犬をつないだり、おやつを出したり、かざりをつけたりできます。\nここで過ごすだけでポイントがたまり、好きなものと交換できます。\n\n<b>ポイントとおじいさん</b>\n右上の「ポイント」で、いまのポイントとためかたが分かります。\n門のそばのおじいさんに話しかけると、さんぽの支度にポイントをくれます。\n\n<b>メニューを手元に呼ぶには</b>\nVR：右スティックを下に長押し\nDesktop：T キー\nスマホ：画面の［メニュー］"
+  - en: "<b>No points needed to start playing</b>\nYou can play right away without any points.\n\n<b>Pet a dog</b>\nStroke the head, cheeks or chin and the dog is happy.\n\n<b>Throw a ball or disc</b>\nBring one out in Toys and throw it. The dog brings it back.\n\n<b>Walk together</b>\nLeash dogs in Walk and walk the hillside.\n\n<b>Nap together</b>\nIn Call a dog comes and sleeps beside you.\n\n<b>Wash</b>\nAfter a walk, head to a wash station.\n\n<b>What the menu does</b>\nFrom the tabs above, leash dogs, bring out treats, or dress a dog.\nPoints add up just by being here, and you trade them for things you like.\n\n<b>Points and Grandpa</b>\nPoints, top right, shows how many you have and how to earn them.\nTalk to Grandpa by the gate and he gives you points to get ready for a walk.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nPhone: Tap [Menu] on the screen"
+- `activities.hillside.formationHelp`
+  - ja: "隊形を選び、足元の印を見て「ここに集合」。印が出ない所には並べません。坂でも並びます。1 分で解散して、それぞれ遊びに戻ります"
+  - en: "Pick a formation, check the marks at your feet, then press Gather here. No mark, no spot. Slopes are fine. They break up after 1 minute and go back to playing"
+- `activities.hillside.trainerIntro`
+  - ja: "トレーナーになると、犬たちを並ばせて集合写真を撮ったり、フリスビーの取り方を変えたりできます。古民家ドッグランでトレーナーになった人も、ここで使えます。\n1 か月 500 / 3 か月 1,350 / 6 か月 2,550 / 12 か月 4,800 Credits。自動更新はなく、延長は残りの日数に足されます。"
+  - en: "As a Trainer you can line the dogs up for group photos and switch the Frisbee catch style. A Trainer from Kominka Dog Run works here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; extensions add to the days left."
+- `activities.hillside.trainerActive`
+  - ja: "このワールドに来たときにトレーナーなら、出るまでそのまま使えます。集合は、その場のみんなで楽しめます。"
+  - en: "If you were a Trainer when you joined, it stays on until you leave. Everyone around can join the gathering."
+- `activities.hillside.unknown`
+  - ja: "うまくいったか分かりませんでした。もう一度どうぞ"
+  - en: "Could not tell if that worked. Try again"
+- `KD_TreatPouch.WordToyHelp`
+  - ja: "おもちゃは犬ごとに 1 つ、目の前に出ます。ディスクは持つと線が出て、Use で投げられます"
+  - en: "One toy per dog, placed in front of you. Hold a disc to see its path, then Use to throw"
+- `KD_TreatPouch.WordWalkUnknown`
+  - ja: "うまくいったか分かりませんでした。もう一度どうぞ"
+  - en: "Could not tell if that worked. Try again"
+- `photo.help.body`
+  - ja: "犬と遊んだりさんぽしたりすると、いい瞬間が自動で写真になります。ボールを持ってきたとき、なでているとき、犬どうしでじゃれたとき、フリスビーを跳んで取ったとき、集合写真のとき。さんぽでは、立ち寄った場所や見晴らしのいい場所でも撮ります。\n\n写真は 24 枚まで残ります (さんぽ 10・なでる 4・遊び 4・洗う 6)。いっぱいになると、同じ種類の古い写真から入れ替わります。新しい写真が左上で、◀ ▶ でページをめくれます。\n\n写真はあなたにだけ見えていて、ほかの人には別の写真が見えています。このワールドを出ると消えます。\n\n残したい写真は、PC・Quest では、門の写真ボードかここの写真に VRChat カメラを近づけると 1 枚が画面いっぱいに写るので、そのまま撮ります。スマホでは写真を大きく表示して、スクリーンショットで持ち帰れます。\n\n自動撮影は［設定］の［写真: ON / OFF］で切り替えられます。"
+  - en: "As you play and walk with the dogs, good moments become photos on their own: when a dog brings a ball back, while you pet, when dogs play together, when a dog leaps for a frisbee, and at group photos. On walks, stops and viewpoints are captured too.\n\nUp to 24 photos are kept (walk 10, petting 4, play 4, wash 6). When full, the oldest of that kind is replaced. The newest is top left, and ◀ ▶ turns the pages.\n\nOnly you see your photos. Others see their own. They are gone when you leave this world.\n\nTo keep one: on PC and Quest, bring the VRChat camera close to the photo board at the gate or a photo here, and it fills the frame, then shoot. On your phone, enlarge the photo and take a screenshot.\n\nTurn automatic photos on or off at Settings → Photos: ON / OFF."
 
 ## 記録
 
-- 2026-10-15: 棚卸しを作成 (統括 Fable)。レビューは Issue 側に記録。
+- 2026-10-15: 棚卸しを作成 (統括 Fable)。同日、5 ロールのレビューを反映し §12 に記録。反映と検証は Issue 側。
