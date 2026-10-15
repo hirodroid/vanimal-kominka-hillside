@@ -2,10 +2,10 @@
 id: DES-UI-006
 type: DES
 system: UI
-status: wip
+status: review
 priority: High
-summary: 手元メニューを整理する。さんぽタブの2列化は実装済み・実機確認待ち。10月14日のHTML案は差分整理の推奨案 (かざり = サブタブで行を絞る、地点 = 変えない、人一覧 = 同じ面で 3×3 + ページ送り) を 2026-10-15 ユーザー採用、実装中
-next: "実装中 (Opus 2 本: かざりのサブタブ / 人一覧の 3×3。C# と Editor)。統括: compile → Acc/1・2、Course/85・81、Menu/20・21・22・6f・6h・25c (シーンの保存は別セッションのシーンのコミット後) → Codex 独立レビュー → コミット。その後ユーザーの確認を端末別 (PCVR / Desktop / Quest / iOS Touch) に。さんぽタブの既存確認 (A0-21・C19・E24、誤解除・13言語・木陰と夜の可読性) も継続"
+summary: 手元メニューの整理。さんぽタブの 2 列化 (10-03) と、10/14 の HTML 案から採用したかざりのサブタブ・人一覧の 3×3 (2026-10-15 実装、Edit 検査 PASS) の実機確認待ち。地点の面は変えない
+next: "ユーザーの確認 (端末別に記録): かざりのサブタブで品が探せるか・2 ページ目へ行けるか、[人] で 3×3 が読めて押せるか・10 人以上でページ送り、受付 OFF の見分け、pt-br など縮小した文の可読性。PCVR / Desktop / Quest / iOS Touch。さんぽタブの既存確認 (A0-21・C19・E24、誤解除・13言語・木陰と夜) も継続。ハーネス (Course/129、82b T9-join-pages) は相談のうえで。シーンのコミットは別セッションの区切りで (Acc/1 → Course/85 で再生成できる)"
 updated: 2026-10-15
 ---
 
@@ -111,5 +111,16 @@ updated: 2026-10-15
 Codex 独立レビュー (D / X / M、高 1・中 6・低 1) は差分整理に反映済み。別件候補: [world-ui-spec](../../world-ui-spec.md) の DECO 行の品数 (14 品) は IMP-PRG-002 以後の 10 品と合っていない (更新漏れ。採用範囲の反映時に直す)。
 
 - [x] ユーザーの回答を記録し、採用範囲を UI 仕様 ([world-ui-spec](../../world-ui-spec.md) DECO 行・地図の面) へ反映する — 2026-10-15
-- [ ] 実装 (C# と Editor は Opus 2 本で着手済み 2026-10-15。シーンの保存を伴うメニューは別セッションのシーンのコミット後) → 統括が compile → Acc/1・2、Course/85・81、Menu/20・21・22・6f・6h・25c → Codex 独立レビュー → コミット
-- [ ] PCVR・Touch・13 言語の確認 (差分整理 §8)
+- [x] 実装 (C# と Editor、Acc/1・Course/85 でシーンへ適用。2026-10-15。シーンのコミットは別セッションの区切りで) → 統括が compile → Acc/1・2、Course/85・81、Menu/20・21・22・6f・6h・25c → Codex 独立レビュー → コミット
+- [ ] PCVR・Desktop・Quest・iOS Touch の確認 (差分整理 §8。端末別に記録)、ハーネス (Course/129、82b T9-join-pages) は相談のうえで
+
+## 2026-10-15 実装 (統括 Fable、実装 Opus 2 本、Codex 独立レビュー)
+
+- **かざりのサブタブ**: `KD_TreatPouch.Acc.cs` (`_accGroup` / `_accPage`、`_AccGroup0..2` / `_AccPagePrev` / `_AccPageNext`、A 面で群の行だけ出す、`AccTopRow`、未配線なら旧挙動) / `.PetFx.cs` / `.Collar.cs` (群の可視、`_FxN` / `_CollarN` は群へ切り替えてから処理。ハーネス Course/129 の `_Collar1` はそのまま通る) / 新規 `Scripts/Editor/KH_AccSubTabEditor.cs` (`Acc/1 - Acc Sub Tabs`: Page_Acc 上段に AccGroup0..2 (276×48)・AccPagePrev/Next (64×48)・AccPageLabel (80×48)、退避 `Temp/des-ui-006/before-acc-subtabs.unity`、保存前検査 / `Acc/2 - Verify Acc Sub Tabs`: 読み直して検査、`Temp/des-ui-006/acc-subtabs-verify.json`) / Menu/21・6f の追従。新規翻訳キー 0。
+- **人一覧の 3×3**: `KD_TreatPouch.Travel.cs` (`_joinIds` / `_joinBoxes` 80、セル 9、対応表 `JoinCellIndex` / `JoinPageCount` / `JoinClampedPage` (10 人以上は 7 人 / ページ)、`_JoinPick0..8` + `_JoinPagePrev/Next`、[人] で地図・凡例・番号・自分・輪を隠す、2 行目は状態優先、フッターは [人] のとき 2 ボタンの左 435×90 へ RectTransform を切替。**TMP の fontSize の書き込みは Udon 非公開** (U# コンパイルで落ちた) ので pt は変えず、Course/84・85 がフッターに自動縮小 18→14pt を付ける) / `KH_CourseTravelJoinEditor.cs` (Course/85: 旧 ScrollRect・Person9..15 を撤去し 3×3 を生成、退避 `before-people-grid.unity`。Course/81 の Validate: 9 セル・対応表を 1〜80 人で照合・13 言語の収まり・重なり) / `KH_CourseTravelMapEditor.cs` (フッターの定数と自動縮小) / `KH_CourseTravelNameFontEditor.cs` (ビルドに入らない DontSave の部品を走査から外す) / ハーネス `KH_CourseWalkHarnessEditor.Travel.cs` に T9-join-pages を追加 (**未実施**)。
+- **検証 (Edit、統括)**: C# 0・U# 0 (124 scripts)。Acc/1 SAVED → Acc/2 `ACC_SUBTABS_OK` (飾り 10 → 2 ページ、首輪 5・撫でFX 6 → 1 ページ、13 言語のサブタブの収まり fit 0 件)。Course/85 BUILT。Course/81 は**別セッション由来の除外円 (`travelKeepOutRadii`、洗い場の位置) の不一致で先に止まる**ため、Join.Validate + NameFont.Validate だけを一時メニューで回し `PEOPLE_GRID_OK` (2 行目は 13 言語中 17 文が 16→12pt の範囲で縮小、pt-br のフッター 2 文が 18→14pt の範囲で縮小。`Temp/des-ui-006/people-grid-verify.json`)。Menu/21 pass=317 fail=0、Menu/22 PASS、Menu/6h PASS、Menu/24 PASS。
+- **既存・別セッション由来の FAIL (本票と無関係、確認済み)**: Menu/20 の 2 件 (LiveRow1 が余る。HEAD のシーンにも残っているパレード側の件)、Menu/6f の 2 件 (首輪の対策 (b)。IMP-PRG-002 10-14 の記録どおり)、Menu/25c の 12 件 (fixture が `_tab` を設定せず、初期タブが さんぽ になった 2026-09-23 以降は A 面に入らない。確認カードの fixture も表示状態で作られる。別件候補: fixture の更新)。Course/81 の keep-out は洗い場の位置が確定したら Course/80 を流し直す (洗い場側の作業)。
+- **検査で見つけた別件候補**: 洗い場の商品板 (`KH_WashStation*/PremiumSelectionBoard` の Description / Item0) の文字に共通フォントに無い字があり、Editor では TMP の fallback (LiberationSans) で描かれている (実機では □ になる見込み。IMP-UI-008 側)。
+- **Codex 独立レビュー (実装差分、D / M / X)**: 高 0・中 2・低 1。反映: 表示名ラベル richText=false + 検査、Course/85 の保存前検査、16pt の古いコメント。別件候補 (設計書の §5.2「8 人」・§5.3 16pt) も同日修正。
+- **未実施・未確認**: ハーネス (Course/129、82b の T9-join-pages) は回していない (Play は別セッションと同じ Unity のため見送り。回すかは相談)。Play・PCVR・Desktop・Quest・iOS Touch は NOT_TESTED。上限 80 は SDK で未確認 (定数のコメントに「要確認」)。
+- **シーン**: Acc/1 と Course/85 で保存した (メモリ上のシーンは別セッションの保存済みの状態で dirty なし)。本番シーンは別セッションの未コミット分を含むため**コミットしない** (18641ec と同じ扱い。別セッションの区切りでまとめて)。ビルダーは何度流しても同じ結果なので、シーンが戻った場合は Acc/1 → Course/85 を流し直す。

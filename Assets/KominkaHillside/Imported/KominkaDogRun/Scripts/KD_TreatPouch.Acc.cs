@@ -118,10 +118,178 @@ namespace KominkaDogRun
             ResetAccessoryScroll();
         }
 
+        /// <summary>面が替わるとき: 先頭へ戻す。裏山改変 (DES-UI-006): サブタブのページも 1 ページ目へ (呼び手は Acc / Collar / Live のまま)。</summary>
         private void ResetAccessoryScroll()
+        {
+            _accPage = 0;
+            AccScrollTop();
+        }
+
+        private void AccScrollTop()
         {
             if (tabScrolls != null && TabAcc < tabScrolls.Length && tabScrolls[TabAcc] != null)
                 tabScrolls[TabAcc].verticalNormalizedPosition = 1f;
+        }
+
+        // ============================================================
+        // 裏山改変 (DES-UI-006、2026-10-15 ユーザー決定「すべてはいで OK」、docs/plans/2026-10-15-menu-subtabs-and-people.md §3.2):
+        // カタログ階層 (A 面) の上段 (y 164) にサブタブ 3 つ (0 犬のかざり / 1 首輪とリード / 2 撫でエフェクト) とページ送り [◀] p / q [▶]。
+        //
+        // **行は動かさない・改名しない** (Content の子のまま。文言の配線 22 本が経路で引く)。サブタブは SetActive で出す行を絞るフィルタ:
+        // 選んだ群の行のうち、出す行だけを数えた順でページ p の 6 件 (AccPageCells) だけを出す。群見出し (FxHead / CollarHead) は A 面では隠す。
+        // 出すセルが常に 6 以下なので Content は Viewport に収まり、ScrollRect は残したまま動かない。
+        // 状態 (_accGroup / _accPage) はローカル (同期しない)。滞在中は保つ (タブを切り替えても戻さない)。面が替わると ResetAccessoryScroll がページを 0 へ。
+        // 隠れている行のイベント (ハーネスが A 面から直接 _Collar1 / _Acc0 を呼ぶ等) は、その行の群とページへ切り替えてから今の処理を行う。
+        // B / C / D の面は今のまま (見出しと [もどる] を出し、サブタブとページ送りは隠す)。
+        // 部品が未配線 (accSubTabRoot == null) なら今までどおり全部の行を 1 本のスクロールで出す (群見出しも出す)。部品は Acc/1 (KH_AccSubTabEditor) が作る。
+        // ============================================================
+
+        /// <summary>サブタブの群。0 = 犬のかざり (AccRow) / 1 = 首輪とリード (CollarRow) / 2 = 撫でエフェクト (FxRow)。</summary>
+        public const int AccGroupDecor = 0;
+        public const int AccGroupCollar = 1;
+        public const int AccGroupFx = 2;
+        public const int AccGroupCount = 3;
+        /// <summary>1 ページのセル数 (2 列 × 3 段 = Viewport 390 に収まる 376)。</summary>
+        public const int AccPageCells = 6;
+        /// <summary>AccGroupItems の limit に渡す「全部」(どの群の枠よりも大きい数)。</summary>
+        private const int AccAllRows = 1000;
+
+        [Header("裏山: かざりのサブタブとページ送り (DES-UI-006、Acc/1 が配線。同期しない。未配線なら旧挙動 = 全部の行を出す)")]
+        [Tooltip("サブタブとページ送りの親 (Page_Acc/AccSubTabs)。カタログ階層 (A 面) でだけ出す。null なら旧挙動")]
+        public GameObject accSubTabRoot;
+        [Tooltip("サブタブ 3 つの地 (0 犬のかざり / 1 首輪とリード / 2 撫でエフェクト)。選択中 = openOnColor、ほか = hillsideNeutralColor ([地点]/[人] と同じ)")]
+        public UnityEngine.UI.Image[] accGroupImages;
+        [Tooltip("サブタブ 3 つの文字 (KD_TreatPouch.WordAccTitle / collar.group / KD_TreatPouch.WordFxGroup)")]
+        public TextMeshProUGUI[] accGroupLabels;
+        [Tooltip("ページ送り [◀] (群の件数が 6 を超えるときだけ出す)。1 ページ目では recallOffColor で暗く、押しても何もしない")]
+        public GameObject accPagePrevButton;
+        public UnityEngine.UI.Image accPagePrevImage;
+        [Tooltip("ページ送り [▶]。最終ページでは recallOffColor で暗く、押しても何もしない")]
+        public GameObject accPageNextButton;
+        public UnityEngine.UI.Image accPageNextImage;
+        [Tooltip("「p / q」(数字の連結。翻訳キーなし)")]
+        public TextMeshProUGUI accPageLabel;
+
+        /// <summary>選んでいるサブタブ (AccGroup*)。ローカル。</summary>
+        private int _accGroup;
+        /// <summary>選んでいる群のページ (0 始まり)。ローカル。</summary>
+        private int _accPage;
+
+        public void _AccGroup0() { AccGroupPick(AccGroupDecor); }
+        public void _AccGroup1() { AccGroupPick(AccGroupCollar); }
+        public void _AccGroup2() { AccGroupPick(AccGroupFx); }
+        public void _AccPagePrev() { AccPageStep(-1); }
+        public void _AccPageNext() { AccPageStep(1); }
+
+        private bool AccSubTabsOn() { return accSubTabRoot != null; }
+
+        /// <summary>サブタブを押した。選んでいるものをもう一度押しても何もしない (ページも保つ)。</summary>
+        private void AccGroupPick(int group)
+        {
+            if (_tab != TabAcc || _settingsOpen || _welcome || !HillsideAccCatalogLevel() || !AccSubTabsOn()) return;
+            if (group < AccGroupDecor || group >= AccGroupCount || group == _accGroup) return;
+            _accGroup = group;
+            _accPage = 0;
+            Redraw();
+            AccScrollTop();
+        }
+
+        /// <summary>[◀] / [▶]。範囲の外 (1 ページ目の ◀ / 最終ページの ▶) は何もしない (暗く描いてある)。</summary>
+        private void AccPageStep(int step)
+        {
+            if (_tab != TabAcc || _settingsOpen || _welcome || !HillsideAccCatalogLevel() || !AccSubTabsOn()) return;
+            int pages = AccPageCount(AccGroupItems(_accGroup, AccAllRows));
+            int next = _accPage + step;
+            if (next < 0 || next >= pages) return;
+            _accPage = next;
+            Redraw();
+            AccScrollTop();
+        }
+
+        /// <summary>群 <paramref name="group"/> の出す行のうち、枠の添字 <paramref name="limit"/> 未満にあるものの数 (limit = AccAllRows で総数)。
+        /// 数え方は描画と同じ: 飾り = 一覧の行 (構成品を除く、器の数まで) / 首輪 = 商品のある CollarRow / 撫でFX = 商品のある FxRow (CE の空き枠は数えない)。</summary>
+        private int AccGroupItems(int group, int limit)
+        {
+            int n = 0;
+            if (group == AccGroupDecor)
+            {
+                EnsureAccessoryCatalog();
+                int rows = accRows == null ? 0 : accRows.Length;
+                n = _accCatalogCount < rows ? _accCatalogCount : rows;
+                return limit < n ? limit : n;
+            }
+            if (group == AccGroupCollar)
+            {
+                int cn = collarPatterns == null || collarLabels == null ? 0 : collarLabels.Length;
+                for (int i = 0; i < cn && i < limit; i++)
+                    if (collarLabels[i] != null && collarPatterns.ItemAt(i) != null) n++;
+                return n;
+            }
+            int fn = fxLabels == null ? 0 : fxLabels.Length;
+            for (int i = 0; i < fn && i < limit; i++)
+                if (fxLabels[i] != null && FxAt(i) != null) n++;
+            return n;
+        }
+
+        private int AccPageCount(int items)
+        {
+            return items <= 0 ? 1 : (items + AccPageCells - 1) / AccPageCells;
+        }
+
+        /// <summary>出す行だけを数えた順 <paramref name="ordinal"/> が今のページにあるか (A 面・配線済みのときだけ呼ぶ)。</summary>
+        private bool AccCellOnPage(int ordinal)
+        {
+            int first = _accPage * AccPageCells;
+            return ordinal >= first && ordinal < first + AccPageCells;
+        }
+
+        /// <summary>行のイベントから: その行の群とページへ切り替える (隠れている行が押された / ハーネスが直接呼んだ)。未配線でも状態だけ持つ (描画は見ない)。</summary>
+        private void AccShowCell(int group, int ordinal)
+        {
+            _accGroup = group;
+            _accPage = ordinal < 0 ? 0 : ordinal / AccPageCells;
+        }
+
+        /// <summary>群とページを範囲に丸める (群の件数が減った・壊れた値)。</summary>
+        private void AccClampPage()
+        {
+            if (_accGroup < AccGroupDecor || _accGroup >= AccGroupCount) _accGroup = AccGroupDecor;
+            int pages = AccPageCount(AccGroupItems(_accGroup, AccAllRows));
+            if (_accPage >= pages) _accPage = pages - 1;
+            if (_accPage < 0) _accPage = 0;
+        }
+
+        /// <summary>上段: A 面ならサブタブとページ送りを出して見出しを隠す。B / C / D の面は見出しを出してサブタブを隠す。
+        /// 未配線なら何もしない (見出しは今までどおり常に出ている)。</summary>
+        private void AccTopRow(bool catalogLevel)
+        {
+            if (!AccSubTabsOn()) return;
+            if (accHeaderLabel != null)
+            {
+                GameObject header = accHeaderLabel.gameObject;
+                bool pageItself = header == panelRoot || (tabPages != null && TabAcc < tabPages.Length && header == tabPages[TabAcc]);   // 誤配線で面ごと消さない
+                if (!pageItself && header.activeSelf == catalogLevel) header.SetActive(!catalogLevel);
+            }
+            if (accSubTabRoot.activeSelf != catalogLevel) accSubTabRoot.SetActive(catalogLevel);
+            if (!catalogLevel) return;
+
+            for (int g = 0; g < AccGroupCount; g++)
+            {
+                if (accGroupImages != null && g < accGroupImages.Length && accGroupImages[g] != null)
+                    accGroupImages[g].color = g == _accGroup ? openOnColor : hillsideNeutralColor;
+                if (accGroupLabels != null && g < accGroupLabels.Length && accGroupLabels[g] != null)
+                    accGroupLabels[g].text = L(g == AccGroupDecor ? "KD_TreatPouch.WordAccTitle" : g == AccGroupCollar ? "collar.group" : "KD_TreatPouch.WordFxGroup");
+            }
+
+            int pages = AccPageCount(AccGroupItems(_accGroup, AccAllRows));
+            bool paged = pages > 1;
+            if (accPagePrevButton != null && accPagePrevButton.activeSelf != paged) accPagePrevButton.SetActive(paged);
+            if (accPageNextButton != null && accPageNextButton.activeSelf != paged) accPageNextButton.SetActive(paged);
+            if (accPageLabel != null && accPageLabel.gameObject.activeSelf != paged) accPageLabel.gameObject.SetActive(paged);
+            if (!paged) return;
+            if (accPagePrevImage != null) accPagePrevImage.color = _accPage > 0 ? equipOnColor : recallOffColor;
+            if (accPageNextImage != null) accPageNextImage.color = _accPage < pages - 1 ? equipOnColor : recallOffColor;
+            if (accPageLabel != null) accPageLabel.text = (_accPage + 1).ToString() + " / " + pages.ToString();
         }
 
         public void _AccConfirmNo() { _accConfirm = false; _accGiftRow = -1; Redraw(); }
@@ -181,6 +349,7 @@ namespace KominkaDogRun
             {
                 int choice = AccCatalogRow(row);
                 if (choice < 0) return;
+                AccShowCell(AccGroupDecor, row);   // 裏山改変 (DES-UI-006): 隠れている行から来ても飾りのサブタブへ (一覧の行 = 出す順)
                 // Browsing and trying on never require ownership.
                 _accProduct = choice;
                 Redraw();
@@ -316,6 +485,11 @@ namespace KominkaDogRun
             { _accSet = -1; _accSetMenu = 0; _accProduct = -1; _accConfirm = false; }
 
             bool page2 = _accProduct >= 0 && accProductIds != null && _accProduct < accProductIds.Length;
+            // 裏山改変 (DES-UI-006): セット・犬選択の面は飾りの群 (ライブの詳細から直接来た場合も、戻ったら飾りのサブタブ)
+            if (page2 || _accSetMenu > 0) _accGroup = AccGroupDecor;
+            bool catalogLevel = !page2 && _accSetMenu == 0;
+            bool subTabs = catalogLevel && AccSubTabsOn();
+            if (subTabs) AccClampPage();
             // 贈る確認 (IMP-PRG-012) は商品一覧の面だけ。面を離れた / 贈れなくなったら閉じる (所有では閉じない)
             if (_accGiftRow >= 0 && (page2 || _accSetMenu != 0 || !AccCanGift(_accGiftRow))) _accGiftRow = -1;
             KD_ShopItem previewItem = page2 && accItems != null && _accProduct < accItems.Length ? accItems[_accProduct] : null;
@@ -347,7 +521,8 @@ namespace KominkaDogRun
             {
                 GameObject rowGo = accRows[i];
                 if (rowGo == null) continue;
-                bool live = i < shown;
+                // 裏山改変 (DES-UI-006): A 面でサブタブがあるときは、飾りのサブタブのページ p の 6 行だけ (行 i = 一覧の i 番目 = 出す順)
+                bool live = i < shown && (!subTabs || (_accGroup == AccGroupDecor && AccCellOnPage(i)));
                 if (rowGo.activeSelf != live) rowGo.SetActive(live);
                 if (!live) continue;
 
@@ -402,10 +577,13 @@ namespace KominkaDogRun
             // 裏山改変 (IMP-DOG-015 / 計画書 D-2 (a)): 撫でFX の行 (Content の AccRow の後ろの FxRow0..10) は
             // **カタログ階層 (_accSetMenu == 0 かつ _accProduct 未選択) のときだけ**描く。セット中身・装着方法・犬選択では隠す。
             // 下端の 1 行は 撫でFX の結果 → 無ければ支度ポイントの未受取の案内 (KD_TreatPouch.PetFx.cs)
-            bool fxLevel = !page2 && _accSetMenu == 0;
-            RedrawFxRows(fxLevel);
-            RedrawCollarRows(fxLevel);   // 裏山改変 (IMP-DOG-050): 撫でFX の後ろに「首輪とリード」の小見出しと 5 行
+            // 裏山改変 (DES-UI-006): サブタブがあるときは選んでいる群だけを出す (群が選ばれていない撫でFX・首輪は隠し、その確認カードも閉じる)。
+            // 未配線なら今までどおり両方を出す (fxLevel)
+            bool fxLevel = catalogLevel;
+            RedrawFxRows(fxLevel && (!subTabs || _accGroup == AccGroupFx));
+            RedrawCollarRows(fxLevel && (!subTabs || _accGroup == AccGroupCollar));   // 裏山改変 (IMP-DOG-050): 撫でFX の後ろに「首輪とリード」の小見出しと 5 行
             HillsideAccFooter(fxLevel);
+            AccTopRow(fxLevel);   // 裏山改変 (DES-UI-006): 上段 (A 面 = サブタブとページ送り / ほか = 見出しと [もどる])
         }
 
         /// <summary>1 ページ目の 1 行 — 飾りそのもの。</summary>

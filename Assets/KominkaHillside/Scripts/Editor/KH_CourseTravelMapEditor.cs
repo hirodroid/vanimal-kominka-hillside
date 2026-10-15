@@ -52,6 +52,9 @@ namespace KominkaHillside.Editor
         // セルの格子: 右の列 (中心 x 155、幅 590) の Y140〜−36 (人の一覧と同じ帯。上は切替 [地点]/[人] の下端 142、下はフッターの上端 −46)。
         // 2 列 (291 + 間隔 8 + 291) × 3 段 (高さ 56、間隔 4)。文字は人の一覧の行と同じ 18pt・2 段 (1 行目 = 番号と呼び名、2 行目 = 距離)
         public static readonly Vector2 RowSize = new Vector2(291f, 56f);
+        // フッターの文 (ワープ先 / 犬の数 / 散歩先) の保存値 = [地点] の配置。[人] のときは KD_TreatPouch.TravelFooterLayout が 2 ボタンの左へ移す (DES-UI-006。Course/81 の KH_CourseTravelJoinEditor.Validate が保存値を見る)
+        public static readonly Vector2 FooterPos = new Vector2(155f, -98f), FooterSize = new Vector2(590f, 104f);
+        public const float FooterPoints = 18f, FooterMinPoints = 14f;   // DES-UI-006: 自動縮小 18→14pt ([人] の 435 幅で長い言語が収まるように。[地点] の 590 幅では 18 のまま)
         public const float RowTop = 140f, RowPitchY = 60f, RowColumnGap = 8f, ListCenterX = 155f;
         public static Vector2 RowPos(int k)
         {
@@ -174,7 +177,8 @@ namespace KominkaHillside.Editor
                     row.SetActive(m.spotWarpEnabled != null && RowSpots[k] < m.spotWarpEnabled.Length && m.spotWarpEnabled[RowSpots[k]]);
                 }
                 // W2 U10: ワープ先 / 犬の数 / 散歩先のまま の 3 行 (一覧の下 -46 〜 実行ボタンの上 -150)
-                var footer = MakeText(page.transform, "Footer", new Vector2(155f, -98f), new Vector2(590f, 104f), 18f, TextAlignmentOptions.Left, font, Ja("course.travel.map.pick"));
+                var footer = MakeText(page.transform, "Footer", FooterPos, FooterSize, FooterPoints, TextAlignmentOptions.Left, font, Ja("course.travel.map.pick"));
+                ApplyFooterFit(footer);
                 var go = KD_ShopSetupEditor.EnsureButton(page.transform, "Go", new Vector2(155f, -205f), new Vector2(500f, 90f), KD_UiSpriteEditor.ActionNeutral, font, Ja("course.travel.map.go"), pouchBacking, "_TravelGo", log);
                 var goLabel = Label(go, 26f);
                 var status = MakeText(page.transform, "Status", new Vector2(155f, -285f), new Vector2(590f, 40f), 20f, TextAlignmentOptions.Center, font, "");
@@ -458,6 +462,14 @@ namespace KominkaHillside.Editor
                 }
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>フッターの文の自動縮小 (DES-UI-006)。実行時に pt を変えられない (TMP の fontSize は Udon 非公開) ので、[人] の狭い枠では TMP が縮めて収める。Course/84・85 の両方が書く。</summary>
+        public static void ApplyFooterFit(TextMeshProUGUI footer)
+        {
+            if (footer == null) return;
+            footer.fontSize = FooterPoints; footer.enableAutoSizing = true; footer.fontSizeMax = FooterPoints; footer.fontSizeMin = FooterMinPoints;
+            EditorUtility.SetDirty(footer);
         }
 
         static string SpotName(KH_LeashManager m, int spot)

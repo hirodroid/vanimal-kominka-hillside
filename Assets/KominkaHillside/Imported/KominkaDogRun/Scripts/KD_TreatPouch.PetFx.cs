@@ -49,6 +49,7 @@ namespace KominkaDogRun
             if (_tab != TabAcc || _settingsOpen || _welcome || !HillsideAccCatalogLevel()) return;
             KD_ShopItem it = FxAt(row);
             if (it == null || catalog == null) return;
+            AccShowCell(AccGroupFx, AccGroupItems(AccGroupFx, row));   // 裏山改変 (DES-UI-006): 隠れている行から来ても撫でエフェクトのサブタブへ
             // 裏山改変: 確認カードは共有 1 枚。撫でFX の確認を開くときは かざりの購入・ギフトの確認を閉じる (同じ面で 2 つ開かない)
             _accConfirm = false; _accGiftRow = -1;
 
@@ -132,10 +133,13 @@ namespace KominkaDogRun
         /// 行の中身は古民家の RedrawFx と同じ (Point 不足は「あと N pt」、CE はセット名と Credits、使用中は押す先が無い)。</summary>
         private void RedrawFxRows(bool visible)
         {
+            // 裏山改変 (DES-UI-006): サブタブがあるときは群見出しを出さない (サブタブ「撫でエフェクト」が代わり)。visible = カタログ階層かつ撫でFX の群を選んでいる
+            bool paged = visible && AccSubTabsOn();
+            bool headOn = visible && !paged;
             int headN = hillsideFxHeadRows == null ? 0 : hillsideFxHeadRows.Length;
             for (int h = 0; h < headN; h++)
-                if (hillsideFxHeadRows[h] != null && hillsideFxHeadRows[h].activeSelf != visible) hillsideFxHeadRows[h].SetActive(visible);
-            if (visible && hillsideFxHeadLabel != null) hillsideFxHeadLabel.text = L("KD_TreatPouch.WordFxGroup");
+                if (hillsideFxHeadRows[h] != null && hillsideFxHeadRows[h].activeSelf != headOn) hillsideFxHeadRows[h].SetActive(headOn);
+            if (headOn && hillsideFxHeadLabel != null) hillsideFxHeadLabel.text = L("KD_TreatPouch.WordFxGroup");
 
             int n = fxLabels == null ? 0 : fxLabels.Length;
             if (!visible)
@@ -152,6 +156,7 @@ namespace KominkaDogRun
             }
 
             string applied = petFxBox == null ? KD_PetFxBox.Unset : petFxBox.AppliedProduct();
+            int ordinal = 0;   // 裏山改変 (DES-UI-006): 商品のある行だけを数えた順 (ページの判定。CE の空き枠は数えない)
             for (int i = 0; i < n; i++)
             {
                 TextMeshProUGUI lbl = fxLabels[i];
@@ -160,6 +165,7 @@ namespace KominkaDogRun
                 // 商品の無い枠 (段階 1 で null のまま) は行ごと隠す — 押しても何も起きない行を出さない
                 GameObject rowGo = HillsideRowOf(lbl);
                 bool rowOn = it != null;
+                if (rowOn) { if (paged && !AccCellOnPage(ordinal)) rowOn = false; ordinal++; }   // サブタブのページ p の 6 件だけ
                 if (rowGo != null && rowGo.activeSelf != rowOn) rowGo.SetActive(rowOn);
                 if (!rowOn) continue;
 

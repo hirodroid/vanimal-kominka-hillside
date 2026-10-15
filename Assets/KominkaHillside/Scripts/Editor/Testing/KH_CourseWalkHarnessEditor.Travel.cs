@@ -167,6 +167,7 @@ namespace KominkaHillside.Editor
         static void TvRcCases()
         {
             TvT6b(7); TvT12WalkIn(7); TvT12MovedLate(7); TvT12MovedFirstLost(7); TvT12Join(7); TvT9JoinFastCancel(); TvT9JoinHistory();
+            TvT9JoinPages();   // DES-UI-006: [人] のページ送り (2026-10-15 追加。回すかは相談で決める)
         }
 
         /// <summary>浮きの高さの取り残し (_swimYValid) が消えるか (82b の末尾、2 件とも模擬)。犬 0 を陸でリードに繋いで落ち着かせ、
@@ -1212,6 +1213,88 @@ namespace KominkaHillside.Editor
                 TvMyBox().SetProgramVariable("debugJoinLoopback", 0); TvMyBox().SetProgramVariable("debugAnswerCode", 0);
                 ClientSimMain.RemovePlayer(tvRemote); tvRemote = null;
             }));
+        }
+
+        /// <summary>DES-UI-006: [人] のページ送り (模擬なし。ClientSim の人形 15 人 = 自分以外 15 人 → 7 / 7 / 1 人の 3 ページ)。
+        /// 実ボタン (_JoinPick0..8・_JoinPageNext / _JoinPagePrev) を押し、描画したセルの表示名 (travelPeopleLabels) を並び (_joinIds) と照らす:
+        /// ページ境界 (7 人目と 8 人目)・全員に 1 回ずつ届く・◀ で戻る・端の ◀ ▶ は何もしない・別のページの相手を選んだまま保つ・
+        /// 最終ページの 1 人が退室したら 1 つ前のページへ (1 秒ごとの更新。手元メニューを開いておく)・[地点] → [人] で先頭へ。
+        /// 対応表の全 n (1〜80) は Edit で Course/81 (KH_CourseTravelJoinEditor.CheckPeoplePaging) が見る。前提: ほかの人形がいない (T9-join-history の後)。</summary>
+        static void TvT9JoinPages()
+        {
+            var s = TvCase("T9-join-pages", false, 0);
+            var ids = new List<int>(); var reached = new List<int>(); int picked = -1;
+            s.Add(TvDo(() => { for (int k = 1; k <= 15; k++) ClientSimMain.SpawnRemotePlayer("KH_TravelPage" + k); }));
+            s.Add(TvUntil(() => VRCPlayerApi.GetPlayerCount() == 16, 10, "15 page puppets did not spawn, or other puppets are left (needs exactly 16 players)"));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                object o; var root = pouch.TryGetProgramVariable("panelRoot", out o) ? o as GameObject : null;
+                if (root == null || !root.activeSelf) pouch.SendCustomEvent("_Toggle");   // 退室の検出 (1 秒ごと) は手元メニューを開いている間だけ動く
+                if (Get<bool>(pouch, "_welcome")) pouch.SendCustomEvent("_WelcomeMenu");
+                pouch.SendCustomEvent("_TravelOpenMap"); pouch.SendCustomEvent("_TravelModePeople");
+                int n = Get<int>(pouch, "_joinCount");
+                TvExpect(n == 15, "15 people listed (is " + n + ")");
+                ids.AddRange(Get<int[]>(pouch, "_joinIds").Take(n));
+                TvExpect(Get<int>(pouch, "_joinPage") == 0, "starts on page 1");
+                TvExpect(TvCellOn("travelPeoplePagerLabels", 0) && TvCellText("travelPeoplePagerLabels", 0) == "◀", "cell 0 is [◀]");
+                TvExpect(TvCellText("travelPeoplePagerLabels", 1) == "▶\n1 / 3", "cell 8 is [▶] with 1 / 3 (is '" + TvCellText("travelPeoplePagerLabels", 1) + "')");
+                for (int c = 1; c <= 7; c++) { TvExpect(TvCellText("travelPeopleLabels", c) == TvName(ids[c - 1]), "page 1 cell " + c + " = list " + (c - 1)); reached.Add(ids[c - 1]); }
+                pouch.SendCustomEvent("_JoinPick0");
+                TvExpect(Get<int>(pouch, "_joinPage") == 0, "[◀] on page 1 does nothing");
+            }));
+            s.Add(TvDo(() =>
+            {
+                pouch.SendCustomEvent("_JoinPick8");
+                TvExpect(Get<int>(pouch, "_joinPage") == 1, "[▶] (cell 8) turns to page 2");
+                TvExpect(TvCellText("travelPeopleLabels", 1) == TvName(ids[7]), "page boundary: page 2 cell 1 = the 8th person (list 7)");
+                TvExpect(TvCellText("travelPeoplePagerLabels", 1) == "▶\n2 / 3", "cell 8 shows 2 / 3");
+                for (int c = 1; c <= 7; c++) { TvExpect(TvCellText("travelPeopleLabels", c) == TvName(ids[7 + c - 1]), "page 2 cell " + c + " = list " + (7 + c - 1)); reached.Add(ids[7 + c - 1]); }
+                pouch.SendCustomEvent("_JoinPick3");
+                picked = Get<int>(pouch, "_joinPick");
+                TvExpect(picked == ids[9], "page 2 cell 3 picks list 9 (picked " + picked + ", list 9 = " + ids[9] + ")");
+                pouch.SendCustomEvent("_JoinPagePrev");
+                TvExpect(Get<int>(pouch, "_joinPage") == 0 && Get<int>(pouch, "_joinPick") == picked, "[◀] back to page 1 keeps the pick on page 2");
+            }));
+            s.Add(TvDo(() =>
+            {
+                pouch.SendCustomEvent("_JoinPageNext"); pouch.SendCustomEvent("_JoinPageNext");
+                TvExpect(Get<int>(pouch, "_joinPage") == 2, "last page (3)");
+                TvExpect(TvCellText("travelPeopleLabels", 1) == TvName(ids[14]) && TvCellOn("travelPeopleButtons", 1), "page 3 cell 1 = list 14");
+                for (int c = 2; c <= 7; c++) TvExpect(!TvCellOn("travelPeopleButtons", c), "page 3 cell " + c + " hidden (nobody)");
+                reached.Add(ids[14]);
+                pouch.SendCustomEvent("_JoinPick8");
+                TvExpect(Get<int>(pouch, "_joinPage") == 2, "[▶] on the last page does nothing");
+                TvExpect(reached.Count == 15 && reached.Distinct().Count() == 15 && ids.All(reached.Contains), "all 15 reached once over the 3 pages");
+                var leaver = VRCPlayerApi.GetPlayerById(ids[14]);
+                TvExpect(leaver != null && Utilities.IsValid(leaver), "the last page's only person is in the instance");
+                ClientSimMain.RemovePlayer(leaver);
+                TvNote("pages 7 / 7 / 1 checked against _joinIds; the last page's only person (" + ids[14] + ") left while page 3 was shown");
+            }));
+            s.Add(TvUntil(() => Get<int>(pouch, "_joinCount") == 14, 4, "the leave was not reflected in the list within 4 s"));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(Get<int>(pouch, "_joinPage") == 1, "the empty last page fell back to page 2 (is " + (Get<int>(pouch, "_joinPage") + 1) + ")");
+                TvExpect(Get<int>(pouch, "_joinPick") == picked, "the pick is kept after the leave");
+                TvExpect(TvCellText("travelPeoplePagerLabels", 1) == "▶\n2 / 2", "cell 8 shows 2 / 2");
+                pouch.SendCustomEvent("_TravelModeSpots"); pouch.SendCustomEvent("_TravelModePeople");
+                TvExpect(Get<int>(pouch, "_joinPage") == 0, "[地点] -> [人] returns to page 1");
+                pouch.SendCustomEvent("_TravelModeSpots");
+                var all = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]; VRCPlayerApi.GetPlayers(all);
+                foreach (var p in all) if (p != null && Utilities.IsValid(p) && !p.isLocal) ClientSimMain.RemovePlayer(p);
+            }));
+        }
+
+        static string TvName(int playerId) { var p = VRCPlayerApi.GetPlayerById(playerId); return p != null && Utilities.IsValid(p) ? p.displayName : "?"; }
+        /// <summary>手元メニューの配列フィールド field の i 番目 (TMP など) の text。無ければ null。</summary>
+        static string TvCellText(string field, int i)
+        {
+            object o; if (!pouch.TryGetProgramVariable(field, out o) || !(o is Array a) || i >= a.Length || !(a.GetValue(i) is Component c) || c == null) return null;
+            var pr = c.GetType().GetProperty("text"); return pr == null ? null : (string)pr.GetValue(c);
+        }
+        static bool TvCellOn(string field, int i)
+        {
+            object o; return pouch.TryGetProgramVariable(field, out o) && o is Array a && i < a.Length && a.GetValue(i) is Component c && c != null && c.gameObject.activeSelf;
         }
 
         static void TvT11(int mask)

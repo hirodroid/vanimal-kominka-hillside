@@ -52,6 +52,7 @@ namespace KominkaDogRun
             if (_tab != TabAcc || _settingsOpen || _welcome || !HillsideAccCatalogLevel() || collarPatterns == null) return;
             KD_ShopItem it = collarPatterns.ItemAt(row);
             if (it == null) return;
+            AccShowCell(AccGroupCollar, AccGroupItems(AccGroupCollar, row));   // 裏山改変 (DES-UI-006): 隠れている行から来ても (ハーネスの _Collar1 等) 首輪とリードのサブタブへ
             // 確認カードは共有 1 枚。かざり・撫でFX の確認を閉じる
             _accConfirm = false; _accGiftRow = -1; _fxConfirmRow = -1;
             if (it.Owned())
@@ -138,6 +139,7 @@ namespace KominkaDogRun
             if (_collarPage < 0) return false;
             KD_ShopItem it = collarPatterns == null ? null : collarPatterns.ItemAt(_collarPage);
             if (it == null || !it.Owned()) { _collarPage = -1; return false; }
+            _accGroup = AccGroupCollar;   // 裏山改変 (DES-UI-006): 戻ったら首輪とリードのサブタブ
 
             _accConfirm = false; _accGiftRow = -1;
             _HideConfirm(ConfirmAcc);
@@ -146,6 +148,7 @@ namespace KominkaDogRun
             RedrawCollarRows(false);
             if (accBackButton != null && !accBackButton.activeSelf) accBackButton.SetActive(true);
             if (accHeaderLabel != null) accHeaderLabel.text = L(it.displayNameKey);
+            AccTopRow(false);   // 裏山改変 (DES-UI-006): セットの面は見出しと [もどる] を出し、サブタブとページ送りは隠す
 
             string leash = CollarLeashKey();
             bool catalogReady = catalog != null && catalog.Resolved();
@@ -226,27 +229,34 @@ namespace KominkaDogRun
                 return;
             }
 
-            // 2 列の格子なので、見出しが段の左端に来るよう、前に並ぶセルの数が奇数なら空きセル [0] を出す
-            int before = _accCatalogCount;
-            int headN = hillsideFxHeadRows == null ? 0 : hillsideFxHeadRows.Length;
-            for (int h = 0; h < headN; h++) if (hillsideFxHeadRows[h] != null && hillsideFxHeadRows[h].activeSelf) before++;
-            int fxN = fxLabels == null ? 0 : fxLabels.Length;
-            for (int i = 0; i < fxN; i++)
+            // 裏山改変 (DES-UI-006): サブタブがあるときは小見出しを出さない (サブタブ「首輪とリード」が代わり)。visible = カタログ階層かつ首輪の群を選んでいる
+            bool paged = AccSubTabsOn();
+            if (paged) HillsideHideAll(collarHeadRows);
+            else
             {
-                if (fxLabels[i] == null) continue;
-                GameObject fxRow = HillsideRowOf(fxLabels[i]);
-                if (fxRow != null && fxRow.activeSelf) before++;
+                // 2 列の格子なので、見出しが段の左端に来るよう、前に並ぶセルの数が奇数なら空きセル [0] を出す
+                int before = _accCatalogCount;
+                int headN = hillsideFxHeadRows == null ? 0 : hillsideFxHeadRows.Length;
+                for (int h = 0; h < headN; h++) if (hillsideFxHeadRows[h] != null && hillsideFxHeadRows[h].activeSelf) before++;
+                int fxN = fxLabels == null ? 0 : fxLabels.Length;
+                for (int i = 0; i < fxN; i++)
+                {
+                    if (fxLabels[i] == null) continue;
+                    GameObject fxRow = HillsideRowOf(fxLabels[i]);
+                    if (fxRow != null && fxRow.activeSelf) before++;
+                }
+                int cells = collarHeadRows == null ? 0 : collarHeadRows.Length;
+                for (int h = 0; h < cells; h++)
+                {
+                    if (collarHeadRows[h] == null) continue;
+                    bool on = h != 0 || (before % 2) == 1;
+                    if (collarHeadRows[h].activeSelf != on) collarHeadRows[h].SetActive(on);
+                }
+                if (collarHeadLabel != null) collarHeadLabel.text = L("collar.group");
             }
-            int cells = collarHeadRows == null ? 0 : collarHeadRows.Length;
-            for (int h = 0; h < cells; h++)
-            {
-                if (collarHeadRows[h] == null) continue;
-                bool on = h != 0 || (before % 2) == 1;
-                if (collarHeadRows[h].activeSelf != on) collarHeadRows[h].SetActive(on);
-            }
-            if (collarHeadLabel != null) collarHeadLabel.text = L("collar.group");
 
             string leash = CollarLeashKey();
+            int ordinal = 0;   // 裏山改変 (DES-UI-006): 商品のある行だけを数えた順 (ページの判定)
             for (int i = 0; i < n; i++)
             {
                 TextMeshProUGUI lbl = collarLabels[i];
@@ -254,6 +264,7 @@ namespace KominkaDogRun
                 KD_ShopItem it = collarPatterns.ItemAt(i);
                 GameObject rowGo = HillsideRowOf(lbl);
                 bool rowOn = it != null;
+                if (rowOn) { if (paged && !AccCellOnPage(ordinal)) rowOn = false; ordinal++; }   // サブタブのページ p の 6 件だけ
                 if (rowGo != null && rowGo.activeSelf != rowOn) rowGo.SetActive(rowOn);
                 if (!rowOn) continue;
 

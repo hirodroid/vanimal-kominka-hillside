@@ -21,7 +21,11 @@ namespace KominkaDogRun
     /// すべて Course/84・85 が生成・配線する。文言は course.travel.*。
     /// `_TravelUpper` / `_TravelRiver` (選んで即ワープ) は段階 1 からの入口で、ClientSim ハーネスが使う。
     /// IMP-WLD-002 (設計書 §F.2): [人] のときは [ここへワープ] を隠し、フッターに [合流をたのむ] (`_TravelGo`) と [来てもらう] (`_TravelCall`) を横に 2 つ出す。
-    /// 取消は送信済みの要求に作用し、送った方のボタンだけが [取り消す] になる (もう一方は押しても何もしない)。</summary>
+    /// 取消は送信済みの要求に作用し、送った方のボタンだけが [取り消す] になる (もう一方は押しても何もしない)。
+    /// DES-UI-006 (docs/plans/2026-10-15-menu-subtabs-and-people.md §5.3、2026-10-15 ユーザー承認): [人] のときは地図・凡例・番号・自分の点・選択の輪を隠し、
+    /// 一覧を 3 列 × 3 段のセル (Person0..8) + ページ送りにする。対応表は <see cref="JoinCellIndex"/> 1 つで、描画と押下の両方が使う
+    /// (自分以外が 9 人以下ならセル = 並びの添字。10 人以上はセル 0 = ◀、1〜7 = 人 (1 ページ 7 人)、8 = ▶ と「p / q」)。
+    /// フッターの文は [人] のときだけ 2 ボタンの左 (435×90。18pt、収まらなければ TMP の自動縮小で 14pt まで。Course/84・85 が付ける) へ移す。並びの上限は 80 (<see cref="JoinMax"/>)。</summary>
     public partial class KD_TreatPouch
     {
         [Header("地図と移動 (IMP-WLD-001 段階 2。Course/84 が配線する)")]
@@ -48,11 +52,17 @@ namespace KominkaDogRun
         [Header("合流 (IMP-WLD-001 段階 3。Course/85 が配線する)")]
         public UnityEngine.UI.Image travelModeSpotsImage, travelModePeopleImage;
         public TextMeshProUGUI travelModeSpotsLabel, travelModePeopleLabel;
-        public GameObject travelPeopleRoot;              // 人の一覧 (スクロール)
-        public RectTransform travelPeopleContent;        // 一覧の中身 (人数で高さを変える)
-        public UnityEngine.UI.Button[] travelPeopleButtons;   // 16 行
+        public GameObject travelPeopleRoot;              // 人の一覧 (DES-UI-006: 3 列 × 3 段のセルの器。スクロールは撤去)
+        public RectTransform travelPeopleContent;        // DES-UI-006 で使わない (スクロールの中身だった。Course/85 が null にする)
+        public UnityEngine.UI.Button[] travelPeopleButtons;   // 9 セル (Person0..8)
         public UnityEngine.UI.Image[] travelPeopleImages;
-        public TextMeshProUGUI[] travelPeopleLabels;
+        public TextMeshProUGUI[] travelPeopleLabels;          // セルの 1 行目 = 表示名だけ (補助フォント KH_DisplayName。Course/86 の対象)
+        [Header("人の一覧のグリッド (DES-UI-006。Course/85 が配線する)")]
+        public TextMeshProUGUI[] travelPeopleInfoLabels;      // セルの 2 行目 (共通フォント 16pt。地点と距離、または状態の文)
+        [Tooltip("[0] = セル 0 の ◀、[1] = セル 8 の ▶ と「p / q」。共通フォント (◀▶ と数字は写真のページ送りと同じく焼いてある)。10 人以上のときだけ出す")]
+        public TextMeshProUGUI[] travelPeoplePagerLabels;
+        [Tooltip("地図の番号 Mark1〜6 ([人] のとき地図と一緒に隠す)")]
+        public GameObject[] travelMapMarks;
         public TextMeshProUGUI travelPeopleEmpty;
         public GameObject travelAcceptButton;
         public TextMeshProUGUI travelAcceptLabel;
@@ -75,17 +85,30 @@ namespace KominkaDogRun
         private bool _travelArrived;         // この副画面で着いた ([もどる] → [さんぽへもどる])
         private bool _travelPlaced;          // この移動で PlaceInFront を済ませた (移動 1 回につき 1 回)
         private int _travelMode;             // 0 地点 / 1 人
-        private int[] _joinIds = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+        // DES-UI-006: 並びの上限。VRChat のインスタンスの最大人数として置く (要確認: 実際の上限は SDK・公式で確かめていない)。
+        // 自分は並びに入らないので、80 人のインスタンスでも足りる。セルの部品は 9 個のまま (ページで送る)
+        public const int JoinMax = 80;
+        // セルの対応表の規則 (§5.3)。Course/81 (KH_CourseTravelJoinEditor.Validate) が同じ規則を n = 1〜80 で突き合わせる
+        public const int PeopleCells = 9, PeoplePerPage = 7, PeoplePagedFrom = 10;
+        public const int JoinCellEmpty = -1, JoinCellPrev = -2, JoinCellNext = -3;
+        // [人] のときのフッターの文 (2 ボタンの左、x -540〜-105 / y -250〜-160)。[地点] のときはシーンの保存値 (Course/84 の位置) に戻す
+        public const float FooterPeopleX = -322.5f, FooterPeopleY = -205f, FooterPeopleW = 435f, FooterPeopleH = 90f, FooterPeoplePoints = 18f;   // pt は [地点] と同じ 18 (TMP の fontSize は Udon に公開されていないので実行時に変えない。3 行で約 65 < 90)
+        private int[] _joinIds = new int[JoinMax];   // JoinFreeze が全部書く (_joinCount より後ろは -1)
         private int _joinCount;
-        private int _joinPick = -1;          // 選んでいる相手の playerId
+        private int _joinPick = -1;          // 選んでいる相手の playerId (ページを替えても保つ)
+        private int _joinPage;               // 今のページ (10 人以上のときだけ意味がある)
         private float _joinNextRefresh;
         private int _joinSeenSerial;
         private KominkaHillside.KH_TravelMailbox _travelBox;
         // 行ごとの相手の受付箱 (W3 レビュー 8: 探すのは開いたとき・入退室・未取得のときだけ。10 Hz では探さない)
-        private KominkaHillside.KH_TravelMailbox[] _joinBoxes = new KominkaHillside.KH_TravelMailbox[16];
+        private KominkaHillside.KH_TravelMailbox[] _joinBoxes = new KominkaHillside.KH_TravelMailbox[JoinMax];
         private string _joinReasonKey = "";      // 合流の着地点の理由 (W3 レビュー 12: 着いた後もフッターに残す)
         private float _joinReasonUntil;
-        const float PeopleViewHeight = 176f, PeopleRowPitch = 60f;
+        // フッターの文の [地点] の配置 (最初の描画で保存値を控える) と、今どちらの配置か (-1 = まだ書いていない)
+        private RectTransform _footerRect;
+        private bool _footerSaved;
+        private Vector2 _footerSpotsPos, _footerSpotsSize;
+        private int _footerLayout = -1;
 
         // ============================================================
         // 入口
@@ -119,22 +142,19 @@ namespace KominkaDogRun
         public void _TravelPick4() { TravelPick(4); }
         public void _TravelPick5() { TravelPick(5); }
 
-        public void _JoinPick0() { JoinPick(0); }
-        public void _JoinPick1() { JoinPick(1); }
-        public void _JoinPick2() { JoinPick(2); }
-        public void _JoinPick3() { JoinPick(3); }
-        public void _JoinPick4() { JoinPick(4); }
-        public void _JoinPick5() { JoinPick(5); }
-        public void _JoinPick6() { JoinPick(6); }
-        public void _JoinPick7() { JoinPick(7); }
-        public void _JoinPick8() { JoinPick(8); }
-        public void _JoinPick9() { JoinPick(9); }
-        public void _JoinPick10() { JoinPick(10); }
-        public void _JoinPick11() { JoinPick(11); }
-        public void _JoinPick12() { JoinPick(12); }
-        public void _JoinPick13() { JoinPick(13); }
-        public void _JoinPick14() { JoinPick(14); }
-        public void _JoinPick15() { JoinPick(15); }
+        // セル c の押下 (DES-UI-006: 9 セル)。中身は対応表で決まる (人 / ◀ / ▶ / 空)。旧 _JoinPick9..15 は Course/85 が配線をやめたので消した
+        public void _JoinPick0() { JoinPickCell(0); }
+        public void _JoinPick1() { JoinPickCell(1); }
+        public void _JoinPick2() { JoinPickCell(2); }
+        public void _JoinPick3() { JoinPickCell(3); }
+        public void _JoinPick4() { JoinPickCell(4); }
+        public void _JoinPick5() { JoinPickCell(5); }
+        public void _JoinPick6() { JoinPickCell(6); }
+        public void _JoinPick7() { JoinPickCell(7); }
+        public void _JoinPick8() { JoinPickCell(8); }
+        /// <summary>前 / 次のページ (セル 0 / 8 と同じ処理。ClientSim ハーネスの入口)。ローカル専用。</summary>
+        public void _JoinPagePrev() { JoinTurnPage(-1); }
+        public void _JoinPageNext() { JoinTurnPage(1); }
 
         /// <summary>実行ボタン。地点なら [ここへワープ]、人なら [合流をたのむ] / [取り消す]。ローカル専用。</summary>
         public void _TravelGo()
@@ -308,6 +328,7 @@ namespace KominkaDogRun
             for (int i = 0; i < _joinBoxes.Length; i++)
                 _joinBoxes[i] = i < _joinCount && mine != null ? mine._FindBox(VRCPlayerApi.GetPlayerById(_joinIds[i])) : null;
             if (_joinPick >= 0 && JoinRowOf(_joinPick) < 0) _joinPick = -1;
+            _joinPage = 0;   // DES-UI-006: 並べ直したら先頭のページから (_TravelModePeople・[人] のまま開き直したとき)
             _joinNextRefresh = Time.time + 1f;
         }
 
@@ -323,15 +344,67 @@ namespace KominkaDogRun
             for (int i = w; i < _joinBoxes.Length; i++) _joinBoxes[i] = null;
             _joinCount = w;
             int n = VRCPlayerApi.GetPlayerCount();
-            VRCPlayerApi[] all = new VRCPlayerApi[n];
-            VRCPlayerApi.GetPlayers(all);
-            for (int i = 0; i < n && _joinCount < _joinIds.Length; i++)
-                if (Utilities.IsValid(all[i]) && !all[i].isLocal && JoinRowOf(all[i].playerId) < 0) _joinIds[_joinCount++] = all[i].playerId;
+            // DES-UI-006: 上限を 80 にしたので、自分以外が全員並んでいる (並びは重複のない在室者だけ) ときは入室の走査 (人数 × 並びの長さ) を省く
+            if (_joinCount < n - 1)
+            {
+                VRCPlayerApi[] all = new VRCPlayerApi[n];
+                VRCPlayerApi.GetPlayers(all);
+                for (int i = 0; i < n && _joinCount < _joinIds.Length; i++)
+                    if (Utilities.IsValid(all[i]) && !all[i].isLocal && JoinRowOf(all[i].playerId) < 0) _joinIds[_joinCount++] = all[i].playerId;
+            }
             for (int i = _joinCount; i < _joinIds.Length; i++) _joinIds[i] = -1;
             // 未取得 (入室直後の「準備中」) と新しく足した行だけ探す
             KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
             for (int i = 0; i < _joinCount; i++)
                 if (_joinBoxes[i] == null && mine != null) _joinBoxes[i] = mine._FindBox(VRCPlayerApi.GetPlayerById(_joinIds[i]));
+            // 退出で今のページが空になったら、残っている最後のページへ (9 人以下に減ったら 1 ページだけ)
+            _joinPage = JoinClampedPage(_joinPage, _joinCount);
+        }
+
+        // ---- セルの対応表 (DES-UI-006 §5.3。描画 TravelMapRedraw と押下 JoinPickCell が同じものを使う) ----
+
+        /// <summary>ページ数。自分以外が 9 人以下なら 1 (ページ送りなし)、10 人以上は 1 ページ 7 人。</summary>
+        private int JoinPageCount(int n)
+        {
+            return n < PeoplePagedFrom ? 1 : (n + PeoplePerPage - 1) / PeoplePerPage;
+        }
+
+        /// <summary>人数 n・ページ page のセル cell が出すもの: 並びの添字 (0 以上) / JoinCellPrev / JoinCellNext / JoinCellEmpty (隠す)。
+        /// 9 人以下: セル = 添字。10 人以上: 全ページ同じ割り付けで、セル 0 = ◀、セル 1〜7 = 添字 page × 7 + (cell − 1)、セル 8 = ▶。</summary>
+        private int JoinCellIndex(int n, int page, int cell)
+        {
+            if (cell < 0 || cell >= PeopleCells) return JoinCellEmpty;
+            if (n < PeoplePagedFrom) return cell < n ? cell : JoinCellEmpty;
+            if (cell == 0) return JoinCellPrev;
+            if (cell == PeopleCells - 1) return JoinCellNext;
+            int idx = page * PeoplePerPage + (cell - 1);
+            return idx < n ? idx : JoinCellEmpty;
+        }
+
+        /// <summary>ページを 0 〜 最終ページに収める。</summary>
+        private int JoinClampedPage(int page, int n)
+        {
+            int last = JoinPageCount(n) - 1;
+            if (page > last) return last;
+            return page < 0 ? 0 : page;
+        }
+
+        private void JoinPickCell(int cell)
+        {
+            int idx = JoinCellIndex(_joinCount, _joinPage, cell);
+            if (idx == JoinCellPrev) { JoinTurnPage(-1); return; }
+            if (idx == JoinCellNext) { JoinTurnPage(1); return; }
+            if (idx >= 0) JoinPick(idx);
+        }
+
+        /// <summary>ページ送り。1 ページ目の ◀・最終ページの ▶ (暗くしてある) は何もしない。選んでいる相手 (playerId) は変えない。</summary>
+        private void JoinTurnPage(int step)
+        {
+            if (TravelInputLocked() || _travelMode != 1) return;
+            int next = _joinPage + step;
+            if (next < 0 || next >= JoinPageCount(_joinCount)) return;
+            _joinPage = next;
+            TravelMapRedraw();
         }
 
         private int JoinRowOf(int playerId)
@@ -520,6 +593,14 @@ namespace KominkaDogRun
                 travelAcceptLabel.text = L(box != null && !box.accepting ? "course.travel.join.accept.off" : "course.travel.join.accept.on");
             FilmAcceptRedraw(box, people);   // IMP-WLD-008 W4: 合流の切り替えの隣に「撮影の申し込みを受ける」(§14.5)
             if (travelPeopleRoot != null && travelPeopleRoot.activeSelf != people) travelPeopleRoot.SetActive(people);
+            // DES-UI-006: [人] のときは地図・凡例・番号・自分の点を隠す (グリッドが地図の場所まで広がる。選択の輪は下で消す)
+            bool mapShown = !people;
+            if (travelMapRect != null && travelMapRect.gameObject.activeSelf != mapShown) travelMapRect.gameObject.SetActive(mapShown);
+            if (travelLegendLabel != null && travelLegendLabel.gameObject.activeSelf != mapShown) travelLegendLabel.gameObject.SetActive(mapShown);
+            if (travelMapPlayer != null && travelMapPlayer.gameObject.activeSelf != mapShown) travelMapPlayer.gameObject.SetActive(mapShown);
+            for (int s = 0; travelMapMarks != null && s < travelMapMarks.Length; s++)
+                if (travelMapMarks[s] != null && travelMapMarks[s].activeSelf != mapShown) travelMapMarks[s].SetActive(mapShown);
+            TravelFooterLayout(people);
 
             int waiting = manager._TravelWaitingSpot();
             float left = manager._TravelCooldownLeft();
@@ -538,7 +619,7 @@ namespace KominkaDogRun
                 if (travelLabels != null && k < travelLabels.Length && travelLabels[k] != null && travelLabels[k].text != text) travelLabels[k].text = text;
                 WalkTint(travelImages, k, waiting == spot ? openOnColor : (_travelPick == k ? equipOnColor : hillsideNeutralColor));
             }
-            // ---- 人の 16 行 ----
+            // ---- 人のセル (DES-UI-006: 3 列 × 3 段 + ページ送り。対応表は JoinCellIndex) ----
             int waitingFor = box != null ? box._WaitingFor() : -1;
             if (people)
             {
@@ -548,50 +629,45 @@ namespace KominkaDogRun
                     if (travelPeopleEmpty.gameObject.activeSelf != empty) travelPeopleEmpty.gameObject.SetActive(empty);
                     if (empty) travelPeopleEmpty.text = L("course.travel.join.alone");
                 }
-                if (travelPeopleContent != null)
+                _joinPage = JoinClampedPage(_joinPage, _joinCount);
+                int pages = JoinPageCount(_joinCount);
+                for (int c = 0; travelPeopleButtons != null && c < travelPeopleButtons.Length; c++)
                 {
-                    // 人数に合わせて中身の高さを変え、減ったときは見える範囲へ戻す (W3 レビュー 13)
-                    float h = Mathf.Max(PeopleViewHeight, _joinCount * PeopleRowPitch + 4f);
-                    if (Mathf.Abs(travelPeopleContent.sizeDelta.y - h) > 0.5f) travelPeopleContent.sizeDelta = new Vector2(travelPeopleContent.sizeDelta.x, h);
-                    Vector2 at = travelPeopleContent.anchoredPosition;
-                    float maxY = h - PeopleViewHeight;
-                    if (at.y > maxY || at.y < 0f) travelPeopleContent.anchoredPosition = new Vector2(at.x, Mathf.Clamp(at.y, 0f, maxY));
-                }
-                for (int i = 0; travelPeopleButtons != null && i < travelPeopleButtons.Length; i++)
-                {
-                    bool on = i < _joinCount;
-                    if (travelPeopleButtons[i] != null && travelPeopleButtons[i].gameObject.activeSelf != on) travelPeopleButtons[i].gameObject.SetActive(on);
+                    int idx = JoinCellIndex(_joinCount, _joinPage, c);
+                    bool on = idx != JoinCellEmpty;
+                    if (travelPeopleButtons[c] != null && travelPeopleButtons[c].gameObject.activeSelf != on) travelPeopleButtons[c].gameObject.SetActive(on);
                     if (!on) continue;
-                    VRCPlayerApi p = VRCPlayerApi.GetPlayerById(_joinIds[i]);
+                    if (idx == JoinCellPrev || idx == JoinCellNext)
+                    {
+                        // ◀ / ▶ は記号と数字だけ (新しい翻訳キーなし。写真のページ送りと同じ字を共通フォントで出す)。端のページでは暗くして押しても何もしない
+                        bool can = idx == JoinCellPrev ? _joinPage > 0 : _joinPage < pages - 1;
+                        JoinCellText(c, "", "", idx == JoinCellPrev ? "◀" : "▶\n" + (_joinPage + 1).ToString() + " / " + pages.ToString());
+                        WalkTint(travelPeopleImages, c, can ? hillsideNeutralColor : recallOffColor);
+                        continue;
+                    }
+                    VRCPlayerApi p = VRCPlayerApi.GetPlayerById(_joinIds[idx]);
                     if (!Utilities.IsValid(p)) continue;
-                    KominkaHillside.KH_TravelMailbox theirs = _joinBoxes[i];
-                    string place = travelNotice != null ? L("course.travel.join.near").Replace("{0}", travelNotice._NearestSpotName(p.GetPosition())) : "";
-                    // 2 段: 1 行目 = 表示名 (長ければ … で切る)、2 行目 = 最寄りの地点・距離・状態 (81 の測定で幅が足りなかったため)
-                    string text = p.displayName + "\n" + place + "  " + TravelDistanceText(p.GetPosition(), me);
-                    // 返事待ちの行は 2 行目を置き換える (§F.2)
-                    if (waitingFor == _joinIds[i]) text = p.displayName + "\n" + (box._OutPhase() == 1 ? L("course.travel.call.onway") : L("course.travel.join.waiting").Replace("{0}", Mathf.CeilToInt(box._WaitLeft()).ToString()));
-                    else if (theirs == null) text += "  (" + L("course.travel.join.notReady") + ")";
-                    else if (!theirs.accepting) text += "  (" + L("course.travel.join.notAccepting") + ")";
-                    if (travelPeopleLabels != null && i < travelPeopleLabels.Length && travelPeopleLabels[i] != null && travelPeopleLabels[i].text != text) travelPeopleLabels[i].text = text;
-                    Color tint = waitingFor == _joinIds[i] ? openOnColor : (_joinPick == _joinIds[i] ? equipOnColor : (theirs == null || !theirs.accepting ? recallOffColor : hillsideNeutralColor));
-                    WalkTint(travelPeopleImages, i, tint);
+                    KominkaHillside.KH_TravelMailbox theirs = _joinBoxes[idx];
+                    // 2 行目は状態を優先する (セル幅約 323 では後ろに足した状態が … に消えるため。§5.3)。地点と距離は通常のときだけ
+                    string info;
+                    if (waitingFor == _joinIds[idx]) info = box._OutPhase() == 1 ? L("course.travel.call.onway") : L("course.travel.join.waiting").Replace("{0}", Mathf.CeilToInt(box._WaitLeft()).ToString());
+                    else if (theirs == null) info = L("course.travel.join.notReady");
+                    else if (!theirs.accepting) info = L("course.travel.join.notAccepting");
+                    else info = (travelNotice != null ? L("course.travel.join.near").Replace("{0}", travelNotice._NearestSpotName(p.GetPosition())) + "  " : "") + TravelDistanceText(p.GetPosition(), me);
+                    JoinCellText(c, p.displayName, info, "");
+                    Color tint = waitingFor == _joinIds[idx] ? openOnColor : (_joinPick == _joinIds[idx] ? equipOnColor : (theirs == null || !theirs.accepting ? recallOffColor : hillsideNeutralColor));
+                    WalkTint(travelPeopleImages, c, tint);
                 }
             }
-            // ---- 選んだ地点・相手の輪 ----
+            // ---- 選んだ地点の輪 ([地点] だけ。DES-UI-006: [人] では地図ごと隠すので相手の輪は出さない) ----
             if (travelMapSelection != null)
             {
-                bool show = false; Vector3 at = Vector3.zero;
-                if (!people && _travelPick >= 0) { show = true; at = manager.spotPositions[_travelSpots[_travelPick]]; }
-                else if (people && _joinPick >= 0)
-                {
-                    VRCPlayerApi p = VRCPlayerApi.GetPlayerById(_joinPick);
-                    if (Utilities.IsValid(p)) { show = true; at = p.GetPosition(); }
-                }
+                bool show = !people && _travelPick >= 0;
                 if (travelMapSelection.gameObject.activeSelf != show) travelMapSelection.gameObject.SetActive(show);
-                if (show) travelMapSelection.anchoredPosition = TravelMapPoint(at);
+                if (show) travelMapSelection.anchoredPosition = TravelMapPoint(manager.spotPositions[_travelSpots[_travelPick]]);
             }
-            // ---- 自分の位置と向き (北 = +Z を上に固定。回さない) ----
-            if (travelMapPlayer != null && Utilities.IsValid(lp))
+            // ---- 自分の位置と向き (北 = +Z を上に固定。回さない。[人] では隠している) ----
+            if (!people && travelMapPlayer != null && Utilities.IsValid(lp))
             {
                 travelMapPlayer.anchoredPosition = TravelMapPoint(me);
                 travelMapPlayer.localRotation = Quaternion.Euler(0f, 0f, -lp.GetRotation().eulerAngles.y);
@@ -658,6 +734,38 @@ namespace KominkaDogRun
                 }
             }
             if (travelStatusLabel != null) travelStatusLabel.text = HillsideNoteOr(TabWalk, "");
+        }
+
+        /// <summary>セル c の文字: 1 行目 (表示名。補助フォント)・2 行目 (共通フォント)・ページ送りの記号 (セル 0 / 8 だけ。空なら隠す)。
+        /// 表示名は文字のまま入れる (表示名に &lt; などがあってもタグとして読ませないため、1 つのラベルに大きさの違う 2 行を詰めない)。</summary>
+        private void JoinCellText(int c, string name, string info, string pager)
+        {
+            if (travelPeopleLabels != null && c < travelPeopleLabels.Length && travelPeopleLabels[c] != null && travelPeopleLabels[c].text != name) travelPeopleLabels[c].text = name;
+            if (travelPeopleInfoLabels != null && c < travelPeopleInfoLabels.Length && travelPeopleInfoLabels[c] != null && travelPeopleInfoLabels[c].text != info) travelPeopleInfoLabels[c].text = info;
+            int k = c == 0 ? 0 : (c == PeopleCells - 1 ? 1 : -1);
+            if (k < 0 || travelPeoplePagerLabels == null || k >= travelPeoplePagerLabels.Length || travelPeoplePagerLabels[k] == null) return;
+            TextMeshProUGUI t = travelPeoplePagerLabels[k];
+            bool show = pager.Length > 0;
+            if (t.gameObject.activeSelf != show) t.gameObject.SetActive(show);
+            if (show && t.text != pager) t.text = pager;
+        }
+
+        /// <summary>フッターの文の配置を切り替える (DES-UI-006)。[人] = 2 ボタンの左 435×90 (pt は変えない。18pt のまま)、[地点] = シーンの保存値 (Course/84。Course/81 が見る値)。
+        /// 切り替わったときだけ書く (10 Hz で RectTransform を書かない)。</summary>
+        private void TravelFooterLayout(bool people)
+        {
+            if (travelFooterLabel == null) return;
+            if (!_footerSaved)
+            {
+                _footerRect = (RectTransform)((Component)travelFooterLabel).transform;
+                _footerSpotsPos = _footerRect.anchoredPosition; _footerSpotsSize = _footerRect.sizeDelta;
+                _footerSaved = true;
+            }
+            int layout = people ? 1 : 0;
+            if (_footerLayout == layout) return;
+            _footerLayout = layout;
+            _footerRect.anchoredPosition = people ? new Vector2(FooterPeopleX, FooterPeopleY) : _footerSpotsPos;
+            _footerRect.sizeDelta = people ? new Vector2(FooterPeopleW, FooterPeopleH) : _footerSpotsSize;
         }
 
         private string TravelDistanceText(Vector3 there, Vector3 me)

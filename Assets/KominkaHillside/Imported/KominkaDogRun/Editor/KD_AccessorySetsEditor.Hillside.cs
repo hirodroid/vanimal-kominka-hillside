@@ -163,7 +163,10 @@ namespace KominkaDogRun.Editor
             v.Check(pouch.accItems != null && pouch.accItems.All(x => x != null && !x.CeWithheld()) && pouch.accProductIds != null && pouch.accProductIds.All(id => !KD_ProductDefinitions.IsWithheldKey(GoodsKeyOf(id))),
                 "IMP-PRG-002: 一覧に公開しない CE 商品 (王様 / 夏 / キャンディ / パンプキン) とその構成品が無い");
             int shownRows = shown.Count(id => !HillsideSetMembers.Contains(id));
-            v.Check(shownRows % 2 == 0, "見える行 " + shownRows + " が偶数 (2 列の格子で撫でFX の見出しが段の左端に来る)");
+            // 裏山改変 (DES-UI-006): サブタブ (Acc/1) が入ると群見出しは出さず群ごとに 6 件ずつのページで見せるので、偶数の前提は要らない
+            if (KominkaHillside.Editor.KH_AccSubTabEditor.IsApplied(pouch))
+                v.Note("見える行 " + shownRows + " 品 → サブタブ「犬のかざり」で " + ((shownRows + KD_TreatPouch.AccPageCells - 1) / KD_TreatPouch.AccPageCells) + " ページ (1 ページ " + KD_TreatPouch.AccPageCells + " 件。DES-UI-006 で偶数の前提は不要。部品は Acc/2 が検査)");
+            else v.Check(shownRows % 2 == 0, "見える行 " + shownRows + " が偶数 (2 列の格子で撫でFX の見出しが段の左端に来る)");
             var catalog = KD_LocalizationEditor.Load();
             int missing = 0; string first = "";
             foreach (var k in (pouch.accNameKeys ?? new string[0]).Concat(pouch.accSlotNameKeys ?? new string[0]))

@@ -15,7 +15,7 @@ namespace KominkaHillside.Editor
     /// <summary>IMP-WLD-001 段階 4: 表示名の補助フォント (設計書 §A.6)。**Static** (2026-09-27 方式変更)。
     ///
     /// 共通フォント KD_NotoSerif SDF は宣言した字だけを焼いた Static なので、VRChat の表示名の字の多くが □ になる。
-    /// 表示名を出すラベル (人の一覧 16 行・通知板の名前) に限って、同じ書体の Static フォント KH_DisplayName SDF を使う。
+    /// 表示名を出すラベル (人の一覧のセルの 1 行目 travelPeopleLabels・通知板の名前) に限って、同じ書体の Static フォント KH_DisplayName SDF を使う。
     /// - 最初の版は Dynamic だったが、元の TTF (7.33 MiB) がビルドに入り Android が +3.53 MB になったので採らない。
     ///   Static で焼いてから元のフォントの参照を外す (Course/27 が共通フォントへ字形を足すのと同じ作法。vrc-world-ui §8)。
     /// - 文字集合: scripts/kh-gen-name-charset.js が作る KH_DisplayName_Charset.txt (ASCII・Latin-1・Latin 拡張 A・かな・全角英数・
@@ -155,7 +155,8 @@ namespace KominkaHillside.Editor
             return existing;
         }
 
-        /// <summary>表示名のラベル (人の一覧 16 行・通知板の名前) にだけ補助フォントを付ける。フォントがまだ無ければ何もしない (Course/85 から呼ぶ)。</summary>
+        /// <summary>表示名のラベル (人の一覧のセルの 1 行目 = travelPeopleLabels の全部・通知板の名前) にだけ補助フォントを付ける。
+        /// DES-UI-006: セルは 9 個になり、2 行目 (travelPeopleInfoLabels。翻訳の文) とページ送り (◀ ▶) は共通フォントのまま (この補助フォントには ◀ ▶ やハングルが無い)。フォントがまだ無ければ何もしない (Course/85 から呼ぶ)。</summary>
         public static int ApplyIfPresent(KD_TreatPouch p, KH_TravelNotice notice)
         {
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
@@ -250,33 +251,58 @@ namespace KominkaHillside.Editor
         {
             var refs = new List<string>();
             var fonts = new HashSet<TMP_FontAsset>();
+            var via = new Dictionary<TMP_FontAsset, string>();      // フォント → 最初に見つけた参照元 (FAIL の文に出して、どのラベルかを特定できるようにする)
+            var unsaved = new List<string>();                       // 保存されない物 (DontSave。TMP の SubMesh・測定用の一時物) からの参照 = ビルドに入らないので数えない
+            int skipped = 0;                                        // 飛ばした DontSave のコンポーネント数 (TMP_SubMeshUI など)
             foreach (var root in scene.GetRootGameObjects())
                 foreach (var c in root.GetComponentsInChildren<Component>(true))
                 {
                     if (c == null || c is Transform) continue;
+                    bool notSaved = NotSaved(c.transform);
+                    if (notSaved) skipped++;
                     var it = new SerializedObject(c).GetIterator();
                     while (it.Next(true))
                     {
                         if (it.propertyType != SerializedPropertyType.ObjectReference) continue;
                         var r = it.objectReferenceValue;
-                        if (r is Font) refs.Add(c.GetType().Name + "(" + c.name + ")." + it.propertyPath + " -> " + AssetDatabase.GetAssetPath(r));
-                        else if (r is TMP_FontAsset fa) fonts.Add(fa);
+                        if (!(r is Font) && !(r is TMP_FontAsset)) continue;
+                        string owner = c.GetType().Name + "(" + PathOf(c.transform) + ")." + it.propertyPath;
+                        if (notSaved) { unsaved.Add(owner + " -> " + r.name); continue; }
+                        if (r is Font) refs.Add(owner + " -> " + AssetDatabase.GetAssetPath(r));
+                        else if (r is TMP_FontAsset fa && fonts.Add(fa)) via[fa] = owner;
                     }
                 }
             var queue = new Queue<TMP_FontAsset>(fonts);
             while (queue.Count > 0)
             {
                 var f = queue.Dequeue();
-                if (f.fallbackFontAssetTable != null) foreach (var fb in f.fallbackFontAssetTable) if (fb != null && fonts.Add(fb)) queue.Enqueue(fb);
+                if (f.fallbackFontAssetTable != null) foreach (var fb in f.fallbackFontAssetTable) if (fb != null && fonts.Add(fb)) { via[fb] = (via.TryGetValue(f, out string o) ? o : "?") + " -> " + f.name + " (fallback)"; queue.Enqueue(fb); }
             }
             foreach (var f in fonts)
             {
+                string from = via.TryGetValue(f, out string o) ? " [via " + o + "]" : "";
                 var src = new SerializedObject(f).FindProperty("m_SourceFontFile").objectReferenceValue;
-                if (src != null) refs.Add(f.name + ".m_SourceFontFile -> " + AssetDatabase.GetAssetPath(src));
-                if (f.atlasPopulationMode != AtlasPopulationMode.Static) refs.Add(f.name + " is " + f.atlasPopulationMode + " (its source font is built)");
+                if (src != null) refs.Add(f.name + ".m_SourceFontFile -> " + AssetDatabase.GetAssetPath(src) + from);
+                if (f.atlasPopulationMode != AtlasPopulationMode.Static) refs.Add(f.name + " is " + f.atlasPopulationMode + " (its source font is built)" + from);
             }
             foreach (var r in refs) e.Add("FAIL source font reaches the build: " + r);
-            return refs.Count + " refs / " + fonts.Count + " TMP fonts checked (" + string.Join(", ", fonts.Select(x => x.name).OrderBy(x => x)) + ")";
+            return refs.Count + " refs / " + fonts.Count + " TMP fonts checked (" + string.Join(", ", fonts.Select(x => x.name).OrderBy(x => x)) + ")"
+                + "; skipped " + skipped + " DontSave components"
+                + (unsaved.Count > 0 ? "; not saved (DontSave, not built, not counted): " + string.Join("; ", unsaved.Take(10)) : "");
+        }
+
+        /// <summary>保存されない (= ビルドに入らない) 物か。自分か祖先が DontSaveInBuild を持つ (TMP の SubMesh は DontSave、測定用の一時物は HideAndDontSave)。</summary>
+        static bool NotSaved(Transform t)
+        {
+            for (; t != null; t = t.parent) if ((t.gameObject.hideFlags & HideFlags.DontSaveInBuild) != 0) return true;
+            return false;
+        }
+
+        static string PathOf(Transform t)
+        {
+            string path = t.name;
+            for (var x = t.parent; x != null; x = x.parent) path = x.name + "/" + path;
+            return path;
         }
 
         /// <summary>アトラスの使用率 (グリフの矩形 + 余白の面積 ÷ アトラスの面積)。</summary>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using KominkaDogRun;
 using KominkaDogRun.Editor;
@@ -23,7 +24,10 @@ namespace KominkaHillside.Editor
     /// 1. KH_TravelMailbox / KH_TravelNotice の Program Asset が無ければ作ってコンパイルを始め、**シーンは変えずに止まる** (もう一度 85 を流す)。
     /// 2. 受付箱の雛形 KH_TravelMailbox (VRCPlayerObject + Manual、同期は accepting 1 本) をシーンの一番上に置く (入室ごとに複製される)。
     /// 3. 通知板 KH_TravelNotice (WorldSpace Canvas + VRCUiShape + BoxCollider、Layer Default) を置く。
-    /// 4. 副画面に [地点] / [人] の切替・人の一覧 (16 行、スクロール)・「合流の申し込みを受ける」、さんぽタブ上段に「申し込み 1 件」を足す。
+    /// 4. 副画面に [地点] / [人] の切替・人の一覧・「合流の申し込みを受ける」、さんぽタブ上段に「申し込み 1 件」を足す。
+    ///    DES-UI-006 (2026-10-15): 人の一覧は 16 行のスクロールから 3 列 × 3 段のセル (Person0..8、1 行目 Label = 表示名 / 2 行目 Info / セル 0・8 の Pager = ◀ ▶) へ。
+    ///    旧スクロール (ScrollRect / Viewport / Content / Person0..15) は撤去する (外から参照されていたら変えずに止まる)。[人] のとき地図を隠すため Mark1〜6 を配線する。
+    ///    退避は Temp/des-ui-006/before-people-grid.unity。何度流しても同じ結果。
     /// 5. 翻訳表 (course.travel.join.*) を入れ直す。
     /// IMP-WLD-002 (設計書 §F.2): 通知板に呼ぶ用の [行く] (Button4) / [今は行かない] (Button5) と理由の行、副画面の [人] のフッターに
     /// [合流をたのむ] (JoinAsk → _TravelGo) / [来てもらう] (JoinCall → _TravelCall) を横に 2 つ (245×90、間隔 10) 足す。
@@ -37,15 +41,32 @@ namespace KominkaHillside.Editor
         public const string AskName = "JoinAsk", CallName = "JoinCall", ReasonName = "Reason";
         // [人] のフッター: Course/84 の Go (中心 155, -205、500×90) を左右に分ける
         public static readonly Vector2 AskPos = new Vector2(27.5f, -205f), CallPos = new Vector2(282.5f, -205f), HalfSize = new Vector2(245f, 90f);
-        public const int PeopleRows = 16;
-        const float RowHeight = 56f, RowPitch = 60f, PeopleWidth = 590f, PeopleHeight = 176f;
-        static readonly Vector2 PeoplePos = new Vector2(155f, 52f);
+        // DES-UI-006 §5.2 案 C: [人] のとき地図を隠した帯 (x -540〜450 / y 140〜-160。上 = 上段の行の下端 142、下 = 2 ボタンの上端 -160) に 3 列 × 3 段、間隔 10
+        public const int PeopleCells = KD_TreatPouch.PeopleCells;
+        public const float BandLeft = -540f, BandRight = 450f, BandTop = 140f, BandBottom = -160f, CellGap = 10f;
+        public static readonly Vector2 CellSize = new Vector2((BandRight - BandLeft - 2f * CellGap) / 3f, (BandTop - BandBottom - 2f * CellGap) / 3f);   // 323.33 × 93.33
+        public static readonly Vector2 PeoplePos = new Vector2((BandLeft + BandRight) / 2f, (BandTop + BandBottom) / 2f), PeopleSize = new Vector2(BandRight - BandLeft, BandTop - BandBottom);
+        /// <summary>セル c の中心 (副画面の座標。c = 段 × 3 + 列)。セルは People (帯の中心) の子なので、置くときは PeoplePos を引く。</summary>
+        public static Vector2 CellPos(int c)
+        {
+            int col = c % 3, line = c / 3;
+            return new Vector2(BandLeft + CellSize.x * (col + .5f) + CellGap * col, BandTop - CellSize.y * (line + .5f) - CellGap * line);
+        }
+        // セルの中: 1 行目 = 表示名 20pt (補助フォント、… で切る)、2 行目 = 地点と距離か状態 16pt (共通フォント、収まらなければ 12pt まで縮める)、
+        // セル 0 / 8 の Pager = ◀ / ▶ と「p / q」24pt (共通フォント)。高さは §10.1 の 1 行 (ascent − descent ≒ 1.45 em) に余裕を持たせる
+        const float CellPadX = 24f, NamePoints = 20f, InfoPoints = 16f, InfoMinPoints = 12f, PagerPoints = 24f, NameHeight = 40f, InfoHeight = 34f;
+        static float NameY { get { return CellSize.y / 2f - 6f - NameHeight / 2f; } }
+        static float InfoY { get { return -CellSize.y / 2f + 6f + InfoHeight / 2f; } }
+        // 1 ページ 7 人で 80 人なら 12 ページ (ページ送りのセルの測定に使う最長の「p / q」)
+        static string LongestPage { get { int q = (KD_TreatPouch.JoinMax + KD_TreatPouch.PeoplePerPage - 1) / KD_TreatPouch.PeoplePerPage; return q + " / " + q; } }
+        const string GridBackupDir = "Temp/des-ui-006";
+        const string SharedFontPath = "Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset";   // = KD_ShopSetupEditor.FontAssetPath (private)
         static readonly Vector2 BoardSize = new Vector2(760f, 380f);
         static readonly string[] NoticeEvents = { "_Yes", "_No", "_Pause", "_Block", "_Go", "_NotNow" };
         // ネットワークから呼べる入口 (§F.3)。名前と引数の型をこの 7 つに固定する (IMP-WLD-008 W4: 撮影の ReqFilm / EndFilm / FilmRevoked は KH_TravelMailbox.Film.cs)
         static readonly string[] NetworkEntries = { "ReqJoin(int seq)", "ReqCall(int seq)", "AnsJoin(int seq, int code)", "CancelJoin(int seq)", "ReqFilm(int seq)", "EndFilm(int seq)", "FilmRevoked(int seq)" };
 
-        [Serializable] class BuildReport { public string utc, scene, status, reason; public bool programAssetsCreated; public int droppedNetworkIds; }
+        [Serializable] class BuildReport { public string utc, scene, status, reason; public bool programAssetsCreated; public int droppedNetworkIds; public List<string> findings = new List<string>(), info = new List<string>(); }
 
         [MenuItem("Tools/KominkaHillside/Course/85 - Build Travel Join")]
         public static void Build()
@@ -77,6 +98,15 @@ namespace KominkaHillside.Editor
             var font = p.sectionTitleLabel != null ? p.sectionTitleLabel.font : null;
             if (pouchBacking == null || font == null) throw new InvalidOperationException("Menu backing / font missing");
             File.Copy(KH_CourseGroundEditor.ScenePath, OutDir + "/before-travel-join.unity", true);
+            Directory.CreateDirectory(GridBackupDir);
+            File.Copy(KH_CourseGroundEditor.ScenePath, GridBackupDir + "/before-people-grid.unity", true);
+            // DES-UI-006: 撤去する旧スクロールの部品を、手元メニュー以外が参照していないこと (消すと相手の参照が黙って null になる。vrc-scene-edit-safety)。シーンを変える前に止める
+            var oldPeople = p.travelMapPage.transform.Find(PeopleName);
+            if (oldPeople != null)
+            {
+                var refs = OldScrollRefs(oldPeople, p, pouchBacking);
+                if (refs.Count > 0) throw new InvalidOperationException("The old people scroll is referenced from outside the menu; scene unchanged: " + string.Join("; ", refs.Take(10)));
+            }
             var log = new StringBuilder();
             try
             {
@@ -172,36 +202,70 @@ namespace KominkaHillside.Editor
                     hl.fontSize = 26f; hl.enableWordWrapping = false; hl.enableAutoSizing = true; hl.fontSizeMin = 14f; hl.fontSizeMax = 26f; EditorUtility.SetDirty(hl);
                     hb.SetActive(false);
                 }
-                var people = KD_ShopSetupEditor.EnsureUiChild(page, PeopleName, PeoplePos, new Vector2(PeopleWidth, PeopleHeight));
-                var viewport = KD_ShopSetupEditor.EnsureUiChild(people.transform, "Viewport", Vector2.zero, new Vector2(PeopleWidth, PeopleHeight));
-                if (viewport.GetComponent<RectMask2D>() == null) viewport.AddComponent<RectMask2D>();
-                var vImg = viewport.GetComponent<Image>(); if (vImg == null) vImg = viewport.AddComponent<Image>(); vImg.color = new Color(0f, 0f, 0f, 0f); vImg.raycastTarget = true;
-                float contentH = PeopleRows * RowPitch;
-                var content = KD_ShopSetupEditor.EnsureUiChild(viewport.transform, "Content", Vector2.zero, new Vector2(PeopleWidth, contentH));
-                var crt = (RectTransform)content.transform; crt.anchorMin = crt.anchorMax = new Vector2(.5f, 1f); crt.pivot = new Vector2(.5f, 1f); crt.anchoredPosition = Vector2.zero;
-                var scroll = people.GetComponent<ScrollRect>(); if (scroll == null) scroll = people.AddComponent<ScrollRect>();
-                scroll.viewport = (RectTransform)viewport.transform; scroll.content = crt; scroll.horizontal = false; scroll.vertical = true;
-                scroll.movementType = ScrollRect.MovementType.Clamped; scroll.inertia = false; scroll.scrollSensitivity = 35f;
-                var rows = new Button[PeopleRows]; var rowImages = new Image[PeopleRows]; var rowLabels = new TextMeshProUGUI[PeopleRows];
-                for (int i = 0; i < PeopleRows; i++)
+                // ---- 人の一覧 (DES-UI-006: 3 列 × 3 段のセル。旧スクロールの部品は撤去する) ----
+                var people = KD_ShopSetupEditor.EnsureUiChild(page, PeopleName, PeoplePos, PeopleSize);
+                var oldScroll = people.GetComponent<ScrollRect>();
+                if (oldScroll != null) { UnityEngine.Object.DestroyImmediate(oldScroll); log.AppendLine("removed People ScrollRect"); }
+                var oldViewport = people.transform.Find("Viewport");
+                if (oldViewport != null) { UnityEngine.Object.DestroyImmediate(oldViewport.gameObject); log.AppendLine("removed People/Viewport (Content, Person0..15)"); }
+                for (int i = people.transform.childCount - 1; i >= 0; i--)
                 {
-                    var row = KD_ShopSetupEditor.EnsureButton(content.transform, "Person" + i, Vector2.zero, new Vector2(PeopleWidth - 20f, RowHeight),
-                        KD_UiSpriteEditor.ActionNeutral, font, "VRChatUser    " + Ja("course.travel.join.near").Replace("{0}", Ja("course.walk.upper")) + "  35 m", pouchBacking, "_JoinPick" + i, log);
-                    rows[i] = row.GetComponent<Button>(); rowImages[i] = row.GetComponent<Image>();
-                    rowLabels[i] = row.transform.Find("Label").GetComponent<TextMeshProUGUI>(); rowLabels[i].fontSize = 18f; rowLabels[i].alignment = TextAlignmentOptions.Left; rowLabels[i].overflowMode = TextOverflowModes.Ellipsis; rowLabels[i].lineSpacing = -10f;
-                    // 行は content の上端から並べる (人数で content の高さを変えても行が動かない。W3 レビュー 13)
-                    var rrt = (RectTransform)row.transform; rrt.anchorMin = rrt.anchorMax = new Vector2(.5f, 1f); rrt.pivot = new Vector2(.5f, 1f);
-                    rrt.anchoredPosition = new Vector2(0f, -2f - i * RowPitch);
-                    row.SetActive(false);
+                    var ch = people.transform.GetChild(i);
+                    if (ch.name.StartsWith("Person") && int.TryParse(ch.name.Substring(6), out int k) && k >= PeopleCells) { log.AppendLine("removed stale " + ch.name); UnityEngine.Object.DestroyImmediate(ch.gameObject); }
                 }
-                var empty = MakeText(people.transform, "Empty", Vector2.zero, new Vector2(PeopleWidth, 40f), 20f, font, Ja("course.travel.join.alone"));
+                var rows = new Button[PeopleCells]; var rowImages = new Image[PeopleCells]; var rowLabels = new TextMeshProUGUI[PeopleCells]; var rowInfos = new TextMeshProUGUI[PeopleCells];
+                var pagers = new TextMeshProUGUI[2];
+                float innerW = CellSize.x - CellPadX;
+                for (int c = 0; c < PeopleCells; c++)
+                {
+                    var cell = KD_ShopSetupEditor.EnsureButton(people.transform, "Person" + c, CellPos(c) - PeoplePos, CellSize,
+                        KD_UiSpriteEditor.ActionNeutral, font, "VRChatUser", pouchBacking, "_JoinPick" + c, log);
+                    rows[c] = cell.GetComponent<Button>(); rowImages[c] = cell.GetComponent<Image>();
+                    // 1 行目 = 表示名 (EnsureButton の Label を上の帯へ置き直す。毎回 EnsureButton が中央・全面に戻すので、その後で書く)
+                    var name = cell.transform.Find("Label").GetComponent<TextMeshProUGUI>();
+                    var nrt = name.rectTransform; nrt.anchoredPosition = new Vector2(0f, NameY); nrt.sizeDelta = new Vector2(innerW, NameHeight);
+                    name.fontSize = NamePoints; name.enableAutoSizing = false; name.alignment = TextAlignmentOptions.Left; name.overflowMode = TextOverflowModes.Ellipsis; name.lineSpacing = 0f;
+                    name.richText = false;   // 表示名に < があってもタグとして読ませない (TMP の既定は true。EnsureButton / ApplyIfPresent はここを触らない)
+                    name.text = "VRChatUser"; EditorUtility.SetDirty(name);
+                    rowLabels[c] = name;
+                    // 2 行目 = 地点と距離か状態 (共通フォント。13 言語の字形は Course/27 が共通フォントへ焼く)
+                    var info = MakeText(cell.transform, "Info", new Vector2(0f, InfoY), new Vector2(innerW, InfoHeight), InfoPoints, font, Ja("course.travel.join.near").Replace("{0}", Ja("course.walk.upper")) + "  " + Ja("course.travel.map.distance").Replace("{0}", "35"));
+                    info.alignment = TextAlignmentOptions.Left; info.overflowMode = TextOverflowModes.Ellipsis;
+                    info.enableAutoSizing = true; info.fontSizeMax = InfoPoints; info.fontSizeMin = InfoMinPoints; EditorUtility.SetDirty(info);
+                    rowInfos[c] = info;
+                    // ページ送りの記号 (セル 0 = ◀、セル 8 = ▶ と「p / q」)。10 人以上のときだけ実行時に出す
+                    var oldPager = cell.transform.Find("Pager");
+                    if (c == 0 || c == PeopleCells - 1)
+                    {
+                        var pager = MakeText(cell.transform, "Pager", Vector2.zero, new Vector2(innerW, CellSize.y - 8f), PagerPoints, font, c == 0 ? "◀" : "▶\n2 / 3");
+                        pager.alignment = TextAlignmentOptions.Center; EditorUtility.SetDirty(pager);
+                        pager.gameObject.SetActive(false);
+                        pagers[c == 0 ? 0 : 1] = pager;
+                    }
+                    else if (oldPager != null) UnityEngine.Object.DestroyImmediate(oldPager.gameObject);
+                    cell.SetActive(false);
+                }
+                var empty = MakeText(people.transform, "Empty", Vector2.zero, new Vector2(PeopleSize.x, 40f), 20f, font, Ja("course.travel.join.alone"));
                 people.SetActive(false);
+                // [人] のとき地図と一緒に隠す番号 (Course/84 が作る Mark1〜6)
+                var marks = new GameObject[6];
+                for (int s = 0; s < 6; s++)
+                {
+                    var mt = page.Find("Mark" + (s + 1));
+                    if (mt == null) throw new InvalidOperationException("Map number Mark" + (s + 1) + " missing: run Course/84 first");
+                    marks[s] = mt.gameObject;
+                }
+                // ◀ ▶ と数字の字形 (写真のページ送りと同じ定数・同じ焼き方。入っていれば何もしない)
+                string pagerMissing = KD_ShopSetupEditor.MissingGlyphs(KH_PhotoGalleryEditor.PagerGlyphs);
+                if (pagerMissing.Length > 0) { KD_ShopSetupEditor.AddGlyphs(pagerMissing, log); log.AppendLine("pager glyphs added: " + pagerMissing); }
 
                 p.travelModeSpotsImage = modeSpots.GetComponent<Image>(); p.travelModePeopleImage = modePeople.GetComponent<Image>();
                 p.travelModeSpotsLabel = modeSpots.transform.Find("Label").GetComponent<TextMeshProUGUI>(); p.travelModePeopleLabel = modePeople.transform.Find("Label").GetComponent<TextMeshProUGUI>();
                 p.travelModeSpotsLabel.fontSize = 20f; p.travelModePeopleLabel.fontSize = 20f;
-                p.travelPeopleContent = crt;
+                p.travelPeopleContent = null;   // DES-UI-006: スクロールの中身は撤去した
                 p.travelPeopleRoot = people; p.travelPeopleButtons = rows; p.travelPeopleImages = rowImages; p.travelPeopleLabels = rowLabels; p.travelPeopleEmpty = empty;
+                p.travelPeopleInfoLabels = rowInfos; p.travelPeoplePagerLabels = pagers; p.travelMapMarks = marks;
+                KH_CourseTravelMapEditor.ApplyFooterFit(p.travelFooterLabel);   // 84 を流し直さなくても自動縮小 (18→14pt) を付ける
                 p.travelAcceptButton = accept; p.travelAcceptLabel = acceptLabel;
                 p.travelJoinPendingButton = pending; p.travelJoinPendingLabel = pendingLabel;
                 p.travelNotice = notice;
@@ -214,6 +278,20 @@ namespace KominkaHillside.Editor
                 KH_CourseTravelNameFontEditor.ApplyIfPresent(p, notice);   // 85 を流し直しても表示名の補助フォントを戻す (段階 4)
                 UdonSharpEditorUtility.CopyProxyToUdon(p); EditorUtility.SetDirty(p);
                 EditorSceneManager.MarkSceneDirty(scene);
+                // ---- 保存前の検査 (DES-UI-006: 人の一覧のグリッドのプロキシ側・寸法・重なり・対応表・13 言語の収まり。通らなければ保存しない) ----
+                // backing の変数表は保存時に揃うことがあるので (vrc-udonsharp §4)、backing の検査は Course/81 の Validate に残す (Acc/1・2 と同じ分け方)
+                var errors = new List<string>();
+                var fit = new KH_CourseTravelEditor.Report();
+                ValidatePeopleGrid(p, pouchBacking, errors);
+                MeasurePeopleGrid(p, errors, fit);
+                report.info = fit.labelFit.Where(x => x.StartsWith("people ")).ToList();   // 縮んだ数の要約 (people grid / people footer summary)
+                if (errors.Count > 0)
+                {
+                    report.findings = errors; report.status = "NOT_SAVED";
+                    report.reason = "People grid check failed (" + errors.Count + "); scene NOT saved. Reopen the scene without saving to discard.";
+                    File.WriteAllText(OutDir + "/travel-join-build.json", JsonUtility.ToJson(report, true));
+                    throw new InvalidOperationException("[KH Travel Join] " + report.reason + " First: " + errors[0]);
+                }
                 if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Travel join build save failed");
             }
             catch
@@ -273,7 +351,7 @@ namespace KominkaHillside.Editor
                     Req(e, nb.publicVariables.TryGetVariableValue("reasonLabel", out object rlv) && rlv != null, "notice reasonLabel (backing)");
                 }
             }
-            // W3 レビュー 10: 配置の値・Collider・通知音・一覧のスクロールと行の対応
+            // W3 レビュー 10: 配置の値・Collider・通知音 (一覧のセルは ValidatePeopleGrid)
             Req(e, Mathf.Approximately(notice.distance, 1.1f) && Mathf.Approximately(notice.lowerDegrees, 15f) && Mathf.Approximately(notice.replaceMeters, 3f), "notice placement 1.1 m / 15 deg / 3 m");
             Req(e, notice.chime != null && notice.chime.clip != null && !notice.chime.playOnAwake && !notice.chime.loop, "notice chime wired (one shot)");
             if (board != null)
@@ -281,16 +359,6 @@ namespace KominkaHillside.Editor
                 var bcol = board.GetComponent<BoxCollider>(); var brect = (RectTransform)board.transform;
                 Req(e, bcol != null && Mathf.Approximately(bcol.size.x, brect.sizeDelta.x) && Mathf.Approximately(bcol.size.y, brect.sizeDelta.y) && Mathf.Approximately(brect.localScale.x, 0.001f), "notice collider matches the board (scale 0.001)");
             }
-            var scroll = p.travelPeopleRoot != null ? p.travelPeopleRoot.GetComponent<ScrollRect>() : null;
-            Req(e, scroll != null && scroll.content == p.travelPeopleContent && scroll.viewport != null && scroll.viewport.GetComponent<RectMask2D>() != null && !scroll.horizontal && scroll.vertical, "people ScrollRect wired (viewport mask, content)");
-            if (p.travelPeopleButtons != null && p.travelPeopleContent != null)
-                for (int i = 0; i < p.travelPeopleButtons.Length; i++)
-                {
-                    var b = p.travelPeopleButtons[i];
-                    Req(e, b != null && b.transform.parent == p.travelPeopleContent && b.name == "Person" + i && p.travelPeopleImages[i] == b.GetComponent<Image>() && p.travelPeopleLabels[i] == b.transform.Find("Label").GetComponent<TextMeshProUGUI>(), "people row " + i + " matches the arrays");
-                    var rt = b != null ? (RectTransform)b.transform : null;
-                    Req(e, rt != null && Mathf.Approximately(rt.anchorMin.y, 1f) && Mathf.Approximately(rt.anchoredPosition.y, -2f - i * RowPitch), "people row " + i + " anchored to the content top");
-                }
             Req(e, notice.language == p.language && notice.manager == m && notice.titleLabel != null && notice.placeLabel != null && notice.countLabel != null && notice.yesLabel != null && notice.noLabel != null && notice.pauseLabel != null && notice.blockLabel != null, "notice wired");
             // 手元メニュー
             var pb = UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
@@ -299,8 +367,7 @@ namespace KominkaHillside.Editor
             if (p.travelJoinPendingButton != null) CheckEvent(e, p.travelJoinPendingButton, pb, "_TravelShowNotice");
             var page = p.travelMapPage != null ? p.travelMapPage.transform : null;
             Req(e, page != null && p.travelPeopleRoot != null && p.travelPeopleRoot.transform.parent == page && !p.travelPeopleRoot.activeSelf, "people list on the map page, hidden at start");
-            Req(e, p.travelPeopleButtons != null && p.travelPeopleButtons.Length == PeopleRows && p.travelPeopleImages != null && p.travelPeopleImages.Length == PeopleRows && p.travelPeopleLabels != null && p.travelPeopleLabels.Length == PeopleRows, "16 people rows");
-            if (p.travelPeopleButtons != null) for (int i = 0; i < p.travelPeopleButtons.Length; i++) if (p.travelPeopleButtons[i] != null) CheckEvent(e, p.travelPeopleButtons[i].gameObject, pb, "_JoinPick" + i);
+            ValidatePeopleGrid(p, pb, e);   // DES-UI-006: 9 セル・ページ送り・地図を隠す配線・フッターの 2 つの配置・重なり・対応表
             if (page != null)
             {
                 foreach (var (name, evt) in new[] { (ModeSpotsName, "_TravelModeSpots"), (ModePeopleName, "_TravelModePeople"), (AcceptName, "_TravelToggleAccept") })
@@ -333,7 +400,8 @@ namespace KominkaHillside.Editor
                 if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out object fv) || fv == null) e.Add("FAIL backing " + field);
             foreach (var field in new[] { "travelNotice", "travelPeopleRoot", "travelAcceptButton", "travelJoinPendingButton" })
                 if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out object v) || v == null) e.Add("FAIL backing " + field);
-            if (pb == null || !pb.publicVariables.TryGetVariableValue("travelPeopleButtons", out object arr) || !(arr is Array a) || a.Length != PeopleRows) e.Add("FAIL backing travelPeopleButtons");
+            foreach (var (field, len) in new[] { ("travelPeopleButtons", PeopleCells), ("travelPeopleImages", PeopleCells), ("travelPeopleLabels", PeopleCells), ("travelPeopleInfoLabels", PeopleCells), ("travelPeoplePagerLabels", 2), ("travelMapMarks", 6) })
+                if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out object arr) || !(arr is Array a) || a.Length != len || a.Cast<object>().Any(x => x == null)) e.Add("FAIL backing " + field + " (length " + len + ", no null)");
             // 文言の収まり (日英)
             var go = new GameObject("TravelJoinMeasure", typeof(RectTransform)); go.hideFlags = HideFlags.HideAndDontSave;
             try
@@ -346,8 +414,6 @@ namespace KominkaHillside.Editor
                     Fit(sample, p.travelModeSpotsLabel, T("course.travel.join.spots"), code + " mode spots", e, report);
                     Fit(sample, p.travelModePeopleLabel, T("course.travel.join.people"), code + " mode people", e, report);
                     Fit(sample, p.travelJoinPendingLabel, T("course.travel.join.pending"), code + " pending", e, report);
-                    // 表示名は VRChat の上限に近い 15 字で測る (2 段。1 行目 = 名前、2 行目 = 地点・距離・状態)
-                    Fit(sample, p.travelPeopleLabels[0], "VRChatUser12345\n" + T("course.travel.join.near").Replace("{0}", T("course.travel.join.spot.bridgeDown")) + "  999 m  (" + T("course.travel.join.notAccepting") + ")", code + " person row", e, report);
                     Fit(sample, p.travelGoLabel, T("course.travel.join.cancel").Replace("{0}", "20"), code + " go cancel", e, report);
                     Fit(sample, p.travelGoLabel, T("course.travel.join.ask"), code + " go ask", e, report);
                     Fit(sample, notice.titleLabel, T("course.travel.join.notice.title").Replace("{0}", "VRChatUser12"), code + " notice title", e, report);
@@ -362,6 +428,7 @@ namespace KominkaHillside.Editor
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
             MeasureCall(p, notice, e, report);
+            MeasurePeopleGrid(p, e, report);   // DES-UI-006: セルの全状態・ページ送り・[人] のフッター (13 言語)
         }
 
         /// <summary>呼ぶの文言と設定の文言の収まり (13 言語全部。§F.2)。</summary>
@@ -390,11 +457,247 @@ namespace KominkaHillside.Editor
                     Fit(sample, notice.reasonLabel, T("course.travel.cooling").Replace("{0}", "10"), code + " reason cooling", e, report);
                     foreach (var key in new[] { "coming", "arrived", "notcoming", "unknown", "canceledby", "crossyield", "answerfirst" })
                         Fit(sample, p.travelStatusLabel, T("course.travel.call." + key).Replace("{0}", "VRChatUser12"), code + " status call." + key, e, report);
-                    Fit(sample, p.travelPeopleLabels[0], "VRChatUser12345\n" + T("course.travel.call.onway"), code + " person row on the way", e, report);
-                    Fit(sample, p.travelPeopleLabels[0], "VRChatUser12345\n" + T("course.travel.join.waiting").Replace("{0}", "20"), code + " person row waiting", e, report);
                 }
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        // ============================================================
+        // DES-UI-006: 人の一覧のグリッド (3 列 × 3 段 + ページ送り)
+        // ============================================================
+
+        /// <summary>Course/85 が撤去する旧スクロールの部品 (People の ScrollRect、Viewport 以下、Person9 以降) を、
+        /// 手元メニュー (KD_TreatPouch のプロキシと backing。配列ごと張り直す) と撤去する部品自身の外から参照している箇所。Transform の親子は数えない。</summary>
+        static List<string> OldScrollRefs(Transform people, KD_TreatPouch p, VRC.Udon.UdonBehaviour pouchBacking)
+        {
+            var doomed = new HashSet<UnityEngine.Object>();
+            void AddTree(Transform t)
+            {
+                foreach (var x in t.GetComponentsInChildren<Transform>(true)) { doomed.Add(x.gameObject); foreach (var c in x.GetComponents<Component>()) if (c != null) doomed.Add(c); }
+            }
+            var scroll = people.GetComponent<ScrollRect>(); if (scroll != null) doomed.Add(scroll);
+            var vp = people.Find("Viewport"); if (vp != null) AddTree(vp);
+            for (int i = 0; i < people.childCount; i++)
+            {
+                var ch = people.GetChild(i);
+                if (ch.name.StartsWith("Person") && int.TryParse(ch.name.Substring(6), out int k) && k >= PeopleCells) AddTree(ch);
+            }
+            var found = new List<string>();
+            if (doomed.Count == 0) return found;
+            foreach (var root in people.gameObject.scene.GetRootGameObjects())
+                foreach (var c in root.GetComponentsInChildren<Component>(true))
+                {
+                    if (c == null || c is Transform || doomed.Contains(c) || c == p || c == pouchBacking) continue;
+                    var it = new SerializedObject(c).GetIterator();
+                    while (it.Next(true))
+                        if (it.propertyType == SerializedPropertyType.ObjectReference && it.objectReferenceValue != null && doomed.Contains(it.objectReferenceValue))
+                            found.Add(c.GetType().Name + "(" + c.name + ")." + it.propertyPath + " -> " + it.objectReferenceValue.name);
+                }
+            return found;
+        }
+
+        /// <summary>Course/81: 9 セルの位置・大きさ・イベント・配列、ページ送りのラベル、地図を隠す配線、フッターの保存値 ([地点] の配置)、重なり、対応表。</summary>
+        static void ValidatePeopleGrid(KD_TreatPouch p, VRC.Udon.UdonBehaviour pb, List<string> e)
+        {
+            var page = p.travelMapPage != null ? p.travelMapPage.transform : null;
+            var root = p.travelPeopleRoot;
+            if (page == null || root == null) { e.Add("FAIL people grid: map page / people root missing (run Course/85)"); return; }
+            var rrt = (RectTransform)root.transform;
+            Req(e, root.GetComponent<ScrollRect>() == null && root.transform.Find("Viewport") == null, "people grid: the old ScrollRect / Viewport are gone (DES-UI-006; run Course/85)");
+            Req(e, Near(rrt.anchoredPosition, PeoplePos) && Near(rrt.sizeDelta, PeopleSize), "people grid container on the band " + PeoplePos + " " + PeopleSize + " (is " + rrt.anchoredPosition + " " + rrt.sizeDelta + ")");
+            for (int i = 0; i < root.transform.childCount; i++)
+            {
+                var ch = root.transform.GetChild(i);
+                if (ch.name.StartsWith("Person") && int.TryParse(ch.name.Substring(6), out int k) && k >= PeopleCells) e.Add("FAIL stale people cell " + ch.name + " (run Course/85)");
+            }
+            Req(e, p.travelPeopleContent == null, "travelPeopleContent cleared (the scroll content is gone)");
+            Req(e, KD_TreatPouch.PeopleCells == 9 && KD_TreatPouch.PeoplePerPage == 7 && KD_TreatPouch.PeoplePagedFrom == 10 && KD_TreatPouch.JoinMax == 80
+                && KD_TreatPouch.JoinCellEmpty == -1 && KD_TreatPouch.JoinCellPrev == -2 && KD_TreatPouch.JoinCellNext == -3, "paging constants: 9 cells, 7 per page, paged from 10, 80 max (DES-UI-006 §5.3)");
+            bool arrays = p.travelPeopleButtons != null && p.travelPeopleButtons.Length == PeopleCells && p.travelPeopleImages != null && p.travelPeopleImages.Length == PeopleCells
+                && p.travelPeopleLabels != null && p.travelPeopleLabels.Length == PeopleCells && p.travelPeopleInfoLabels != null && p.travelPeopleInfoLabels.Length == PeopleCells
+                && p.travelPeoplePagerLabels != null && p.travelPeoplePagerLabels.Length == 2;
+            Req(e, arrays, PeopleCells + " people cells (buttons / images / name labels / info labels) + 2 pager labels");
+            var shared = p.sectionTitleLabel != null ? p.sectionTitleLabel.font : null;
+            var cellRects = new List<Rect>();
+            if (arrays)
+                for (int c = 0; c < PeopleCells; c++)
+                {
+                    var b = p.travelPeopleButtons[c];
+                    if (b == null) { e.Add("FAIL people cell " + c + " missing"); continue; }
+                    var nameT = b.transform.Find("Label"); var infoT = b.transform.Find("Info");
+                    Req(e, b.transform.parent == root.transform && b.name == "Person" + c && p.travelPeopleImages[c] == b.GetComponent<Image>()
+                        && nameT != null && p.travelPeopleLabels[c] == nameT.GetComponent<TextMeshProUGUI>() && infoT != null && p.travelPeopleInfoLabels[c] == infoT.GetComponent<TextMeshProUGUI>(),
+                        "people cell " + c + " matches the arrays (Label = name, Info = 2nd line)");
+                    CheckEvent(e, b.gameObject, pb, "_JoinPick" + c);
+                    var rt = (RectTransform)b.transform;
+                    var at = rrt.anchoredPosition + rt.anchoredPosition;
+                    Req(e, Near(at, CellPos(c)) && Near(rt.sizeDelta, CellSize), "people cell " + c + " at " + CellPos(c) + " size " + CellSize + " (is " + at + " " + rt.sizeDelta + ")");
+                    var r = new Rect(at - rt.sizeDelta / 2f, rt.sizeDelta); cellRects.Add(r);
+                    Req(e, r.xMin >= BandLeft - .5f && r.xMax <= BandRight + .5f && r.yMax <= BandTop + .5f && r.yMin >= BandBottom - .5f, "people cell " + c + " inside the band x " + BandLeft + ".." + BandRight + " / y " + BandTop + ".." + BandBottom);
+                    Req(e, !b.gameObject.activeSelf, "people cell " + c + " hidden at start");
+                    foreach (var g in b.GetComponentsInChildren<Graphic>(true)) if (g.transform != b.transform && g.raycastTarget) e.Add("FAIL decoration blocks raycast: " + b.name + "/" + g.name);
+                    var info = p.travelPeopleInfoLabels[c];
+                    Req(e, info != null && shared != null && info.font == shared && info.overflowMode == TextOverflowModes.Ellipsis && !info.enableWordWrapping, "people cell " + c + " info: shared font (13-language glyphs), one line, ellipsis");
+                    var nm = p.travelPeopleLabels[c];
+                    Req(e, nm != null && nm.overflowMode == TextOverflowModes.Ellipsis && !nm.enableWordWrapping && !nm.enableAutoSizing && !nm.richText, "people cell " + c + " name: one line, ellipsis, fixed size, rich text off");
+                }
+            for (int k = 0; arrays && k < 2; k++)
+            {
+                var t = p.travelPeoplePagerLabels[k]; int cell = k == 0 ? 0 : PeopleCells - 1;
+                Req(e, t != null && p.travelPeopleButtons[cell] != null && t.transform.parent == p.travelPeopleButtons[cell].transform && t.name == "Pager" && t.font == shared && !t.raycastTarget && !t.gameObject.activeSelf,
+                    "pager label " + k + " under Person" + cell + " (shared font, no raycast, hidden at start)");
+            }
+            // MissingGlyphs / AddGlyphs は KD_ShopSetupEditor の FontAssetPath (private) を見る。セルの共通フォントがそれと同じであること
+            Req(e, shared != null && AssetDatabase.GetAssetPath(shared) == SharedFontPath, "people cells' shared font is " + SharedFontPath + " (the font MissingGlyphs / AddGlyphs bake; is " + (shared != null ? AssetDatabase.GetAssetPath(shared) : "none") + ")");
+            string glyphs = KD_ShopSetupEditor.MissingGlyphs(KH_PhotoGalleryEditor.PagerGlyphs);
+            Req(e, glyphs.Length == 0, "shared font has the pager glyphs " + KH_PhotoGalleryEditor.PagerGlyphs + (glyphs.Length > 0 ? " (missing " + glyphs + "; run Course/85)" : ""));
+            // [人] のとき地図と一緒に隠す番号
+            Req(e, p.travelMapMarks != null && p.travelMapMarks.Length == 6 && Enumerable.Range(0, 6).All(s => p.travelMapMarks[s] != null && page.Find("Mark" + (s + 1)) != null && p.travelMapMarks[s] == page.Find("Mark" + (s + 1)).gameObject),
+                "travelMapMarks = Mark1..6 (hidden with the map in [人])");
+            // フッターの文: 保存値は [地点] の配置 (実行時に [人] のときだけ 2 ボタンの左へ移す)
+            var footer = p.travelFooterLabel;
+            if (footer == null) e.Add("FAIL footer label missing");
+            else
+            {
+                var frt = footer.rectTransform;
+                Req(e, Near(frt.anchoredPosition, KH_CourseTravelMapEditor.FooterPos) && Near(frt.sizeDelta, KH_CourseTravelMapEditor.FooterSize) && footer.enableAutoSizing
+                    && Mathf.Approximately(footer.fontSizeMax, KH_CourseTravelMapEditor.FooterPoints) && Mathf.Approximately(footer.fontSizeMin, KH_CourseTravelMapEditor.FooterMinPoints),
+                    "footer saved at the [地点] layout " + KH_CourseTravelMapEditor.FooterPos + " " + KH_CourseTravelMapEditor.FooterSize + " autosize " + KH_CourseTravelMapEditor.FooterMinPoints + "-" + KH_CourseTravelMapEditor.FooterPoints + "pt (is " + frt.anchoredPosition + " " + frt.sizeDelta + " autosize=" + footer.enableAutoSizing + " " + footer.fontSizeMin + "-" + footer.fontSizeMax + "pt)");
+            }
+            var footerPeople = new Rect(KD_TreatPouch.FooterPeopleX - KD_TreatPouch.FooterPeopleW / 2f, KD_TreatPouch.FooterPeopleY - KD_TreatPouch.FooterPeopleH / 2f, KD_TreatPouch.FooterPeopleW, KD_TreatPouch.FooterPeopleH);
+            Req(e, footerPeople.xMin >= -KD_TreatSetupEditor.PanelWidth / 2f && footerPeople.yMin >= -KD_TreatSetupEditor.PanelHeight / 2f, "[人] footer inside the board");
+            // 重なり: セル・[人] のフッター ↔ 上段の行 (合流 / 撮影の受付・[地点] [人]・[もどる])・2 ボタン・状態の 1 行。端が接するのは可
+            var others = new List<(string name, Rect rect)>();
+            void Add(string n, Transform t, bool required)
+            {
+                if (t is RectTransform r) others.Add((n, new Rect(r.anchoredPosition - r.sizeDelta / 2f, r.sizeDelta)));
+                else if (required) e.Add("FAIL overlap check: " + n + " missing");
+            }
+            Add(AcceptName, page.Find(AcceptName), true); Add("FilmAcceptToggle", p.filmAcceptButton != null ? p.filmAcceptButton.transform : null, false);
+            Add(ModeSpotsName, page.Find(ModeSpotsName), true); Add(ModePeopleName, page.Find(ModePeopleName), true); Add("Back", page.Find("Back"), true);
+            Add(AskName, page.Find(AskName), true); Add(CallName, page.Find(CallName), true); Add("Status", p.travelStatusLabel != null ? p.travelStatusLabel.transform : null, true);
+            for (int c = 0; c < cellRects.Count; c++)
+            {
+                foreach (var (n, r) in others) if (Overlap(cellRects[c], r)) e.Add("FAIL people cell " + c + " overlaps " + n);
+                if (Overlap(cellRects[c], footerPeople)) e.Add("FAIL people cell " + c + " overlaps the [人] footer");
+            }
+            foreach (var (n, r) in others) if (Overlap(footerPeople, r)) e.Add("FAIL the [人] footer overlaps " + n);
+            CheckPeoplePaging(p, e);
+        }
+
+        static bool Near(Vector2 a, Vector2 b) { return Vector2.Distance(a, b) < .5f; }
+        /// <summary>重なり (0.5 未満のはみ出しと、端が接するのは重なりにしない)。</summary>
+        static bool Overlap(Rect a, Rect b) { const float t = .5f; return a.xMin + t < b.xMax && b.xMin + t < a.xMax && a.yMin + t < b.yMax && b.yMin + t < a.yMax; }
+
+        /// <summary>対応表 (KD_TreatPouch の private メソッド JoinCellIndex / JoinPageCount / JoinClampedPage) を、Editor 側に独立に書いた §5.3 の規則
+        /// (<see cref="SpecCellIndex"/>) と n = 1〜80 の全ページ・全セルで突き合わせる。全員に重複・欠落なく届くこと、空のページが無いこと、
+        /// セル 0 / 8 がページ送りになるのは 10 人以上だけ、退出で最後のページが空になれば 1 つ前へ戻ることも見る。
+        /// プロキシは普通の C# のクラスなので Editor では反射で呼べる (C# としての計算の確認。Udon VM での実行は Play / 実機)。</summary>
+        static void CheckPeoplePaging(KD_TreatPouch p, List<string> e)
+        {
+            const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic;
+            var cellIndex = typeof(KD_TreatPouch).GetMethod("JoinCellIndex", F);
+            var pageCount = typeof(KD_TreatPouch).GetMethod("JoinPageCount", F);
+            var clamp = typeof(KD_TreatPouch).GetMethod("JoinClampedPage", F);
+            if (cellIndex == null || pageCount == null || clamp == null) { e.Add("FAIL paging methods JoinCellIndex / JoinPageCount / JoinClampedPage not found on KD_TreatPouch"); return; }
+            int Idx(int n, int pg, int c) { return (int)cellIndex.Invoke(p, new object[] { n, pg, c }); }
+            int Pages(int n) { return (int)pageCount.Invoke(p, new object[] { n }); }
+            int Clamp(int pg, int n) { return (int)clamp.Invoke(p, new object[] { pg, n }); }
+            var bad = new List<string>();
+            for (int n = 1; n <= KD_TreatPouch.JoinMax; n++)
+            {
+                int pages = Pages(n);
+                if (pages != SpecPageCount(n)) { bad.Add("n=" + n + " pages " + pages + " != " + SpecPageCount(n)); continue; }
+                var seen = new int[n];
+                for (int pg = 0; pg < pages; pg++)
+                {
+                    int onPage = 0;
+                    for (int c = 0; c < PeopleCells; c++)
+                    {
+                        int got = Idx(n, pg, c), want = SpecCellIndex(n, pg, c);
+                        if (got != want) { bad.Add("n=" + n + " page " + pg + " cell " + c + " -> " + got + " (rule " + want + ")"); continue; }
+                        if (got >= 0) { if (got >= n) bad.Add("n=" + n + " page " + pg + " cell " + c + " index " + got + " out of range"); else { seen[got]++; onPage++; } }
+                        bool pager = got == KD_TreatPouch.JoinCellPrev || got == KD_TreatPouch.JoinCellNext;
+                        if (pager != (n >= 10 && (c == 0 || c == 8))) bad.Add("n=" + n + " page " + pg + " cell " + c + " pager=" + pager);
+                    }
+                    if (onPage == 0) bad.Add("n=" + n + " page " + pg + " has nobody");
+                }
+                for (int i = 0; i < n; i++) if (seen[i] != 1) bad.Add("n=" + n + " index " + i + " shown " + seen[i] + " times");
+                if (Clamp(pages, n) != pages - 1 || Clamp(-1, n) != 0 || Clamp(pages - 1, n) != pages - 1) bad.Add("n=" + n + " page clamp");
+                if (n >= 2 && Clamp(pages - 1, n - 1) != SpecPageCount(n - 1) - 1) bad.Add("n=" + n + " -> " + (n - 1) + " on the last page: clamped to " + Clamp(pages - 1, n - 1) + " (rule " + (SpecPageCount(n - 1) - 1) + ")");
+                if (Idx(n, 0, -1) != KD_TreatPouch.JoinCellEmpty || Idx(n, 0, PeopleCells) != KD_TreatPouch.JoinCellEmpty) bad.Add("n=" + n + " out-of-range cell not empty");
+            }
+            if (bad.Count > 0) e.Add("FAIL people paging (" + bad.Count + " mismatches): " + string.Join("; ", bad.Take(8)));
+        }
+
+        /// <summary>§5.3 の規則の Editor 側の写し (U# の定数を使わずに書く。突き合わせで U# 側の変更を検出する)。
+        /// 自分以外が 9 人以下: 1 ページ、セル c = 添字 c。10 人以上: 1 ページ 7 人、セル 0 = 前 (-2)、セル 1〜7 = 添字 page × 7 + (c − 1)、セル 8 = 次 (-3)。空 = -1。</summary>
+        public static int SpecPageCount(int n) { return n <= 9 ? 1 : (n + 6) / 7; }
+        public static int SpecCellIndex(int n, int page, int cell)
+        {
+            if (cell < 0 || cell > 8) return -1;
+            if (n <= 9) return cell < n ? cell : -1;
+            if (cell == 0) return -2;
+            if (cell == 8) return -3;
+            int idx = page * 7 + cell - 1;
+            return idx < n ? idx : -1;
+        }
+
+        /// <summary>セルの全状態とページ送り、[人] のフッター (435×90・18pt、収まらなければ自動縮小で 14pt まで。保存値は [地点] の配置なので、同じ設定の測定用の枠で測る) の収まり (13 言語)。</summary>
+        static void MeasurePeopleGrid(KD_TreatPouch p, List<string> e, KH_CourseTravelEditor.Report report)
+        {
+            if (p.travelPeopleLabels == null || p.travelPeopleLabels.Length == 0 || p.travelPeopleLabels[0] == null || p.travelPeopleInfoLabels == null || p.travelPeopleInfoLabels.Length == 0 || p.travelPeopleInfoLabels[0] == null || p.travelFooterLabel == null)
+            { e.Add("FAIL people grid labels missing for the fit check (run Course/85)"); return; }
+            var go = new GameObject("TravelPeopleMeasure", typeof(RectTransform)); go.hideFlags = HideFlags.HideAndDontSave;
+            var fgo = new GameObject("TravelPeopleFooterMeasure", typeof(RectTransform)); fgo.hideFlags = HideFlags.HideAndDontSave;
+            try
+            {
+                var sample = go.AddComponent<TextMeshProUGUI>(); var lang = p.language;
+                var src = p.travelFooterLabel; var footer = fgo.AddComponent<TextMeshProUGUI>();
+                footer.font = src.font; footer.fontSize = KD_TreatPouch.FooterPeoplePoints; footer.enableAutoSizing = true; footer.fontSizeMax = KD_TreatPouch.FooterPeoplePoints; footer.fontSizeMin = KH_CourseTravelMapEditor.FooterMinPoints; footer.enableWordWrapping = src.enableWordWrapping; footer.margin = src.margin; footer.richText = src.richText;
+                footer.rectTransform.sizeDelta = new Vector2(KD_TreatPouch.FooterPeopleW, KD_TreatPouch.FooterPeopleH);
+                var name = p.travelPeopleLabels[0]; var info = p.travelPeopleInfoLabels[0];
+                // 表示名は VRChat の上限に近い 15 字 (英数) で 1 行が入ること。長い名前 (日本語 15 字など) は … で切る設計なので、ここでは測らない
+                Fit(sample, name, "VRChatUser12345", "person name 15", e, report);
+                foreach (var pager in p.travelPeoplePagerLabels ?? new TextMeshProUGUI[0])
+                {
+                    if (pager == null) continue;
+                    Fit(sample, pager, "◀", "pager prev", e, report);
+                    Fit(sample, pager, "▶\n" + LongestPage, "pager next " + LongestPage, e, report);
+                }
+                string[] spotKeys = { "KD_TreatPouch.WordWalkGate", "KD_TreatPouch.WordWalkPlaza", "course.walk.upper", "course.travel.join.spot.bridgeUp", "course.walk.river", "course.travel.join.spot.bridgeDown" };
+                string[] walkKeys = { "KD_TreatPouch.WordWalkPlaza", "KD_TreatPouch.WordWalkGate", "course.walk.forward", "course.walk.reverse", "course.walk.upper", "course.walk.river" };
+                string[] reasons = { "reason.near", "reason.behind", "reason.bridge", "reason.water", "reason.offtrail" };
+                foreach (string code in lang.languageCodes)
+                {
+                    string T(string key) { return lang._TextForLanguage(key, code); }
+                    // セルの 2 行目: 通常 (6 地点の呼び名 × 3 桁の距離) / 受付 OFF / 準備中 / 返事待ち / 向かっている (状態のときは状態の文だけ)
+                    foreach (var sk in spotKeys)
+                        Fit(sample, info, T("course.travel.join.near").Replace("{0}", T(sk)) + "  " + T("course.travel.map.distance").Replace("{0}", "999"), code + " cell info normal " + sk, e, report);
+                    Fit(sample, info, T("course.travel.join.notAccepting"), code + " cell info not accepting", e, report);
+                    Fit(sample, info, T("course.travel.join.notReady"), code + " cell info not ready", e, report);
+                    Fit(sample, info, T("course.travel.join.waiting").Replace("{0}", "20"), code + " cell info waiting", e, report);
+                    Fit(sample, info, T("course.travel.call.onway"), code + " cell info on the way", e, report);
+                    // [人] のフッター: 1 行目 = 合流先か着地点の理由、2 行目 = 犬の数、3 行目 = 散歩先 (折り返さないので、行ごとの幅と 3 行の高さ)
+                    Fit(sample, footer, T("course.travel.join.target").Replace("{0}", "VRChatUser12345"), code + " people footer target", e, report);
+                    foreach (var r in reasons) Fit(sample, footer, T("course.travel.join." + r), code + " people footer " + r, e, report);
+                    Fit(sample, footer, T("course.travel.map.dogs").Replace("{0}", "6"), code + " people footer dogs", e, report);
+                    Fit(sample, footer, T("course.travel.map.alone"), code + " people footer alone", e, report);
+                    foreach (var wk in walkKeys) Fit(sample, footer, T("course.travel.map.walkdest").Replace("{0}", T(wk)), code + " people footer walkdest " + wk, e, report);
+                    Fit(sample, footer, T("course.travel.join.pick"), code + " people footer pick", e, report);
+                    string longestWalk = walkKeys.Select(T).OrderByDescending(x => x.Length).First();
+                    string longestFirst = reasons.Select(r => T("course.travel.join." + r)).OrderByDescending(x => x.Length).First();
+                    Fit(sample, footer, longestFirst + "\n" + T("course.travel.map.dogs").Replace("{0}", "6") + "\n" + T("course.travel.map.walkdest").Replace("{0}", longestWalk), code + " people footer 3 lines", e, report);
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(go); UnityEngine.Object.DestroyImmediate(fgo); }
+            // 2 行目は 16pt から 12pt まで縮めて収める (設計の 16pt を下回る)。縮んだ文の数を 1 行にまとめて残す (fit=1。fit=2 は上で Label overflow)
+            var shrunkFooter = report.labelFit.Where(x => x.Contains(" people footer ") && x.EndsWith("fit=1")).ToList();
+            report.labelFit.Add("people footer summary: " + shrunkFooter.Count + " [人] footer texts shrink below " + KD_TreatPouch.FooterPeoplePoints + "pt (autosize to " + KH_CourseTravelMapEditor.FooterMinPoints + "pt)"
+                + (shrunkFooter.Count > 0 ? ": " + string.Join(" | ", shrunkFooter.Take(12).Select(x => x.Substring(0, Math.Min(60, x.Length)))) : ""));
+            var shrunk = report.labelFit.Where(x => x.Contains(" cell info ") && x.EndsWith("fit=1")).ToList();
+            report.labelFit.Add("people grid summary: " + shrunk.Count + " cell-info texts shrink below " + InfoPoints + "pt (autosize to " + InfoMinPoints + "pt)"
+                + (shrunk.Count > 0 ? ": " + string.Join(" | ", shrunk.Take(12).Select(x => x.Substring(0, Math.Min(60, x.Length)))) : ""));
         }
 
         /// <summary>受付箱のネットワーク入口は 7 つだけで、名前と引数の型が決めたとおり (§F.3。属性の有無だけでは足りない)。

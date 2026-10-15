@@ -479,6 +479,15 @@ namespace KominkaDogRun.Editor
                 if (id == KD_TreatPouch.TabAcc)
                     Check(System.Linq.Enumerable.All(p.accRows, r => r.transform.parent == s.content),
                         "all " + KD_AccessorySetsEditor.MenuCount + " accessory rows in scroll content (7th item and later were off the panel until 2026-09-16)");
+                // 裏山改変 (DES-UI-006): かざりのサブタブ (Acc/1) が入っていれば、上段の部品・押し先・配線を Acc/2 と同じ検査で見る (収まりは Acc/2 が 13 言語で測る)。
+                // さんぽと違いスクロールは残すので、上と下のスクロールの検査もそのまま通す (continue しない)
+                if (id == KD_TreatPouch.TabAcc && KominkaHillside.Editor.KH_AccSubTabEditor.IsApplied(p))
+                {
+                    var accErrors=new System.Collections.Generic.List<string>();
+                    KominkaHillside.Editor.KH_AccSubTabEditor.Validate(p,accErrors,null,null,null);
+                    foreach(var w in accErrors)log.AppendLine("  "+w);
+                    Check(accErrors.Count==0,"accessory sub tabs (DES-UI-006, same checks as Acc/2): "+accErrors.Count+" findings");
+                }
                 if (id == KD_TreatPouch.TabToy)
                     foreach(Transform row in s.content) Check(row.Find("Button")?.GetComponent<Button>()!=null && row.Find("Disc")?.GetComponent<Button>()!=null,"toy row has [ball] and [disc]: "+row.name);
                 if (id == KD_TreatPouch.TabWalk)
