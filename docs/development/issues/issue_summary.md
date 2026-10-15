@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-155 件 — 対応中 19 / 確認待ち 93 / 未着手 7 / 保留 3 / 完了 33
+155 件 — 対応中 19 / 確認待ち 92 / 未着手 7 / 保留 3 / 完了 34
 
 ## 実行キュー
 
@@ -119,7 +119,6 @@
 | [IMP-WLD-014](IMP-WLD-014-cart-single-back-cushion.md) | Medium | カートの背もたれのクッションが 2 つ並んでいて二人乗りに見える。一人用の 1 つにする (Blender 原本 scripts/art/osanpo-cart.py から再生成) | review | 再生成した FBX・BaseColor を取り込み済み (10-13 の IMP-WLD-015 の再生成後は Body 2,576 / LOD1 936、Cart/2 Verify CART_OK)。ユーザーが背面と乗車時の見た目を確認 |
 | [IMP-WLD-015](IMP-WLD-015-cart-remove-armrest-stop-switch.md) | Medium | カートの肘掛け (とって) の先にある停止スイッチ (StopL / StopR の操作面) がもう機能しておらず見た目も変。撤去した (停止は操作帯の「停止」だけ)。メッシュ・コード・シーン・文書から外し、Verify CART_OK | review | 実装・取り込み済み (2026-10-13、Body 2,576 / LOD1 936、Cart/2 Verify CART_OK 2,088)。残りはユーザーの確認: 全カートの肘掛け先に操作面が無いこと (PCVR の見た目) と、操作帯の「停止」で降りられること (Play) |
 | [IMP-WLD-016](IMP-WLD-016-portal-board-in-front-of-gate.md) | Medium | 古民家ドッグランへの案内板を門の前に置き、ポータルはその隣に出す (いまは門の開口の西側、壁線から 1 m 外) | review | ユーザーの Play (PCVR / Desktop): スポーンで振り返ると門の正面 1.2 m に案内板、Interact で西隣 (46.65, 38.12) にポータルが出るか。スポーンの真後ろ約 1.2 m に板が立つ (読む場所がスポーン位置と重なる) のが気になるか。実機でポータルに入れるか等は IMP-WLD-006 のまま |
-| [BUG-UI-001](BUG-UI-001-shopkeeper-walk-info-destinations.md) | Low | おじいさん (KD_ShopKeeper) の「さんぽ」の案内文が、行き先を「広場」と「古民家側の入口」の 2 つだけと言っている (実際は 6 目的地) | review | ユーザー確認: おじいさんの [さんぽ] の案内文が 6 つの行き先で、手元メニューの呼び名と合い、11 言語でも枠に収まるか (A0-20) |
 | [IMP-ENV-009](IMP-ENV-009-course-roadside-scenery.md) | Low | 秋の木立と低木で周回道の単調さを和らげ、川・古民家・犬の見通しを守る。10-04 着手、負荷の詳細調査は景観改善後の VER-ENV-002 | review | 第2段階の川沿い・地面の塗り分けを比較HTMLで確認。小物品質もIMP-ENV-012で追加。詳しい性能調査は景観後のVER-ENV-002 |
 | [IMP-UI-005](IMP-UI-005-complete-thirteen-language-ui.md) | High | 13言語の枠だけでなく、散歩・追加画面を含む全UIの翻訳を揃える | todo | 実装着手時に現行コードと仕様の差を整理する。今回はIssueと資料の更新のみ |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | 先行 Animal Wash との比較の記録 (上回った点・残る違和感の文言は聞いていない)、2 人協力 (B2)、Desktop/Touch、Quest 単体・iOS の実機、負荷・容量。PCVR 1 人の洗い心地 (A17 を含む) は 10-02 ユーザー総合判断で確認済み (比較の記録はなし)。すすぎ改善 (f9ed660) は 10-02 の判断に含まない (確定、c64ae42)。その後 10-08 にユーザーが IMP-DOG-025 の完了を明言 (項目別の記録なし、A-1 の個別結果は無い) |
@@ -136,6 +135,7 @@
 
 | ID | 重要度 | 概要 | 日付 |
 |----|--------|------|------|
+| [BUG-UI-001](BUG-UI-001-shopkeeper-walk-info-destinations.md) | Low | おじいさん (KD_ShopKeeper) の「さんぽ」の案内文が、行き先を「広場」と「古民家側の入口」の 2 つだけと言っていた (実際は 6 目的地)。IMP-UI-010 で行き先の列挙を地図の看板へ移し、症状は消えた | 2026-10-15 |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | 新規制作はハロウィンパレードA案1本に確定。曲・演出・衣装と検収をIMP-LIV-001へ引き継ぐ | 2026-10-14 |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 2026-10-14 ユーザー決定で不採用・取り下げ。犬を傾けて置く拡張は実装せず、実装予定から外す | 2026-10-14 |
 | [DES-DOG-012](DES-DOG-012-gesture-tricks-and-trainer.md) | Medium | 左手ジェスチャーで犬に芸を指示する追加案。既存のお手・ポイント解放を維持し、新しい芸をトレーナー特典にする案を調査。Desktop・Touch は同じ芸をメニュー操作 | 2026-10-13 |
