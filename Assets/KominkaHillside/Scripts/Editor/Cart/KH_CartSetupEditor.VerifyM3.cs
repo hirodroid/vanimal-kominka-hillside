@@ -15,8 +15,25 @@ namespace KominkaHillside.Editor
     /// Probe は ParkedStartDistance と ReclaimCandidate (Runtime の判定、Reflection)。</summary>
     public static partial class KH_CartSetupEditor
     {
+        /// <summary>BUG-DOG-016: おもちゃ (ディスク・ボール) の層。</summary>
+        public const int ToyLayer = 13;
+        public const float StationToyMargin = 0.5f;
+
+        /// <summary>BUG-DOG-016: p をカートの座標系 (回転だけ。箱の寸法は m なので縮尺は掛けない) の xz に移し、本体の箱
+        /// (BodyColliderCenter ± BodyColliderSize/2) を margin だけ広げた外なら true。y は見ない。Walking/5 のディスク検査も使う。</summary>
+        public static bool OutsideBodyXZ(Transform cart, Vector3 p, float margin, out Vector2 localXZ)
+        {
+            var l = Quaternion.Inverse(cart.rotation) * (p - cart.position); localXZ = new Vector2(l.x, l.z);
+            var h = BodyColliderSize * 0.5f;
+            return Mathf.Abs(l.x - BodyColliderCenter.x) > h.x + margin || Mathf.Abs(l.z - BodyColliderCenter.z) > h.z + margin;
+        }
+
         static void M3Check(V v, KH_CartManager manager, SerializedObject mso, UdonBehaviour mb, KH_LeashManager leash, KH_WalkRoute route, Transform stationsRoot, KH_CartSeat[] seats, KH_CartStationPanel[] cartPanels)
         {
+            // BUG-DOG-016 (2026-10-15): 広場のディスクが見本カート StationCart_1 の真下にあった。見本カートは Collider を持たないので
+            // 物理の問い合わせ (OverlapBox) ではなく、有効な layer 13 (おもちゃ) の Collider の bounds.center を全部走査する。y は見ない
+            // (広場の下の置き場 KH_ToyPark のおもちゃも xz で数える。今は見本カートの下に置き場はない)
+            var toyColliders = UnityEngine.Object.FindObjectsOfType<Collider>(true).Where(tc => tc.gameObject.layer == ToyLayer && tc.enabled && tc.gameObject.activeInHierarchy).ToArray();
             // ---- 静的カート (メッシュだけ) ----
             for (int s = 0; s < StationCount; s++)
             {
@@ -31,6 +48,9 @@ namespace KominkaHillside.Editor
                 v.Req(sc.GetComponentsInChildren<Renderer>(true).Length > 0, n + " has renderers");
                 bool fbx = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath) != null;
                 if (fbx) v.Req(sc.GetComponent<LODGroup>() != null && sc.GetComponent<LODGroup>().lodCount == 2, n + " LODGroup (2 levels)");
+                // Codex 2026-10-15: the collider is a circle of its xz extent around bounds.center, not a point (a collider straddling the box edge counts)
+                var toysUnder = toyColliders.Select(tc => { float r = new Vector2(tc.bounds.extents.x, tc.bounds.extents.z).magnitude; return OutsideBodyXZ(sc, tc.bounds.center, StationToyMargin + r, out Vector2 lxz) ? null : tc.name + " local xz " + lxz.ToString("F2") + " r " + r.ToString("F2"); }).Where(msg => msg != null).ToArray();
+                v.Req(toysUnder.Length == 0, n + " no toy (layer " + ToyLayer + ") within the body box + " + StationToyMargin.ToString("F1") + " m (xz, collider extent included; " + toyColliders.Length + " toy colliders scanned" + (toysUnder.Length == 0 ? "" : "; offenders: " + string.Join(", ", toysUnder)) + ")");   // BUG-DOG-016
                 if (leash.spotPositions != null && leash.spotPositions.Length > s && leash.spotYaws != null && leash.spotYaws.Length > s)
                 {
                     var tr = BuildTrack(route); ProjectStops(tr, route, leash);

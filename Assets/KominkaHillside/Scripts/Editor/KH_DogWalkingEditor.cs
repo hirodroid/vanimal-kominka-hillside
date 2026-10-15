@@ -30,11 +30,7 @@ namespace KominkaHillside.Editor
         // Same Product (ownership) and Listing (purchase page) as KominkaDogRun (world-ui-spec section 6). Asset copied with its GUID.
         public const string TrainerProductPath="Assets/KominkaHillside/Data/CE/KD_Product_Trainer.asset";
         public const string TrainerProductId="prod_8c044b21-35f2-4ebb-80f9-e4f685f7bf9f", TrainerListingId="prod_81a5ac65-bd3d-40ad-8edb-2fc7d13b1cee";
-        // BUG-DOG-001: balls rest on the flat upper clearing (KH_TerrainPrototypeConfig.Flats[PlazaFlat], y=19 within r=12),
-        // off the trail end and away from the shade tree. VRCObjectSync respawns to this start position.
-        public static readonly Vector2 BallHomeCenter = new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+3.5f, KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+3.5f);
-        public const float BallSpacing=0.9f, BallRestHeight=0.07f;
-        // IMP-DOG-005: discs rest in a second row behind the balls (same flat), one per dog.
+        // IMP-DOG-005: one disc per dog on the plaza flat (KH_TerrainPrototypeConfig.Flats[PlazaFlat], y=19 within r=12).
         // IMP-DOG-012: all six dogs. Each breed needs its own clips + facts from Frisbee/2 (Build refuses a breed without them).
         public static readonly string[] FrisbeeKeys = {"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
         // IMP-DOG-012 (Codex M1): every breed in FrisbeeKeys x both clip variants is read through the one typed reader
@@ -45,16 +41,34 @@ namespace KominkaHillside.Editor
             KH_FrisbeePrototypeEditor.ReadAllFacts(FrisbeeKeys,out jump,out twist);
         }
         public static readonly Color[] DiscColors = {new Color(.90f,.30f,.25f),new Color(.95f,.60f,.75f),new Color(.95f,.80f,.15f),new Color(.35f,.55f,.95f),new Color(.85f,.45f,.20f),new Color(.90f,.90f,.95f)};
+        // Disc rest grid (i = Keys index, 3 x 2). Lineage: BUG-DOG-001 ball grid NE of the plaza centre -> IMP-DOG-005/019 disc row 2.2 m
+        // behind it -> BUG-DOG-016 (2026-10-15): that row lay under the plaza display cart StationCart_1 and 1.4 m from the cart track,
+        // so the grid moved WEST of the centre: >= 2.5 m (DiscTrackClearance) from the track centreline (moving carts stagger +-0.6,
+        // body half width 0.41, dogs sway +-0.6) and clear of the display cart / panel. Code-owned since then: Walking/5b rewrites the
+        // six scene discs to DiscHome(i) (VRCObjectSync respawns to the scene start position) and Walking/5 checks both.
+        public static readonly Vector2 DiscHomeOffset = new Vector2(-4.4f,4.0f);   // grid centre from the plaza flat centre (72, 127) -> (67.6, 131.0)
+        public const float DiscSpacing=0.9f, DiscRestHeight=0.03f, DiscTrackClearance=2.5f, DiscCartMargin=0.5f, DiscPanelClearance=1f;
         public static Vector3 DiscHome(int i)
         {
-            Vector3 b=PlazaToySpot(i);float z=b.z+2.2f;
-            return new Vector3(b.x,Ground(b.x,z)+0.03f,z);
+            float x=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+DiscHomeOffset.x+((i%3)-1)*DiscSpacing;
+            float z=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+DiscHomeOffset.y+((i/3)-0.5f)*DiscSpacing;
+            return new Vector3(x,Ground(x,z)+DiscRestHeight,z);
         }
-        // The plaza grid where the balls rested until 2026-09-26 night (BUG-DOG-001). Only the disc row still hangs off it.
-        static Vector3 PlazaToySpot(int i)
+        // BUG-DOG-016: the cart track = the closed-loop polyline of KH_WalkRoute.nodePositions (null when the route or its positions are missing).
+        static Vector3[] RouteLoop(KH_WalkRoute route)
         {
-            float x=BallHomeCenter.x+((i%3)-1)*BallSpacing, z=BallHomeCenter.y+((i/3)-0.5f)*BallSpacing;
-            return new Vector3(x,Ground(x,z)+BallRestHeight,z);
+            return route!=null&&route.count>=2&&route.nodePositions!=null&&route.nodePositions.Length==route.count?route.nodePositions:null;
+        }
+        // 2D (xz) distance from p to the polyline, every segment, plus the closing one when the route is a closed loop.
+        static float TrackClearance2D(Vector3[] loop,bool closed,Vector3 p)
+        {
+            float best=float.MaxValue;var q=new Vector2(p.x,p.z);int n=loop.Length;
+            for(int k=0;k<(closed?n:n-1);k++)
+            {
+                var a=new Vector2(loop[k].x,loop[k].z);var b=new Vector2(loop[(k+1)%n].x,loop[(k+1)%n].z);var ab=b-a;
+                float t=ab.sqrMagnitude<1e-8f?0f:Mathf.Clamp01(Vector2.Dot(q-a,ab)/ab.sqrMagnitude);best=Mathf.Min(best,Vector2.Distance(q,a+ab*t));
+            }
+            return best;
         }
         // IMP-DOG-019 (2026-09-26 night): one toy out per dog. The ball starts in the toy park (and VRCObjectSync
         // respawns it there); [Ball] in the hand menu brings it out and sends the disc down, and back (KH_ToyRecall).
@@ -339,7 +353,7 @@ namespace KominkaHillside.Editor
                 int fk=Array.IndexOf(FrisbeeKeys,key);var facts=frisbeeJump[fk];var twistFacts=frisbeeTwist[fk]; // validated up front (Codex M1)
                 bool created;var disc=KH_FrisbeePrototypeEditor.BuildDisc(root.transform,"KH_Frisbee_"+key,"KH_FrisbeeDisc_"+key,DiscColors[i],out created);
                 foreach(var t in disc.GetComponentsInChildren<Transform>(true))t.gameObject.layer=13;
-                if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // human-owned once placed (review M4)
+                if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // a NEW disc only (review M4); existing ones are moved by Walking/5b (BUG-DOG-016)
                 var c=Add<KH_FrisbeeCatch>(Child(root.transform,"KH_FrisbeeCatch_"+key).gameObject,true);
                 KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts,twistFacts);
                 // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the
@@ -451,6 +465,34 @@ namespace KominkaHillside.Editor
             else{var fresh=surface.navMeshData;surface.RemoveData();EditorUtility.CopySerialized(fresh,old);surface.navMeshData=old;surface.AddData();EditorUtility.SetDirty(old);}
             EditorUtility.SetDirty(surface);EditorSceneManager.SaveOpenScenes();AssetDatabase.SaveAssets();
             Report("navigation","vertices="+NavMesh.CalculateTriangulation().vertices.Length);
+        }
+
+        // BUG-DOG-016 (2026-10-15): move the six scene discs to DiscHome(i). Build places only a NEW disc and VRCObjectSync respawns to the
+        // scene start position, so the scene objects themselves move here. Idempotent; marks the scene dirty but does NOT save.
+        [MenuItem("Tools/KominkaHillside/Walking/5b Rehome Discs")]
+        public static void RehomeDiscs()
+        {
+            Guard();var scene=EditorSceneManager.GetActiveScene();
+            if(scene.isDirty)throw new InvalidOperationException("Save/reconcile unrelated scene edits first");
+            var root=GameObject.Find("KH_Dogs");if(root==null)throw new InvalidOperationException("KH_Dogs not found (Walking/3 Build first)");
+            var discs=FrisbeeKeys.Select(k=>root.transform.Find("KH_Frisbee_"+k)).ToArray();   // all present before anything moves
+            for(int k=0;k<discs.Length;k++)if(discs[k]==null)throw new InvalidOperationException("Missing KH_Dogs/KH_Frisbee_"+FrisbeeKeys[k]+" (Walking/3 Build creates it at DiscHome)");
+            var route=root.GetComponentInChildren<KH_WalkRoute>(true);var loop=RouteLoop(route);
+            var log=new StringBuilder();int moved=0;Undo.RecordObjects(discs,"Rehome discs (BUG-DOG-016)");   // Codex 2026-10-15: undoable
+            for(int k=0;k<discs.Length;k++)
+            {
+                string key=FrisbeeKeys[k];int i=Array.IndexOf(Keys,key);var disc=discs[k];   // DiscHome takes the Keys index, as Build does
+                Vector3 before=disc.position,home=DiscHome(i);Quaternion beforeRot=disc.rotation;
+                disc.position=home;disc.rotation=Quaternion.identity;
+                if(Vector3.Distance(before,home)>1e-4f||Quaternion.Angle(beforeRot,Quaternion.identity)>.01f)moved++;
+                log.AppendLine(key+" before "+before.ToString("F2")+" -> after "+home.ToString("F2")+" (moved "+Vector3.Distance(before,home).ToString("F2")+" m), cart track clearance "+(loop==null?"- (no KH_WalkRoute nodePositions)":TrackClearance2D(loop,route.closedLoop,home).ToString("F2")+" m"));
+            }
+            Physics.SyncTransforms();
+            for(int k=0;k<discs.Length;k++)   // info only: what else sits within 0.5 m of the new spot (terrain skipped, triggers ignored)
+                foreach(var col in Physics.OverlapSphere(discs[k].position,.5f,~0,QueryTriggerInteraction.Ignore))
+                    if(!col.transform.IsChildOf(discs[k])&&!(col is TerrainCollider))log.AppendLine("INFO "+FrisbeeKeys[k]+" within 0.5 m: "+col.name+" (layer "+col.gameObject.layer+" "+LayerMask.LayerToName(col.gameObject.layer)+")");
+            if(moved>0)EditorSceneManager.MarkSceneDirty(scene);
+            Report("rehome","moved "+moved+" of "+discs.Length+" discs to DiscHome (BUG-DOG-016)\n"+log+"NOT saved: run Walking/5 and Cart/2, then save");
         }
 
         [MenuItem("Tools/KominkaHillside/Walking/5 Verify")]
@@ -719,13 +761,49 @@ namespace KominkaHillside.Editor
                 var liveV=SceneLive(out var liveSpotV);
                 Check(f.sleepBoard==sleepBoardV&&f.liveSystem==liveV&&w.liveSystem==liveV&&w.liveSpot==liveSpotV,"sleep board = KH_Dogs/KD_SleepBoard when built (IMP-DOG-016, else null) / live = the scene KD_LiveSystem and KD_LiveDogSpot if any (else null) for "+key);
             }
-            // IMP-DOG-012: six discs in the row behind the balls. Placement is human-owned once a disc exists (Build only
-            // places a NEW one at DiscHome(i); the Lab disc keeps wherever it already rests), so this checks that no two
-            // discs sit on top of each other rather than pinning them to DiscHome.
+            // IMP-DOG-012: six discs, no two on top of each other. The rest position was human-owned until 2026-10-15 (Build only
+            // places a NEW disc at DiscHome(i)); since BUG-DOG-016 it is code-owned (Walking/5b rewrites the scene discs), so the
+            // block after this one also pins each disc to DiscHome and keeps it clear of the cart.
             {
                 var discPos=FrisbeeKeys.Select(k=>root.transform.Find("KH_Frisbee_"+k)).Where(t=>t!=null).Select(t=>t.position).ToArray();
                 float minGap=float.MaxValue;for(int a=0;a<discPos.Length;a++)for(int b=a+1;b<discPos.Length;b++)minGap=Mathf.Min(minGap,Vector3.Distance(discPos[a],discPos[b]));
                 Check(discPos.Length==FrisbeeKeys.Length&&(discPos.Length<2||minGap>=0.3f),"all "+FrisbeeKeys.Length+" discs present and apart (closest pair "+(discPos.Length<2?"-":minGap.ToString("F2"))+" m >= 0.30)");
+            }
+            // BUG-DOG-016 (2026-10-15): the cart stepped on the plaza discs. Each disc (and the DiscHome code value, so it stays valid even if
+            // someone moves a scene disc) is >= DiscTrackClearance (xz) from the closed-loop KH_WalkRoute polyline; each scene disc is at
+            // DiscHome, outside every display cart's body box + DiscCartMargin (xz, cart frame), DiscPanelClearance (xz) from every
+            // station panel, and on the NavMesh (the dog fetches it). The display carts have no collider, so this is geometry only.
+            {
+                var trackLoop=RouteLoop(walkRoute);bool trackClosed=walkRoute!=null&&walkRoute.closedLoop;
+                if(trackLoop==null)Check(false,"cart track for the disc clearance: KH_WalkRoute with nodePositions under KH_Dogs (count "+(walkRoute==null?"-":walkRoute.count.ToString())+") missing (BUG-DOG-016)");
+                var cartRootGo=GameObject.Find(KH_CartSetupEditor.RootName);var stRoot=cartRootGo!=null?cartRootGo.transform.Find(KH_CartSetupEditor.StationsName):null;
+                var stCarts=stRoot==null?new Transform[0]:Enumerable.Range(0,KH_CartSetupEditor.StationCount).Select(sx=>stRoot.Find(KH_CartSetupEditor.StationCartPrefix+sx)).Where(tx=>tx!=null).ToArray();
+                var stPanels=stRoot==null?new Transform[0]:Enumerable.Range(0,KH_CartSetupEditor.StationCount).Select(sx=>stRoot.Find("Station_"+sx)).Where(tx=>tx!=null).ToArray();
+                if(stRoot==null)Check(false,KH_CartSetupEditor.RootName+"/"+KH_CartSetupEditor.StationsName+" missing: display cart / panel clearance of the discs not checked (BUG-DOG-016)");
+                else{var missingSt=Enumerable.Range(0,KH_CartSetupEditor.StationCount).SelectMany(sx=>new[]{KH_CartSetupEditor.StationCartPrefix+sx,"Station_"+sx}).Where(nm=>stRoot.Find(nm)==null).ToArray();
+                    Check(missingSt.Length==0,"display carts "+KH_CartSetupEditor.StationCartPrefix+"0.."+(KH_CartSetupEditor.StationCount-1)+" and panels Station_0.."+(KH_CartSetupEditor.StationCount-1)+" under "+KH_CartSetupEditor.RootName+"/"+KH_CartSetupEditor.StationsName+" (missing: "+(missingSt.Length==0?"none":string.Join(", ",missingSt))+")");}
+                Vector2 boxHalf=new Vector2(KH_CartSetupEditor.BodyColliderSize.x*.5f+DiscCartMargin,KH_CartSetupEditor.BodyColliderSize.z*.5f+DiscCartMargin);
+                foreach(string dKey in FrisbeeKeys)
+                {
+                    int dIdx=Array.IndexOf(Keys,dKey);Vector3 dHome=DiscHome(dIdx);   // the Keys index, as Build and 5b use
+                    if(trackLoop!=null){float hd=TrackClearance2D(trackLoop,trackClosed,dHome);Check(hd>=DiscTrackClearance,"DiscHome code value clear of the cart track "+dKey+" "+hd.ToString("F2")+" m >= "+DiscTrackClearance.ToString("F2"));}
+                    var dT=root.transform.Find("KH_Frisbee_"+dKey);if(dT==null)continue;   // counted by "all discs present" above
+                    Vector3 dP=dT.position;float dOff=Vector2.Distance(new Vector2(dP.x,dP.z),new Vector2(dHome.x,dHome.z)),dOffY=Mathf.Abs(dP.y-dHome.y);
+                    Check(dOff<=.05f&&dOffY<=.05f,"disc rests at DiscHome "+dKey+" (xz off "+dOff.ToString("F3")+" m, y off "+dOffY.ToString("F3")+" m, each <= 0.05; code-owned since BUG-DOG-016, Walking/5b rewrites it)");
+                    if(trackLoop!=null){float td=TrackClearance2D(trackLoop,trackClosed,dP);Check(td>=DiscTrackClearance,"cart track clearance "+dKey+" "+td.ToString("F2")+" m >= "+DiscTrackClearance.ToString("F2"));}
+                    if(stRoot==null)continue;
+                    Transform nearCart=null;Vector2 nearLocal=Vector2.zero;float nearCartD=float.MaxValue;bool cartClear=true;
+                    foreach(var sc in stCarts)
+                    {
+                        Vector2 lxz;if(!KH_CartSetupEditor.OutsideBodyXZ(sc,dP,DiscCartMargin,out lxz))cartClear=false;
+                        float cd=Vector2.Distance(new Vector2(dP.x,dP.z),new Vector2(sc.position.x,sc.position.z));if(cd<nearCartD){nearCartD=cd;nearCart=sc;nearLocal=lxz;}
+                    }
+                    Check(cartClear,"disc outside every display cart body box + "+DiscCartMargin.ToString("F2")+" m "+dKey+" (nearest "+(nearCart==null?"-":nearCart.name+" local xz "+nearLocal.ToString("F2")+" vs half box "+boxHalf.ToString("F2"))+")");
+                    Transform nearPanel=null;float nearPanelD=float.MaxValue;
+                    foreach(var sp in stPanels){float pd=Vector2.Distance(new Vector2(dP.x,dP.z),new Vector2(sp.position.x,sp.position.z));if(pd<nearPanelD){nearPanelD=pd;nearPanel=sp;}}
+                    Check(nearPanel==null||nearPanelD>=DiscPanelClearance,"disc clear of every station panel "+dKey+" (nearest "+(nearPanel==null?"-":nearPanel.name+" "+nearPanelD.ToString("F2")+" m")+" >= "+DiscPanelClearance.ToString("F2")+")");
+                    NavMeshHit dNav;Check(NavMesh.SamplePosition(dP,out dNav,1f,NavMesh.AllAreas),"NavMesh within 1 m of the disc (SamplePosition; not a path check) "+dKey);
+                }
             }
             var recallB=root.GetComponentInChildren<KH_ToyRecall>(true);
             Check(recallB!=null&&recallB.discs!=null&&recallB.discs.Length==6&&recallB.discCatchers.Length==6&&Enumerable.Range(0,6).All(i=>{bool want=Array.IndexOf(FrisbeeKeys,Keys[i])>=0;var dt=root.transform.Find("KH_Frisbee_"+Keys[i]);var ct=root.transform.Find("KH_FrisbeeCatch_"+Keys[i]);

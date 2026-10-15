@@ -44,6 +44,7 @@ updated: 2026-10-02
   - `_LastResult` / `_LastRow` の意味は変えない (段 2 の失敗は「出す」の失敗にしない)。段 2 の間も `_GateToy` は Pending を返す (多くは 1 秒未満)
 - Walking/5 Verify: 置き場が広場の地面より 2 m 以上下・床の底が RespawnHeightY より 1 m 以上上・広場中心の真下、床と壁 4 枚の BoxCollider、Layer 17 で NavMesh の層に入らずおもちゃと当たる、Renderer なし、`Ball0..5` / `Disc0..5`、`parkBall` / `parkDisc` の配線、ボール 6 個が置き場の位置から 0.05 m 以内、ディスクが置き場ではなく広場にある。BUG-DOG-001 の「ボールが広場の平坦部・NavMesh 上」の 2 項目はこれに置き換えた
 - 独立レビュー (Codex): 下の「2026-09-26 夜のレビュー」
+- 2026-10-15: DiscHome を広場中心の西 (67.6, 131.0) 中心の格子へ移した ([BUG-DOG-016](BUG-DOG-016-plaza-disc-under-cart.md))
 
 #### 2026-09-26 夜のレビュー (Codex、2 回)
 
