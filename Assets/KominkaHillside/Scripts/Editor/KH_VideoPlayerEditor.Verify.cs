@@ -130,10 +130,11 @@ namespace KominkaHillside.Editor
             Check(front.core == core, "FrontendHandler.core = the Core (SingletonCoreControl is an inspector mark; the wiring is checked here)");
             using (var so = new SerializedObject(front))
             {
-                var q = so.FindProperty("enableQueueList");
-                Check(q != null && !q.boolValue, "FrontendHandler.enableQueueList = false (a new URL plays at once)" + (q == null ? " (field not found)" : ""));
+                var q = so.FindProperty("enableQueueList"); var hs = so.FindProperty("historySize");
+                Check(q != null && q.boolValue, "FrontendHandler.enableQueueList = true (§8: the queue)" + (q == null ? " (field not found)" : ""));
+                Check(hs != null && hs.intValue == HistorySize, "FrontendHandler.historySize = " + HistorySize + " (§8)" + (hs == null ? " (field not found)" : " (actual " + hs.intValue + ")"));
             }
-            Heap(B(front), "enableQueueList", false, Check, Warn);
+            Heap(B(front), "enableQueueList", true, Check, Warn); Heap(B(front), "historySize", HistorySize, Check, Warn);
 
             // ---------------------------------------------------------------- audio (2D)
             var problems = new List<string>();
@@ -169,6 +170,11 @@ namespace KominkaHillside.Editor
             var url = page.Find("UrlInput") != null ? page.Find("UrlInput").GetComponent<VRCUrlInputField>() : null;
             var slider = page.Find("VolumeSlider") != null ? page.Find("VolumeSlider").GetComponent<Slider>() : null;
             var placeholder = page.Find("UrlInput/Placeholder") != null ? page.Find("UrlInput/Placeholder").GetComponent<TextMeshProUGUI>() : null;
+            var listT = page.Find(ListName);
+            Transform LT(string path) { return listT != null ? listT.Find(path) : null; }
+            Button LBt(string path) { var t = LT(path); return t != null ? t.GetComponent<Button>() : null; }
+            TextMeshProUGUI LLb(string path) { var t = LT(path); return t != null ? LabelOf(t.gameObject) : null; }
+            TextMeshProUGUI LTx(string path) { var t = LT(path); return t != null ? t.GetComponent<TextMeshProUGUI>() : null; }
             var fields = new (string name, Object got, Object want)[]
             {
                 ("frontend", vp.frontend, front), ("core", vp.core, core), ("language", vp.language, c.language), ("urlInput", vp.urlInput, url), ("screen", vp.screen, raw),
@@ -181,8 +187,38 @@ namespace KominkaHillside.Editor
                 ("spriteUnmuted", vp.spriteUnmuted, KH_IconSpriteEditor.Load(MuteIcon)), ("spriteMuted", vp.spriteMuted, KH_IconSpriteEditor.Load(MutedIcon)),
                 ("fullRoot", vp.fullRoot, fullT != null ? fullT.gameObject : null), ("fullScreen", vp.fullScreen, fullRaw),
                 ("fullButton", vp.fullButton, Bt("Full")), ("fullCloseButton", vp.fullCloseButton, fullT != null && fullT.Find("Close") != null ? fullT.Find("Close").GetComponent<Button>() : null),
+                // §8: skip / repeat / list
+                ("skipButton", vp.skipButton, Bt("Skip")), ("repeatButton", vp.repeatButton, Bt("Repeat")),
+                ("repeatIcon", vp.repeatIcon, page.Find("Repeat") != null ? IconOf(page.Find("Repeat").gameObject) : null),
+                ("spriteRepeat", vp.spriteRepeat, KH_IconSpriteEditor.Load("repeat")), ("spriteRepeatOne", vp.spriteRepeatOne, KH_IconSpriteEditor.Load(RepeatOneIcon)),
+                ("listButton", vp.listButton, Bt("List")), ("listRoot", vp.listRoot, listT != null ? listT.gameObject : null),
+                ("tabHistoryButton", vp.tabHistoryButton, LBt("TabHistory")), ("tabQueueButton", vp.tabQueueButton, LBt("TabQueue")),
+                ("tabHistoryLabel", vp.tabHistoryLabel, LLb("TabHistory")), ("tabQueueLabel", vp.tabQueueLabel, LLb("TabQueue")),
+                ("listEmptyLabel", vp.listEmptyLabel, LTx("EmptyLabel")), ("pagePrevButton", vp.pagePrevButton, LBt("PagePrev")), ("pageNextButton", vp.pageNextButton, LBt("PageNext")),
+                ("pageLabel", vp.pageLabel, LTx("PageLabel")), ("spriteAdd", vp.spriteAdd, KH_IconSpriteEditor.Load(AddIcon)), ("spriteRemove", vp.spriteRemove, KH_IconSpriteEditor.Load(CloseIcon)),
                 ("page", vp.page, page.gameObject), ("headerLabel", vp.headerLabel, header != null ? LabelOf(header.gameObject) : null),
             };
+            // §8: the 6 rows (arrays in row order)
+            var rowArrays = new (string name, Object[] got, Func<int, Object> want)[]
+            {
+                ("rowRoots", vp.rowRoots, i => LT("Row" + i) != null ? LT("Row" + i).gameObject : null),
+                ("rowLabels", vp.rowLabels, i => LTx("Row" + i + "/Label")),
+                ("rowPlayButtons", vp.rowPlayButtons, i => LBt("Row" + i + "/Play")),
+                ("rowSecondButtons", vp.rowSecondButtons, i => LBt("Row" + i + "/Second")),
+                ("rowSecondIcons", vp.rowSecondIcons, i => LT("Row" + i + "/Second") != null ? IconOf(LT("Row" + i + "/Second").gameObject) : null),
+            };
+            foreach (var ra in rowArrays)
+            {
+                bool ok = ra.got != null && ra.got.Length == ListRows;
+                for (int i = 0; ok && i < ListRows; i++) { var w = ra.want(i); ok = w != null && ra.got[i] != null && ra.got[i] == w; }
+                Check(ok, "KH_VideoPage." + ra.name + " = Row0.." + (ListRows - 1) + " in order" + (ra.got == null ? " (null)" : " (" + ra.got.Length + " entries)"));
+                // Codex 低 (2026-10-16): the backing heap too (length 6, every element; Unity components are stored as themselves)
+                Heap(vpU, ra.name, Enumerable.Range(0, ListRows).Select(i => (object)ra.want(i)).ToArray(), Check, Warn);
+            }
+            // Codex 低 (2026-10-16): the backing heap of the §8 single references (the list, tabs, pager, skip / repeat / list buttons)
+            var heapSingles = new HashSet<string> { "listRoot", "tabHistoryButton", "tabQueueButton", "tabHistoryLabel", "tabQueueLabel", "listEmptyLabel",
+                "pagePrevButton", "pageNextButton", "pageLabel", "skipButton", "repeatButton", "repeatIcon", "listButton" };
+            foreach (var f in fields) if (heapSingles.Contains(f.name)) Heap(vpU, f.name, f.want, Check, Warn);
             foreach (var f in fields) Check(f.got != null && f.want != null && f.got == f.want, "KH_VideoPage." + f.name + " = " + (f.want != null ? f.want.name : "(expected object missing)") + (f.got == null ? " (null)" : f.got != f.want ? " (actual " + f.got.name + ")" : ""));
             Heap(vpU, "core", B(core), Check, Warn); Heap(vpU, "frontend", B(front), Check, Warn); Heap(vpU, "screen", raw, Check, Warn);
             Heap(vpU, "urlInput", url, Check, Warn); Heap(vpU, "page", page.gameObject, Check, Warn); Heap(vpU, "language", B(c.language), Check, Warn);
@@ -198,10 +234,21 @@ namespace KominkaHillside.Editor
             CheckEvent(header, "m_OnClick", pU, "_VideoOpen", typeof(KD_TreatPouch), Check);
             CheckEvent(fullT, "m_OnClick", vpU, "_FullClose", typeof(KH_VideoPage), Check);
             CheckEvent(fullT != null ? fullT.Find("Close") : null, "m_OnClick", vpU, "_FullClose", typeof(KH_VideoPage), Check);
+            // §8: the list
+            CheckEvent(LT("TabHistory"), "m_OnClick", vpU, "_ListTabHistory", typeof(KH_VideoPage), Check);
+            CheckEvent(LT("TabQueue"), "m_OnClick", vpU, "_ListTabQueue", typeof(KH_VideoPage), Check);
+            CheckEvent(LT("PagePrev"), "m_OnClick", vpU, "_ListPagePrev", typeof(KH_VideoPage), Check);
+            CheckEvent(LT("PageNext"), "m_OnClick", vpU, "_ListPageNext", typeof(KH_VideoPage), Check);
+            for (int i = 0; i < ListRows; i++)
+            {
+                CheckEvent(LT("Row" + i + "/Play"), "m_OnClick", vpU, "_RowPlay" + i, typeof(KH_VideoPage), Check);
+                CheckEvent(LT("Row" + i + "/Second"), "m_OnClick", vpU, "_RowSecond" + i, typeof(KH_VideoPage), Check);
+            }
 
             // ---------------------------------------------------------------- §7 icons and the full-screen overlay
             VerifyIcons(page, fullT, Check);
             VerifyFullOverlay(c, fullT, Check);
+            VerifyListPanel(page, listT, Check);
             foreach (var evt in new[] { "_PageOpened", "_RefreshLanguage" }) Check(typeof(KH_VideoPage).GetMethod(evt) != null, "KH_VideoPage." + evt + " exists (the pouch sends it)");
 
             // ---------------------------------------------------------------- pouch / BGM
@@ -318,6 +365,12 @@ namespace KominkaHillside.Editor
             var buttons = new List<(Transform t, string icon)> { (page.Find("Submit"), SubmitIcon), (page.Find("Mute"), MuteIcon) };
             for (int i = 0; i < ControlNames.Length; i++) buttons.Add((page.Find(ControlNames[i]), ControlIcons[i]));
             buttons.Add((fullT != null ? fullT.Find("Close") : null, CloseIcon));
+            var listT = page.Find(ListName);
+            for (int i = 0; i < ListRows; i++)
+            {
+                buttons.Add((listT != null ? listT.Find("Row" + i + "/Play") : null, "play"));
+                buttons.Add((listT != null ? listT.Find("Row" + i + "/Second") : null, AddIcon));   // the initial sprite; KH_VideoPage swaps add / close per tab
+            }
             foreach (var b in buttons)
             {
                 var img = b.t != null ? IconOf(b.t.gameObject) : null;
@@ -330,6 +383,80 @@ namespace KominkaHillside.Editor
                     "[" + (b.t != null ? b.t.name : "?") + "] shows the icon '" + b.icon + "' (white, preserveAspect, " + side + " px = " + (IconFraction * 100f) + "% of the short side), no text label"
                     + (img != null && img.sprite != want ? " (actual " + (img.sprite != null ? img.sprite.name : "none") + ")" : "") + (b.t != null && b.t.Find("Label") != null ? " (a Label is left)" : ""));
             }
+        }
+
+        /// <summary>§8: 一覧の矩形 = 画面の矩形、非表示、画面より前に描く、上段 (タブ 2 + ◀ n/m ▶) が重ならず内側、6 行が 48 px の等ピッチで内側・行の部品が重ならない、
+        /// 題は 1 行・Ellipsis・自動縮小 18 → 14pt で 44 px に 1 行が入る (vrc-world-ui §10.1)、想定外の子が無い。</summary>
+        static void VerifyListPanel(Transform page, Transform listT, Action<bool, string> Check)
+        {
+            Check(listT != null, PageName + "/" + ListName + " exists (Player/1)");
+            if (listT == null) return;
+            var rt = (RectTransform)listT;
+            var screen = page.Find("Screen");
+            Check(Vector2.Distance(rt.anchoredPosition, ScreenPos) < 0.5f && Vector2.Distance(rt.sizeDelta, ScreenSize) < 0.5f, ListName + " has the screen's rect " + ScreenSize + " at " + ScreenPos + " (actual " + rt.sizeDelta + " at " + rt.anchoredPosition + ")");
+            Check(!listT.gameObject.activeSelf, ListName + " hidden in the scene ([list] swaps it with the screen)");
+            Check(screen != null && listT.GetSiblingIndex() > screen.GetSiblingIndex(), ListName + " draws over the screen");
+            var bg = listT.GetComponent<Image>();
+            Check(bg != null && bg.raycastTarget && bg.color.a > 0.9f, ListName + " has an opaque backdrop that takes the pointer");
+            var inner = new Rect(-ScreenSize * 0.5f, ScreenSize);
+            // ---- top row ----
+            var top = new List<(string, Rect)>();
+            foreach (var spec in new[] { ("TabHistory", TabHistoryPos, TabSize), ("TabQueue", TabQueuePos, TabSize), ("PagePrev", PagePrevPos, PageButtonSize), ("PageLabel", PageLabelPos, PageLabelSize), ("PageNext", PageNextPos, PageButtonSize) })
+            {
+                var t = listT.Find(spec.Item1) as RectTransform;
+                Check(t != null && Vector2.Distance(t.anchoredPosition, spec.Item2) < 0.5f && Vector2.Distance(t.sizeDelta, spec.Item3) < 0.5f && Inside(RectOf(t), inner),
+                    ListName + "/" + spec.Item1 + " " + spec.Item3 + " at " + spec.Item2 + ", inside the list" + (t == null ? " (missing)" : ""));
+                if (t != null) top.Add((spec.Item1, RectOf(t)));
+            }
+            var topHits = Overlaps(top);
+            Check(topHits.Count == 0, ListName + " top row: no overlap" + (topHits.Count > 0 ? ": " + string.Join(", ", topHits) : ""));
+            // ---- rows ----
+            float topBottom = ListTopY - TabSize.y * 0.5f;
+            var rowRects = new List<(string, Rect)>();
+            for (int i = 0; i < ListRows; i++)
+            {
+                var row = listT.Find("Row" + i) as RectTransform;
+                var want = new Vector2(0f, RowY(i));
+                Check(row != null && Vector2.Distance(row.anchoredPosition, want) < 0.5f && Vector2.Distance(row.sizeDelta, RowSize) < 0.5f && Inside(RectOf(row), inner)
+                    && RectOf(row).yMax <= topBottom - 6f + 0.5f, ListName + "/Row" + i + " " + RowSize + " at " + want + " (pitch " + RowPitch + "), inside the list, under the top row" + (row == null ? " (missing)" : ""));
+                if (row == null) continue;
+                rowRects.Add(("Row" + i, RectOf(row)));
+                var parts = new List<(string, Rect)>();
+                var ok = true;
+                foreach (var spec in new[] { ("Label", RowLabelPos, RowLabelSize), ("Play", RowPlayPos, RowButtonSize), ("Second", RowSecondPos, RowButtonSize) })
+                {
+                    var t = row.Find(spec.Item1) as RectTransform;
+                    if (t == null || Vector2.Distance(t.anchoredPosition, spec.Item2) > 0.5f || Vector2.Distance(t.sizeDelta, spec.Item3) > 0.5f || !Inside(RectOf(t), new Rect(-RowSize * 0.5f, RowSize))) ok = false;
+                    if (t != null) parts.Add((spec.Item1, RectOf(t)));
+                }
+                var partHits = Overlaps(parts);
+                Check(ok && partHits.Count == 0 && row.childCount == 3, ListName + "/Row" + i + ": Label " + RowLabelSize + " + [Play] + [Second] " + RowButtonSize + " inside the row, no overlap, nothing else" + (partHits.Count > 0 ? ": " + string.Join(", ", partHits) : ""));
+                var label = row.Find("Label") != null ? row.Find("Label").GetComponent<TextMeshProUGUI>() : null;
+                if (label != null)
+                {
+                    float line = 0f;
+                    if (label.font != null && label.font.faceInfo.pointSize > 0) line = (label.font.faceInfo.ascentLine - label.font.faceInfo.descentLine) / label.font.faceInfo.pointSize * label.fontSizeMax;
+                    Check(!label.enableWordWrapping && label.overflowMode == TextOverflowModes.Ellipsis && !label.richText && !label.raycastTarget && label.enableAutoSizing
+                        && Mathf.Approximately(label.fontSizeMax, RowFontMax) && Mathf.Approximately(label.fontSizeMin, RowFontMin) && line > 0f && line <= RowLabelSize.y,
+                        ListName + "/Row" + i + "/Label: one line, Ellipsis, no rich text, no pointer, " + RowFontMax + " -> " + RowFontMin + "pt, one line " + line.ToString("F1") + " px fits " + RowLabelSize.y + " px (vrc-world-ui §10.1)");
+                }
+                else Check(false, ListName + "/Row" + i + "/Label is a TMP text");
+            }
+            for (int i = 1; i < rowRects.Count; i++)
+            {
+                float pitch = rowRects[i - 1].Item2.center.y - rowRects[i].Item2.center.y;
+                Check(Mathf.Abs(pitch - RowPitch) < 0.5f, ListName + " rows " + (i - 1) + " / " + i + " are " + RowPitch + " px apart (" + pitch + ")");
+            }
+            var rowHits = Overlaps(rowRects.Concat(top).ToList());
+            Check(rowHits.Count == 0, ListName + ": the rows overlap neither each other nor the top row" + (rowHits.Count > 0 ? ": " + string.Join(", ", rowHits) : ""));
+            var empty = listT.Find("EmptyLabel") as RectTransform;
+            Check(empty != null && Vector2.Distance(empty.anchoredPosition, EmptyPos) < 0.5f && Vector2.Distance(empty.sizeDelta, EmptySize) < 0.5f && Inside(RectOf(empty), inner),
+                ListName + "/EmptyLabel " + EmptySize + " at " + EmptyPos + " inside the list (shown only when there are no rows)");
+            var allowed = new HashSet<string> { "TabHistory", "TabQueue", "PagePrev", "PageLabel", "PageNext", "EmptyLabel" };
+            for (int i = 0; i < ListRows; i++) allowed.Add("Row" + i);
+            var extra = new List<string>();
+            foreach (Transform child in listT) if (!allowed.Contains(child.name)) extra.Add(child.name);
+            Check(extra.Count == 0, "no unexpected child in " + ListName + (extra.Count > 0 ? ": " + string.Join(", ", extra) : ""));
         }
 
         /// <summary>全画面の覆い: 板の最後の子・非表示・黒い全面のボタン・16:9 の画面が板の内側・[×] が右上で画面とも板の外とも重ならない・レイヤー。</summary>
@@ -396,12 +523,12 @@ namespace KominkaHillside.Editor
                 bool column = !top && spec.name != "Screen" && spec.name != "ScreenFrame";
                 if (column) Check(rc.xMin >= ColumnLeft - 0.01f && rc.xMax <= ColumnRight + 0.01f, "page " + spec.name + " inside the right column x " + ColumnLeft + ".." + ColumnRight + " (" + rc.xMin + ".." + rc.xMax + ")");
             }
-            var hits = Overlaps(rects.Where(x => x.Item1 != "ScreenFrame").ToList());
+            var hits = Overlaps(rects.Where(x => x.Item1 != "ScreenFrame").ToList());   // ListPanel is not in PageLayout (it covers the screen on purpose; VerifyListPanel)
             var frame = rects.Where(x => x.Item1 == "ScreenFrame").Select(x => x.Item2).ToArray();
             if (frame.Length == 1) foreach (var x in rects) if (x.Item1 != "ScreenFrame" && x.Item1 != "Screen" && x.Item2.Overlaps(frame[0])) hits.Add("ScreenFrame x " + x.Item1);
             Check(hits.Count == 0, "page parts overlap each other nowhere (" + rects.Count + " parts)" + (hits.Count > 0 ? ": " + string.Join(", ", hits) : ""));
             var extra = new List<string>();
-            foreach (Transform child in page) if (!PageLayout().Any(s => s.name == child.name)) extra.Add(child.name);
+            foreach (Transform child in page) if (child.name != ListName && !PageLayout().Any(s => s.name == child.name)) extra.Add(child.name);
             Check(extra.Count == 0, "no unexpected child on the page" + (extra.Count > 0 ? ": " + string.Join(", ", extra) : ""));
         }
 
@@ -415,6 +542,15 @@ namespace KominkaHillside.Editor
             // §7: the control buttons are icons (no words to measure); the volume label is the number only
             MeasureOne(c, Lb("Back"), code => TextOrNull(c.catalog, code, "gift.back"), "[back]", Check);
             MeasureOne(c, Tx("VolumeLabel"), code => "100%", "volume label (worst '100%')", Check);
+            // §8: the list's tabs, page label and empty line (the row titles are runtime text: VRChat fallback glyphs, not measured)
+            TextMeshProUGUI L(string path) { var t = page.Find(ListName + "/" + path); return t != null ? (path.StartsWith("Tab") ? LabelOf(t.gameObject) : t.GetComponent<TextMeshProUGUI>()) : null; }
+            // the tabs show the count: history is capped at HistorySize (20), the queue has no cap -> 2 digits assumed
+            MeasureOne(c, L("TabHistory"), code => { var t = TextOrNull(c.catalog, code, ListHistoryKey); return t != null ? t + " (" + HistorySize + ")" : null; }, "list tab [history (" + HistorySize + ")]", Check);
+            MeasureOne(c, L("TabQueue"), code => { var t = TextOrNull(c.catalog, code, ListQueueKey); return t != null ? t + " (99)" : null; }, "list tab [queue (99)]", Check);
+            Note("list tab [queue (n)] is measured with 2 digits; a queue of 100 or more may shrink past the minimum / be cut (no cap in VizVid)");
+            MeasureOne(c, L("EmptyLabel"), code => TextOrNull(c.catalog, code, ListEmptyKey), "list empty line", Check);
+            MeasureOne(c, L("PageLabel"), code => "99/99", "list page label (worst '99/99')", Check);
+            Note("list row titles (who added it + title or URL) are runtime strings: their glyphs come from VRChat's fallback font, not the shared font (device check)");
             MeasureOne(c, Tx("Note"), code => TextOrNull(c.catalog, code, "video.player.note"), "note (3 short lines, wraps, " + NoteFontMax + " -> " + NoteFontMin + "pt in " + NoteSize + ")", Check);
             { var note = Tx("Note"); Check(note != null && note.enableWordWrapping && note.enableAutoSizing && Mathf.Approximately(note.fontSizeMax, NoteFontMax) && Mathf.Approximately(note.fontSizeMin, NoteFontMin),
                 "note wraps and auto-sizes " + NoteFontMax + " -> " + NoteFontMin + "pt"); }
@@ -424,7 +560,7 @@ namespace KominkaHillside.Editor
             {
                 string k = key;
                 if (TextOrNull(c.catalog, c.catalog.fallbackLanguage, k) == null) { Note("state " + k + ": not in the catalog yet (optional), not measured"); continue; }
-                MeasureOne(c, Tx("State"), code => { var t = TextOrNull(c.catalog, code, k); return t?.Replace("{0}", k.EndsWith(".wait") ? "5" : LongPlayerName); }, "state " + key, Check);
+                MeasureOne(c, Tx("State"), code => { var t = TextOrNull(c.catalog, code, k); return t?.Replace("{0}", k.EndsWith(".wait") ? "5" : k.EndsWith(".queued") ? "99" : LongPlayerName); }, "state " + key, Check);
             }
             // the section title shrinks to 320 when both [写真] and [動画] are in the header: every title (and the page's own) at the current width
             var title = c.pouch.sectionTitleLabel;
@@ -503,11 +639,19 @@ namespace KominkaHillside.Editor
         {
             if (u == null) { Check(false, "backing missing for " + field); return; }
             if (!u.publicVariables.TryGetVariableValue(field, out object got)) { Warn("backing heap of " + (u.programSource != null ? u.programSource.name : "?") + " has no " + field + " yet (populated on save / reload)"); return; }
-            bool ok = Equals(got, want) || (got is Object go && want is Object wo && go == wo) || (got == null && want is Object nw && nw == null);
+            bool ok;
+            if (want is Array wa) ok = got is Array ga && ga.Length == wa.Length && Enumerable.Range(0, wa.Length).All(i => Same(ga.GetValue(i), wa.GetValue(i)));
+            else ok = Same(got, want);
             Check(ok, "backing " + (u.programSource != null ? u.programSource.name : "?") + "." + field + " = " + Describe(want) + (ok ? "" : " (actual " + Describe(got) + ")"));
         }
 
-        static string Describe(object o) { return o == null ? "null" : o is Object uo ? (uo == null ? "null" : uo.name) : o.ToString(); }
+        /// <summary>heap の値と期待値が同じか (Unity の偽 null は null と同じに扱う)。</summary>
+        static bool Same(object got, object want)
+        {
+            return Equals(got, want) || (got is Object go && want is Object wo && go == wo) || (got == null && want is Object nw && nw == null) || (want == null && got is Object ng && ng == null);
+        }
+
+        static string Describe(object o) { return o == null ? "null" : o is Object uo ? (uo == null ? "null" : uo.name) : o is Array a ? "[" + a.Length + "]" : o.ToString(); }
 
         /// <summary>UnityEvent (m_OnClick / m_OnEndEdit / m_OnValueChanged) が 1 本だけ、target.SendCustomEvent(固定の文字列 evt) で、その口が型に実在する。</summary>
         static void CheckEvent(Transform t, string eventProperty, UdonBehaviour target, string evt, Type owner, Action<bool, string> Check)

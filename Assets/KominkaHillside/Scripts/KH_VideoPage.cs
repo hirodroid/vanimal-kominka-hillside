@@ -40,6 +40,9 @@ namespace KominkaHillside
         private const string KeyRateLimited = "video.player.state.ratelimited";
         private const string KeyWait = "video.player.state.wait";
         private const string KeyLocked = "video.player.state.locked";
+        private const string KeyQueued = "video.player.state.queued";
+        /// <summary>[次へ] が 5 秒制限に記録する印 (URL ではない。URL 欄の二重判定と一致しない)。</summary>
+        private const string SkipMark = "\u0001skip";
 
         [Header("VizVid (Player/1 が配線)")]
         public JLChnToZ.VRC.VVMW.FrontendHandler frontend;
@@ -77,10 +80,52 @@ namespace KominkaHillside
         [Tooltip("面の [全画面] (→ _ToggleFull) と覆いの [×] (→ _FullClose)")]
         public UnityEngine.UI.Button fullButton, fullCloseButton;
 
+        [Header("次へ・リピート・一覧 (IMP-UI-011 §8)")]
+        [Tooltip("[次へ] (→ _Skip = FrontendHandler._Skip。Owner の取得は VizVid 側)")]
+        public UnityEngine.UI.Button skipButton;
+        [Tooltip("[リピート] (→ _CycleRepeat: オフ → 全部 → 1 曲 → オフ)")]
+        public UnityEngine.UI.Button repeatButton;
+        [Tooltip("リピートの記号。1 曲は spriteRepeatOne、それ以外 spriteRepeat。オフはアルファ 0.4")]
+        public UnityEngine.UI.Image repeatIcon;
+        public Sprite spriteRepeat, spriteRepeatOne;
+        [Tooltip("[一覧] (→ _ToggleList。画面と一覧を入れ替える。再生は続く)")]
+        public UnityEngine.UI.Button listButton;
+
+        [Header("一覧 (画面と同じ矩形。既定は非表示)")]
+        public GameObject listRoot;
+        [Tooltip("→ _ListTabHistory / _ListTabQueue。選んでいるタブは押せなくする (今どちらかの印)")]
+        public UnityEngine.UI.Button tabHistoryButton, tabQueueButton;
+        [Tooltip("video.player.list.history / .queue + \" (件数)\"")]
+        public TMPro.TextMeshProUGUI tabHistoryLabel, tabQueueLabel;
+        [Tooltip("video.player.list.empty (表示中のタブが空のとき)")]
+        public TMPro.TextMeshProUGUI listEmptyLabel;
+        [Tooltip("→ _ListPagePrev / _ListPageNext")]
+        public UnityEngine.UI.Button pagePrevButton, pageNextButton;
+        public TMPro.TextMeshProUGUI pageLabel;
+        [Tooltip("行 6 本 (上から)。余った行は非表示")]
+        public GameObject[] rowRoots;
+        public TMPro.TextMeshProUGUI[] rowLabels;
+        [Tooltip("[▶] → _RowPlay0..5 (今すぐ再生)")]
+        public UnityEngine.UI.Button[] rowPlayButtons;
+        [Tooltip("2 つ目 → _RowSecond0..5 (履歴: キューへ追加 / キュー: 外す)")]
+        public UnityEngine.UI.Button[] rowSecondButtons;
+        public UnityEngine.UI.Image[] rowSecondIcons;
+        [Tooltip("履歴タブの 2 つ目 (追加) / キュータブの 2 つ目 (外す)")]
+        public Sprite spriteAdd, spriteRemove;
+
+        /// <summary>一覧の 1 ページの行数。</summary>
+        public const int RowCount = 6;
+
         private bool _inited;
+        private int _listTab;                // 0 = 履歴 / 1 = キュー
+        private int _listPage;
+        private string[] _rowUrls;           // 各行に描いた URL (押した時に、描いた後で並びが変わっていないかを照合する)
+        private int _rowKey = -1;            // 行のボタンの interactable と 2 つ目の記号の組 (unlocked | タブ)。-1 = まだ
+        private int _repeatShown = -1;       // 0 = オフ / 1 = 全部 / 2 = 1 曲 / -1 = まだ
         private float _lastSubmitAt = -100f;
         private string _lastSubmitUrl = "";
-        private string _noticeKey = "";      // 一時の 1 行 (待って / エラー)。_noticeUntil を過ぎたら状態の行へ戻す
+        private string _noticeKey = "";      // 一時の 1 行 (待って / エラー / ロック / キューに追加)。_noticeUntil を過ぎたら状態の行へ戻す
+        private string _noticeArg = "";      // 一時の 1 行の {0} (待っては残り秒を毎回数えるので使わない)
         private float _noticeUntil = -1f;
         private bool _tickPending;
         private float _tickAt = -100f;
@@ -95,6 +140,7 @@ namespace KominkaHillside
         {
             if (_inited) return;
             _inited = true;
+            _rowUrls = new string[RowCount];
             if (frontend != null) frontend._AddListener(this);
             else Debug.LogError("[KH_VideoPage] frontend が未配線。Run Tools/KominkaHillside/Player/1.");
             if (core == null) Debug.LogError("[KH_VideoPage] core が未配線。Run Tools/KominkaHillside/Player/1.");
@@ -104,6 +150,7 @@ namespace KominkaHillside
         {
             Init();
             SetFull(false);
+            SetList(false);
             DrawTexts();
             DrawState();
         }
@@ -122,13 +169,6 @@ namespace KominkaHillside
             float now = Time.time;
             // ロック中 (FrontendHandler.Locked。外部の権限の仕組み用) は投入しない。URL は欄に残す
             if (frontend.Locked) { ShowNotice(KeyLocked, now + 3f); return; }
-            if (now - _lastSubmitAt < SubmitInterval)
-            {
-                // onEndEdit と [入れる] の二重 (同じ URL) は黙って捨てる。別の URL は欄に残して待ってもらう
-                if (s == _lastSubmitUrl) { ClearInput(); return; }
-                ShowNotice(KeyWait, _lastSubmitAt + SubmitInterval);
-                return;
-            }
             byte type = core.GetSuitablePlayerType(url);
             if (type == 0) type = FallbackPlayerType;
             string[] names = core.PlayerNames;
@@ -138,11 +178,14 @@ namespace KominkaHillside
                 ShowNotice(KeyError, now + 3f);
                 return;
             }
-            _lastSubmitAt = now;
-            _lastSubmitUrl = s;
-            _noticeUntil = -1f;
-            frontend.PlayUrl(url, url, type);
+            // onEndEdit と [入れる] の二重 (同じ URL) は黙って捨てて欄を空に。別の URL は欄に残して待ってもらう
+            int gate = RateGate(s, true);
+            if (gate == 1) { ClearInput(); return; }
+            if (gate != 0) return;
+            int before = frontend.QueueUrls.Length;
+            frontend.PlayUrl(url, url, type);   // キューが有効なら、再生中・読み込み中・キューありのときは末尾へ (VizVid の仕様)
             ClearInput();
+            NoticeIfQueued(before);
             DrawState();
         }
 
@@ -186,6 +229,58 @@ namespace KominkaHillside
             SetFull(false);
         }
 
+        // ---- §8: 次へ・リピート・一覧 ----
+
+        /// <summary>[次へ]。VizVid の UI と同じく FrontendHandler._Skip (非 Owner なら Owner を取ってから次へ。Locked は VizVid 側で弾く)。
+        /// 次の項目の読み込みが始まる操作なので 5 秒制限を通す (制限中は待機表示)。ローカル専用。</summary>
+        public void _Skip()
+        {
+            Init();
+            if (frontend == null || frontend.Locked) return;
+            if (RateGate(SkipMark, false) != 0) return;
+            frontend._Skip();
+            DrawState();
+        }
+
+        /// <summary>[リピート]。オフ → 全部 → 1 曲 → オフ。setter が同期を要求し Owner を取る (VizVid の RequestSync)。ローカル専用。</summary>
+        public void _CycleRepeat()
+        {
+            Init();
+            if (frontend == null || frontend.Locked) return;
+            if (frontend.RepeatOne) frontend.NoRepeat();
+            else if (frontend.RepeatAll) frontend.RepeatOne = true;
+            else frontend.RepeatAll = true;
+            DrawState();
+        }
+
+        /// <summary>[一覧]。画面と一覧を入れ替える (再生は続く)。ローカル専用。</summary>
+        public void _ToggleList()
+        {
+            Init();
+            if (listRoot == null) return;
+            SetList(!listRoot.activeSelf);
+            DrawState();
+        }
+
+        public void _ListTabHistory() { Init(); _listTab = 0; _listPage = 0; DrawState(); }
+        public void _ListTabQueue() { Init(); _listTab = 1; _listPage = 0; DrawState(); }
+        public void _ListPagePrev() { Init(); if (_listPage > 0) _listPage--; DrawState(); }
+        public void _ListPageNext() { Init(); _listPage++; DrawState(); }   // 上限は DrawList が詰める
+
+        // 行のボタン (onClick → SendCustomEvent。引数のある呼び出しを使わない)。番号は今のページの中の行 (0 = 上)
+        public void _RowPlay0() { RowPlay(0); }
+        public void _RowPlay1() { RowPlay(1); }
+        public void _RowPlay2() { RowPlay(2); }
+        public void _RowPlay3() { RowPlay(3); }
+        public void _RowPlay4() { RowPlay(4); }
+        public void _RowPlay5() { RowPlay(5); }
+        public void _RowSecond0() { RowSecond(0); }
+        public void _RowSecond1() { RowSecond(1); }
+        public void _RowSecond2() { RowSecond(2); }
+        public void _RowSecond3() { RowSecond(3); }
+        public void _RowSecond4() { RowSecond(4); }
+        public void _RowSecond5() { RowSecond(5); }
+
         // ================================================================ 受け口 (他の Behaviour から)
 
         /// <summary>KD_TreatPouch._VideoOpen (と板の開き直し) から。開き直しは常に通常表示から。文言を今の言語で描き直し、状態を描き、見回りを始める。ローカル専用。</summary>
@@ -193,6 +288,7 @@ namespace KominkaHillside
         {
             Init();
             SetFull(false);
+            SetList(false);   // §8: 開き直しは常に画面から
             DrawTexts();
             DrawState();
             ScheduleTick();
@@ -247,6 +343,7 @@ namespace KominkaHillside
         private void ShowNotice(string key, float until)
         {
             _noticeKey = key;
+            _noticeArg = "";
             _noticeUntil = until;
             DrawState();
             ScheduleTick();   // 待ちの秒数を数え直し、過ぎたら状態の行へ戻す
@@ -255,6 +352,169 @@ namespace KominkaHillside
         private void SetFull(bool on)
         {
             if (fullRoot != null && fullRoot.activeSelf != on) fullRoot.SetActive(on);
+        }
+
+        /// <summary>§8: 一覧と画面を入れ替える。一覧が無ければ何もしない (画面は出したまま)。</summary>
+        private void SetList(bool on)
+        {
+            if (listRoot == null) return;
+            if (listRoot.activeSelf != on) listRoot.SetActive(on);
+            if (screen != null)
+            {
+                GameObject sg = ((Component)screen).gameObject;
+                if (sg.activeSelf == on) sg.SetActive(!on);
+            }
+        }
+
+        /// <summary>投入・[＋] の直後。キューの件数が増えていたら「キューに追加 ({0} 件目)」を 3 秒 (欄が消えるだけで分からないので)。</summary>
+        private void NoticeIfQueued(int before)
+        {
+            if (frontend == null) return;
+            int after = frontend.QueueUrls.Length;
+            if (after <= before) return;
+            ShowNotice(KeyQueued, Time.time + 3f);
+            _noticeArg = after.ToString();
+            DrawState();
+        }
+
+        /// <summary>URL の読み込みの 5 秒制限 (URL 投入・一覧の行・[次へ] で共通)。
+        /// 0 = 通す (時刻と URL を記録した) / 1 = 同じ URL の二重 (黙って捨てる。silentDup = URL 欄の onEndEdit と [入れる] の二重だけ) / 2 = 待って (状態の行に出した)。</summary>
+        private int RateGate(string s, bool silentDup)
+        {
+            float now = Time.time;
+            if (now - _lastSubmitAt < SubmitInterval)
+            {
+                if (silentDup && s == _lastSubmitUrl) return 1;
+                ShowNotice(KeyWait, _lastSubmitAt + SubmitInterval);
+                return 2;
+            }
+            _lastSubmitAt = now;
+            _lastSubmitUrl = s;
+            _noticeUntil = -1f;
+            return 0;
+        }
+
+        /// <summary>行 r が今指す項目の番号。描いた後に並びが変わっていたら (同期で履歴・キューが動いた) -1 を返して描き直す。</summary>
+        private int RowIndex(int r, VRCUrl[] urls)
+        {
+            int idx = _listPage * RowCount + r;
+            if (urls == null || idx < 0 || idx >= urls.Length || VRCUrl.IsNullOrEmpty(urls[idx]) || _rowUrls == null || r >= _rowUrls.Length) return -1;
+            if (urls[idx].Get() != _rowUrls[r]) return -1;
+            return idx;
+        }
+
+        /// <summary>[▶]。履歴: キューへ足してから末尾を今すぐ再生 (VizVid の UI の「今すぐ」と同じ)。キュー: その項目を今すぐ (キューから消える)。</summary>
+        private void RowPlay(int r)
+        {
+            Init();
+            if (frontend == null || frontend.Locked) return;
+            VRCUrl[] urls = _listTab == 0 ? frontend.HistoryUrls : frontend.QueueUrls;
+            int idx = RowIndex(r, urls);
+            if (idx < 0) { DrawState(); return; }
+            if (RateGate(urls[idx].Get(), false) != 0) return;
+            if (_listTab == 0)
+            {
+                frontend.PlayAt(-1, idx, false);
+                int n = frontend.QueueUrls.Length;   // 再生中などで末尾に積まれたなら、それを今すぐ (空いていれば PlayAt(-1) が即再生済みで n = 0)
+                if (n > 0) frontend.PlayAt(0, n - 1, false);
+            }
+            else frontend.PlayAt(0, idx, false);
+            DrawState();
+        }
+
+        /// <summary>2 つ目。履歴: キューへ追加 (空いていれば即再生になるのは VizVid の仕様)。キュー: 外すだけ (読み込まないので 5 秒制限は通さない)。</summary>
+        private void RowSecond(int r)
+        {
+            Init();
+            if (frontend == null || frontend.Locked) return;
+            VRCUrl[] urls = _listTab == 0 ? frontend.HistoryUrls : frontend.QueueUrls;
+            int idx = RowIndex(r, urls);
+            if (idx < 0) { DrawState(); return; }
+            if (_listTab == 0)
+            {
+                if (RateGate(urls[idx].Get(), false) != 0) return;
+                int before = frontend.QueueUrls.Length;
+                frontend.PlayAt(-1, idx, false);
+                NoticeIfQueued(before);
+            }
+            else frontend.PlayAt(0, idx, true);
+            DrawState();
+        }
+
+        /// <summary>題の 1 行: 「\u200B入れた人:\n\u200B題」から印を除き、改行を空白に。空なら URL。</summary>
+        private string RowText(string title, string url)
+        {
+            if (title == null || title.Length == 0) return url;
+            string t = title.Replace("\u200B", "").Replace("\n", " ").Trim();
+            return t.Length > 0 ? t : url;
+        }
+
+        /// <summary>リピートの記号 (同期値を毎回読み直す。他人が変えても追従)。</summary>
+        private void DrawRepeat()
+        {
+            if (frontend == null || repeatIcon == null) return;
+            int rep = frontend.RepeatOne ? 2 : frontend.RepeatAll ? 1 : 0;
+            if (rep == _repeatShown) return;
+            _repeatShown = rep;
+            Sprite want = rep == 2 ? spriteRepeatOne : spriteRepeat;
+            if (want != null) repeatIcon.sprite = want;
+            Color c = repeatIcon.color;
+            c.a = rep == 0 ? 0.4f : 1f;
+            repeatIcon.color = c;
+        }
+
+        /// <summary>一覧 (表示中のときだけ行を描く)。タブ・件数・ページ・行・空の文。差分で書く。</summary>
+        private void DrawList()
+        {
+            if (frontend == null || listRoot == null || !listRoot.activeSelf) return;
+            bool unlocked = !frontend.Locked;
+            VRCUrl[] hUrls = frontend.HistoryUrls;
+            VRCUrl[] qUrls = frontend.QueueUrls;
+            int hCount = hUrls != null ? hUrls.Length : 0;
+            int qCount = qUrls != null ? qUrls.Length : 0;
+            SetText(tabHistoryLabel, L("video.player.list.history") + " (" + hCount.ToString() + ")");
+            SetText(tabQueueLabel, L("video.player.list.queue") + " (" + qCount.ToString() + ")");
+            if (tabHistoryButton != null && tabHistoryButton.interactable != (_listTab != 0)) tabHistoryButton.interactable = _listTab != 0;
+            if (tabQueueButton != null && tabQueueButton.interactable != (_listTab != 1)) tabQueueButton.interactable = _listTab != 1;
+
+            VRCUrl[] urls = _listTab == 0 ? hUrls : qUrls;
+            string[] titles = _listTab == 0 ? frontend.HistoryTitles : frontend.QueueTitles;
+            int count = _listTab == 0 ? hCount : qCount;
+            int pages = count <= 0 ? 1 : (count + RowCount - 1) / RowCount;
+            if (_listPage >= pages) _listPage = pages - 1;
+            if (_listPage < 0) _listPage = 0;
+
+            int key = (unlocked ? 1 : 0) | (_listTab << 1);
+            bool rekey = key != _rowKey;
+            _rowKey = key;
+            Sprite second = _listTab == 0 ? spriteAdd : spriteRemove;
+            for (int r = 0; r < RowCount; r++)
+            {
+                int idx = _listPage * RowCount + r;
+                bool show = idx < count;
+                if (rowRoots != null && r < rowRoots.Length && rowRoots[r] != null && rowRoots[r].activeSelf != show) rowRoots[r].SetActive(show);
+                string u = show && urls[idx] != null ? urls[idx].Get() : "";
+                if (_rowUrls != null) _rowUrls[r] = u;
+                if (show && rowLabels != null && r < rowLabels.Length)
+                    SetText(rowLabels[r], RowText(titles != null && idx < titles.Length ? titles[idx] : "", u));
+                if (!rekey) continue;
+                if (rowPlayButtons != null && r < rowPlayButtons.Length && rowPlayButtons[r] != null) rowPlayButtons[r].interactable = unlocked;
+                if (rowSecondButtons != null && r < rowSecondButtons.Length && rowSecondButtons[r] != null) rowSecondButtons[r].interactable = unlocked;
+                if (second != null && rowSecondIcons != null && r < rowSecondIcons.Length && rowSecondIcons[r] != null) rowSecondIcons[r].sprite = second;
+            }
+
+            if (listEmptyLabel != null)
+            {
+                GameObject eg = ((Component)listEmptyLabel).gameObject;
+                bool empty = count == 0;
+                if (eg.activeSelf != empty) eg.SetActive(empty);
+                if (empty) SetText(listEmptyLabel, L("video.player.list.empty"));
+            }
+            SetText(pageLabel, (_listPage + 1).ToString() + "/" + pages.ToString());
+            bool canPrev = _listPage > 0;
+            bool canNext = _listPage < pages - 1;
+            if (pagePrevButton != null && pagePrevButton.interactable != canPrev) pagePrevButton.interactable = canPrev;
+            if (pageNextButton != null && pageNextButton.interactable != canNext) pageNextButton.interactable = canNext;
         }
 
         private void ClearInput()
@@ -317,6 +577,7 @@ namespace KominkaHillside
                     if (sec < 1) sec = 1;
                     line = line.Replace("{0}", sec.ToString());
                 }
+                else if (_noticeArg.Length > 0) line = line.Replace("{0}", _noticeArg);
             }
             else line = StateLine(st);
             SetText(stateLabel, line);
@@ -326,7 +587,8 @@ namespace KominkaHillside
             bool canPause = unlocked && st == 4 && !isStatic;
             bool canStop = unlocked && st != 0;
             bool canSync = !VRCUrl.IsNullOrEmpty(core.Url);
-            int mask = (canPlay ? 1 : 0) | (canPause ? 2 : 0) | (canStop ? 4 : 0) | (canSync ? 8 : 0) | (unlocked ? 16 : 0);
+            bool canSkip = unlocked && (st != 0 || (frontend != null && frontend.QueueUrls.Length > 0));
+            int mask = (canPlay ? 1 : 0) | (canPause ? 2 : 0) | (canStop ? 4 : 0) | (canSync ? 8 : 0) | (unlocked ? 16 : 0) | (canSkip ? 32 : 0);
             if (mask != _shownButtons)
             {
                 _shownButtons = mask;
@@ -336,7 +598,11 @@ namespace KominkaHillside
                 if (resyncButton != null) resyncButton.interactable = canSync;
                 if (submitButton != null) submitButton.interactable = unlocked;
                 if (urlInput != null) urlInput.interactable = unlocked;
+                if (skipButton != null) skipButton.interactable = canSkip;
+                if (repeatButton != null) repeatButton.interactable = unlocked;
             }
+            DrawRepeat();
+            DrawList();
 
             int tint = st >= 3 ? 1 : 0;
             if (tint != _screenTint)
@@ -370,7 +636,7 @@ namespace KominkaHillside
             return L(KeyError);
         }
 
-        /// <summary>今の動画を入れた人。FrontendHandler.PlayUrl は履歴の題を「​名前:\n​URL」で残す (同期される) ので、
+        /// <summary>今の動画を入れた人。FrontendHandler.PlayUrl は履歴の題を「\u200B名前:\n\u200BURL」で残す (同期される) ので、
         /// 履歴の先頭が今の URL ならその名前。取れなければ FrontendHandler の Owner (PlayUrl は Owner を取る)。</summary>
         private string SubmitterName()
         {
@@ -382,7 +648,7 @@ namespace KominkaHillside
                 && !VRCUrl.IsNullOrEmpty(cur) && !VRCUrl.IsNullOrEmpty(urls[0]) && urls[0].Get() == cur.Get())
             {
                 string t = titles[0];
-                if (t != null && t.Length > 2 && t[0] == '​')
+                if (t != null && t.Length > 2 && t[0] == '\u200B')
                 {
                     int nl = t.IndexOf('\n');
                     if (nl > 2 && t[nl - 1] == ':') return t.Substring(1, nl - 2);

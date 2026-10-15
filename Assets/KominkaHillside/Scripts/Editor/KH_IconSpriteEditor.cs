@@ -10,7 +10,8 @@ namespace KominkaHillside.Editor
     /// IMP-UI-011 §7 (2026-10-16 ユーザー依頼「記号化」): 動画の面の操作ボタンの記号を、フォントにも翻訳にも依存しない絵 (PNG → Sprite) として手続き的に描く。
     /// VizVid 同梱の記号は MSDF の文字なので使わない。
     ///
-    /// 形は Material Design のアイコン (24 x 24 の格子) に合わせた: play / pause / stop / sync (↻) / volume / muted / fullscreen / load (投入) / close。
+    /// 形は Material Design のアイコン (24 x 24 の格子) に合わせた: play / pause / stop / sync (↻) / volume / muted / fullscreen / load (投入) / close、
+    /// §8 で skip_next (次へ) / repeat (ループ) / repeat_one (ループ + 1) / list (一覧) / add (+)。
     /// 128 x 128、各画素 4 x 4 の標本 (スーパーサンプリング) の被覆率を α にする白い絵。角は小さく丸める。
     /// 凸多角形は「内側へ r 寄せた多角形 + 距離 r」で角を丸めて塗り (標本ごとの内外判定 = 走査線の塗りと同じ結果)、弧と線は距離場で描く。
     /// 既にある PNG は描き直さない (force で描き直す)。KH_VideoPlayerEditor (Player/1) が呼び、Player/2 が Exists / ImporterOk で確かめる。
@@ -20,7 +21,8 @@ namespace KominkaHillside.Editor
         public const string Dir = "Assets/KominkaHillside/Textures/Icons";
         public const int Size = 128, Super = 4;
         const float Grid = 24f;
-        public static readonly string[] Names = { "play", "pause", "stop", "sync", "volume", "muted", "fullscreen", "load", "close" };
+        public static readonly string[] Names = { "play", "pause", "stop", "sync", "volume", "muted", "fullscreen", "load", "close",
+            "skip_next", "repeat", "repeat_one", "list", "add" };   // §8 (2026-10-16): history / queue / repeat
 
         public static string PathOf(string name) { return Dir + "/KH_Icon_" + name + ".png"; }
         public static Sprite Load(string name) { return AssetDatabase.LoadAssetAtPath<Sprite>(PathOf(name)); }
@@ -185,6 +187,34 @@ namespace KominkaHillside.Editor
                     var tray = Rect(5, 18, 19, 20.2f, 0.6f);
                     return p => stem(p) || head(p) || tray(p);
                 }
+                case "skip_next":
+                {
+                    // Material skip_next: a right triangle and a bar at its tip
+                    var tri = Poly(0.6f, V(6, 6), V(6, 18), V(14.5f, 12));
+                    var bar = Rect(16, 6, 18, 18, 0.5f);
+                    return p => tri(p) || bar(p);
+                }
+                case "repeat": return Repeat();
+                case "repeat_one":
+                {
+                    // Material repeat_one: the loop and a small "1" in the middle (a stem and its flag)
+                    var loop = Repeat();
+                    var stem = Rect(11.5f, 9, 13, 15, 0.2f);
+                    var flag = Poly(0.2f, V(10, 10), V(12, 9), V(12.2f, 11), V(10, 11));
+                    return p => loop(p) || stem(p) || flag(p);
+                }
+                case "list":
+                {
+                    // Material list: three dots on the left and three lines
+                    var parts = new List<Func<Vector2, bool>>();
+                    foreach (float y in new[] { 7f, 11f, 15f }) { parts.Add(Rect(3, y, 5, y + 2, 0.4f)); parts.Add(Rect(7, y, 21, y + 2, 0.4f)); }
+                    return p => { foreach (var f in parts) if (f(p)) return true; return false; };
+                }
+                case "add":
+                {
+                    var h = Rect(5, 11, 19, 13, 0.4f); var v = Rect(11, 5, 13, 19, 0.4f);
+                    return p => h(p) || v(p);
+                }
                 case "close":
                 {
                     Vector2 a = V(5.5f, 5.5f), b = V(18.5f, 18.5f), c = V(18.5f, 5.5f), d = V(5.5f, 18.5f);
@@ -192,6 +222,15 @@ namespace KominkaHillside.Editor
                 }
             }
             throw new ArgumentException("unknown icon " + name);
+        }
+
+        /// <summary>Material repeat: the top bar with its left leg and the arrowhead to the right, the bottom bar with its right leg and the arrowhead to the left
+        /// (the bars run into the heads so the rounded ends do not notch the joints).</summary>
+        static Func<Vector2, bool> Repeat()
+        {
+            var topBar = Rect(5, 5, 17.5f, 7, 0.4f); var topLeg = Rect(5, 5, 7, 11, 0.4f); var topHead = Poly(0.4f, V(17, 2), V(21, 6), V(17, 10));
+            var botBar = Rect(6.5f, 17, 19, 19, 0.4f); var botLeg = Rect(17, 13, 19, 19, 0.4f); var botHead = Poly(0.4f, V(7, 14), V(7, 22), V(3, 18));
+            return p => topBar(p) || topLeg(p) || topHead(p) || botBar(p) || botLeg(p) || botHead(p);
         }
 
         /// <summary>Material volume_up の箱 + 台形 (凹なので 2 つの凸に分ける。箱は台形の中まで伸ばして継ぎ目の丸めを隠す)。</summary>

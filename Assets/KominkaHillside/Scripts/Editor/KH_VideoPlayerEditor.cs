@@ -70,17 +70,43 @@ namespace KominkaHillside.Editor
         public static readonly Vector2 IconButtonSize = new Vector2(76f, 50f);
         /// <summary>アイコンの一辺 = ボタンの短辺 x この割合 (ボタンの内側 60%)。</summary>
         public const float IconFraction = 0.6f;
-        public const float ControlRowY = 60f;
-        public static readonly string[] ControlNames = { "Play", "Pause", "Stop", "Resync", "Full" };
-        public static readonly string[] ControlEvents = { "_Play", "_Pause", "_Stop", "_Resync", "_ToggleFull" };
-        public static readonly string[] ControlIcons = { "play", "pause", "stop", "sync", "fullscreen" };
-        public const string SubmitIcon = "load", MuteIcon = "volume", MutedIcon = "muted", CloseIcon = "close";
-        /// <summary>2 段目のボタン i の中心 X (5 個を 150〜510 に等間隔。150 / 240 / 330 / 420 / 510、各 76 幅で x 112〜548)。</summary>
-        public static float ControlX(int i) { return 150f + i * 90f; }
-        // 3 段目: the requested VolumeLabel at x 380 (345..415) overlapped the 240-wide slider (110..350) by 5 px -> 390 (355..425)
-        public static readonly Vector2 SliderPos = new Vector2(230f, -10f), SliderSize = new Vector2(240f, 40f);
-        public static readonly Vector2 VolumeLabelPos = new Vector2(390f, -10f), VolumeLabelSize = new Vector2(70f, 40f);
-        public static readonly Vector2 MutePos = new Vector2(480f, -10f);
+        public const float ControlRowY = 60f, ThirdRowY = -10f;
+        /// <summary>3 段目の小さい記号ボタン (§8: リピート / 一覧 / 全画面 / 消音)。</summary>
+        public static readonly Vector2 SmallButtonSize = new Vector2(60f, 50f);
+        // §8 (2026-10-16): 2 段目 [▶][⏸][■][⏭][↻] (76 x 50 at x 150 / 240 / 330 / 420 / 510)、3 段目 [リピート][一覧][全画面] (60 x 50 at 140 / 204 / 268) + 音量 + % + [消音]。
+        // 3 段目は x 110〜550 を隙間 4 で詰める: 110..170 / 174..234 / 238..298 / slider 302..432 / % 436..486 / mute 490..550
+        public static readonly string[] ControlNames = { "Play", "Pause", "Stop", "Skip", "Resync", "Repeat", "List", "Full" };
+        public static readonly string[] ControlEvents = { "_Play", "_Pause", "_Stop", "_Skip", "_Resync", "_CycleRepeat", "_ToggleList", "_ToggleFull" };
+        public static readonly string[] ControlIcons = { "play", "pause", "stop", "skip_next", "sync", "repeat", "list", "fullscreen" };
+        public const string SubmitIcon = "load", MuteIcon = "volume", MutedIcon = "muted", CloseIcon = "close", RepeatOneIcon = "repeat_one", AddIcon = "add";
+        /// <summary>ControlNames[i] の中心 (2 段目の 5 個は 150〜510 を 90 間隔、3 段目の 3 個は 140 / 204 / 268)。</summary>
+        public static Vector2 ControlPos(int i) { return i < 5 ? new Vector2(150f + i * 90f, ControlRowY) : new Vector2(140f + (i - 5) * 64f, ThirdRowY); }
+        public static Vector2 ControlSize(int i) { return i < 5 ? IconButtonSize : SmallButtonSize; }
+        public static readonly Vector2 SliderPos = new Vector2(367f, ThirdRowY), SliderSize = new Vector2(130f, 40f);
+        public static readonly Vector2 VolumeLabelPos = new Vector2(461f, ThirdRowY), VolumeLabelSize = new Vector2(50f, 40f);
+        public static readonly Vector2 MutePos = new Vector2(520f, ThirdRowY), MuteSize = new Vector2(60f, 50f);
+
+        // ---------------------------------------------------------------- §8 一覧 VideoPage/ListPanel (画面と同じ矩形、既定 非表示。[一覧] で画面と入れ替え)
+        public const string ListName = "ListPanel";
+        public const int ListRows = 6;
+        public const string ListHistoryKey = "video.player.list.history", ListQueueKey = "video.player.list.queue", ListEmptyKey = "video.player.list.empty";
+        static readonly Color ListBack = new Color(0.07f, 0.065f, 0.06f, 0.97f);
+        // panel-local (centre origin; the panel is 640 x 360 -> x -320..320, y -180..180). Top row centre = top - 24
+        public const float ListTopY = 156f;
+        public static readonly Vector2 TabSize = new Vector2(150f, 40f);
+        public static readonly Vector2 TabHistoryPos = new Vector2(-240f, ListTopY), TabQueuePos = new Vector2(-80f, ListTopY);   // -315..-165 / -155..-5
+        public static readonly Vector2 PageButtonSize = new Vector2(40f, 40f), PageLabelSize = new Vector2(70f, 40f);
+        // from the right edge -20: [▶] 260..300, label 186..256, [◀] 142..182 (4 px apart)
+        public static readonly Vector2 PageNextPos = new Vector2(280f, ListTopY), PageLabelPos = new Vector2(221f, ListTopY), PagePrevPos = new Vector2(162f, ListTopY);
+        /// <summary>行 i の中心 Y (上段の下端 136 から 6 px 下が 1 行目の上端、48 px ピッチ、高さ 44: 108 / 60 / 12 / -36 / -84 / -132)。</summary>
+        public static float RowY(int i) { return ListTopY - TabSize.y * 0.5f - 6f - 22f - i * RowPitch; }
+        public const float RowPitch = 48f;
+        public static readonly Vector2 RowSize = new Vector2(600f, 44f);
+        // row-local: label -300..160 (460), [▶ now] 206..250, [+ / x] 256..300
+        public static readonly Vector2 RowLabelPos = new Vector2(-70f, 0f), RowLabelSize = new Vector2(460f, 44f);
+        public static readonly Vector2 RowPlayPos = new Vector2(228f, 0f), RowSecondPos = new Vector2(278f, 0f), RowButtonSize = new Vector2(44f, 44f);
+        public static readonly Vector2 EmptyPos = new Vector2(0f, 0f), EmptySize = new Vector2(600f, 44f);
+        public const float RowFontMax = 18f, RowFontMin = 14f;
 
         // ---------------------------------------------------------------- 全画面の覆い (panelRoot/VideoFull、最前面、既定 非表示。§7 依頼 1)
         public const string FullName = "VideoFull";
@@ -102,10 +128,10 @@ namespace KominkaHillside.Editor
             yield return ("Screen", ScreenPos, ScreenSize);
             yield return ("UrlInput", UrlPos, UrlSize);
             yield return ("Submit", SubmitPos, SubmitSize);
-            for (int i = 0; i < ControlNames.Length; i++) yield return (ControlNames[i], new Vector2(ControlX(i), ControlRowY), IconButtonSize);
+            for (int i = 0; i < ControlNames.Length; i++) yield return (ControlNames[i], ControlPos(i), ControlSize(i));
             yield return ("VolumeSlider", SliderPos, SliderSize);
             yield return ("VolumeLabel", VolumeLabelPos, VolumeLabelSize);
-            yield return ("Mute", MutePos, IconButtonSize);
+            yield return ("Mute", MutePos, MuteSize);
             yield return ("Note", NotePos, NoteSize);
         }
 
@@ -117,10 +143,10 @@ namespace KominkaHillside.Editor
         /// <summary>KH_VideoPage が描く文言 (opus-runtime 2026-10-15 の対応表。§7 2026-10-16 でボタンの語は記号に替えて外した)。gift.back は既存。</summary>
         public static readonly string[] NeededKeys =
         {
-            HeaderKey, TitleKey, "video.player.note", "video.player.url",   // §7: the buttons are icons (submit / play / pause / stop / resync / mute / unmute / volume are gone)
+            HeaderKey, TitleKey, "video.player.note", "video.player.url", ListHistoryKey, ListQueueKey, ListEmptyKey,   // §8: the list's tabs and empty line   // §7: the buttons are icons (submit / play / pause / stop / resync / mute / unmute / volume are gone)
             "video.player.state.idle", "video.player.state.loading", "video.player.state.playing", "video.player.state.playing.anon",
             "video.player.state.paused", "video.player.state.error", "video.player.state.untrusted", "video.player.state.ratelimited", "video.player.state.wait",
-            "gift.back", "video.player.state.locked",
+            "gift.back", "video.player.state.locked", "video.player.state.queued",
         };
         /// <summary>NeededKeys のうち、無くても止めないキー (opus-runtime が後から足す。無ければ Note に落とし FAIL にしない)。</summary>
         public static readonly string[] OptionalKeys = { "video.player.state.locked" };
@@ -128,7 +154,7 @@ namespace KominkaHillside.Editor
         {
             "video.player.state.idle", "video.player.state.loading", "video.player.state.playing", "video.player.state.playing.anon",
             "video.player.state.paused", "video.player.state.error", "video.player.state.untrusted", "video.player.state.ratelimited", "video.player.state.wait",
-            "video.player.state.locked",
+            "video.player.state.locked", "video.player.state.queued",   // queued: {0} = the position in the queue (measured with 99)
         };
         /// <summary>{0} の最悪値 (playing = 入れた人の名前 16 字、wait = 秒)。</summary>
         public const string LongPlayerName = "ABCDEFGHIJKLMNOP";
@@ -232,6 +258,11 @@ namespace KominkaHillside.Editor
             public GameObject submit, mute; public GameObject[] controls; public Slider slider; public TextMeshProUGUI volumeLabel, note;
             public Image muteIcon; public Sprite spriteUnmuted, spriteMuted;
             public GameObject fullRoot, fullClose; public RawImage fullScreen;
+            public Image repeatIcon; public Sprite spriteRepeat, spriteRepeatOne, spriteAdd, spriteRemove;
+            public GameObject listRoot, tabHistory, tabQueue, pagePrev, pageNext; public TextMeshProUGUI pageLabel, emptyLabel;
+            public GameObject[] rowRoots = new GameObject[ListRows], rowPlays = new GameObject[ListRows], rowSeconds = new GameObject[ListRows];
+            public TextMeshProUGUI[] rowLabels = new TextMeshProUGUI[ListRows]; public Image[] rowSecondIcons = new Image[ListRows];
+            public GameObject Ctl(string name) { int i = Array.IndexOf(ControlNames, name); return i >= 0 ? controls[i] : null; }
         }
 
         [MenuItem(Menu + "1 - Build Video Player and Menu Page")]
@@ -400,6 +431,9 @@ namespace KominkaHillside.Editor
             return array.GetArrayElementAtIndex(i);
         }
 
+        /// <summary>§8: 履歴の件数 (VizVid の既定は 5)。</summary>
+        public const int HistorySize = 20;
+
         static void ConfigureFrontend(Parts p, List<string> log)
         {
             if (p.frontend.core != p.core) throw new InvalidOperationException("FrontendHandler.core is not the Core of the same prefab (" + (p.frontend.core != null ? p.frontend.core.name : "null") + ")");
@@ -407,11 +441,14 @@ namespace KominkaHillside.Editor
             {
                 var q = so.FindProperty("enableQueueList");
                 if (q == null) throw new InvalidOperationException("FrontendHandler.enableQueueList not found (VizVid version changed?)");
-                q.boolValue = false;
+                q.boolValue = true;   // §8 (2026-10-16): the queue is on (PlayUrl appends while something plays)
+                var h = so.FindProperty("historySize");
+                if (h == null) throw new InvalidOperationException("FrontendHandler.historySize not found (VizVid version changed?)");
+                h.intValue = HistorySize;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
             UdonSharpEditorUtility.CopyProxyToUdon(p.frontend); EditorUtility.SetDirty(p.frontend);
-            log.Add("FrontendHandler: core = Core (prefab wiring kept), enableQueueList = false (a new URL plays at once)");
+            log.Add("FrontendHandler: core = Core (prefab wiring kept), enableQueueList = true, historySize = " + HistorySize + " (§8; both synced, kept while the instance lives)");
         }
 
         /// <summary>各 VideoPlayerHandler の primaryAudioSource (と R) を集める (AVPro / Builtin は同じ Default Audio Source を共有する)。</summary>
@@ -495,16 +532,18 @@ namespace KominkaHillside.Editor
             ui.submit = IconBtn(page.transform, "Submit", SubmitPos, SubmitSize, Icon(SubmitIcon), c, pageUdon, "_SubmitUrl", log);
             ui.controls = new GameObject[ControlNames.Length];
             for (int i = 0; i < ControlNames.Length; i++)
-                ui.controls[i] = IconBtn(page.transform, ControlNames[i], new Vector2(ControlX(i), ControlRowY), IconButtonSize, Icon(ControlIcons[i]), c, pageUdon, ControlEvents[i], log);
+                ui.controls[i] = IconBtn(page.transform, ControlNames[i], ControlPos(i), ControlSize(i), Icon(ControlIcons[i]), c, pageUdon, ControlEvents[i], log);
+            ui.repeatIcon = IconOf(ui.Ctl("Repeat")); ui.spriteRepeat = Icon("repeat"); ui.spriteRepeatOne = Icon(RepeatOneIcon);
             var sb = new StringBuilder();
             ui.slider = KD_DogVoiceSettingsEditor.BuildSlider(page.transform, "VolumeSlider", SliderPos.y, KD_UiSpriteEditor.LoadRound(), pageUdon, "_VolumeChanged", sb);
             if (sb.Length > 0) log.Add(sb.ToString().Trim());
             FitSlider(ui.slider);
             ui.volumeLabel = Label(page.transform, "VolumeLabel", VolumeLabelPos, VolumeLabelSize, "50%", c.font, 20f, 14f, TextAlignmentOptions.Center, false);   // §7: the number only
             ui.spriteUnmuted = Icon(MuteIcon); ui.spriteMuted = Icon(MutedIcon);
-            ui.mute = IconBtn(page.transform, "Mute", MutePos, IconButtonSize, ui.spriteUnmuted, c, pageUdon, "_ToggleMute", log);
+            ui.mute = IconBtn(page.transform, "Mute", MutePos, MuteSize, ui.spriteUnmuted, c, pageUdon, "_ToggleMute", log);
             ui.muteIcon = IconOf(ui.mute);
             ui.note = Label(page.transform, "Note", NotePos, NoteSize, Ja(c, "video.player.note"), c.font, NoteFontMax, NoteFontMin, TextAlignmentOptions.TopLeft, true);
+            BuildListPanel(page.transform, c, pageUdon, ui, log);   // after the screen: drawn over it
             page.SetActive(false);
 
             var pages = new List<GameObject>();
@@ -513,9 +552,47 @@ namespace KominkaHillside.Editor
             p.extraSettingsPages = pages.ToArray();
             EditorUtility.SetDirty(p);
             log.Add("page: Page_Settings/" + PageName + " (hidden, registered in extraSettingsPages: " + pages.Count + " pages), screen " + ScreenSize + " at " + ScreenPos
-                + ", right column x " + ColumnLeft + ".." + ColumnRight + ": URL " + UrlSize + " + [load], [play][pause][stop][sync][full] (icons) at y " + ControlRowY + ", volume " + SliderSize + " + % + [mute], note " + NoteSize
+                + ", right column x " + ColumnLeft + ".." + ColumnRight + ": URL " + UrlSize + " + [load], [play][pause][stop][skip][sync] (icons) at y " + ControlRowY + ", [repeat][list][full] + volume " + SliderSize + " + % + [mute] at y " + ThirdRowY + ", note " + NoteSize + ", " + ListName + " over the screen"
                 + "; [back] -> pouch _VideoBack. Layer " + LayerMask.LayerToName(page.layer));
             return ui;
+        }
+
+        /// <summary>§8: 一覧 VideoPage/ListPanel (画面と同じ矩形・既定 非表示)。上段 [履歴] [キュー] (文字。KH_VideoPage が描く) と ◀ n/m ▶、
+        /// 6 行 (題 1 行 Ellipsis + [▶ 今すぐ] + [＋ キューへ / × 外す])、空の 1 行。行の文字は実行時の題 (人名・URL) なので字形は焼けない (VRChat のフォールバック)。</summary>
+        static void BuildListPanel(Transform page, Ctx c, UdonBehaviour pageUdon, PageUi ui, List<string> log)
+        {
+            var root = KD_ShopSetupEditor.EnsureUiChild(page, ListName, ScreenPos, ScreenSize);
+            foreach (var g in root.GetComponents<Graphic>()) if (!(g is Image)) Object.DestroyImmediate(g);
+            var bg = Comp<Image>(root); bg.sprite = null; bg.type = Image.Type.Simple; bg.color = ListBack; bg.raycastTarget = true;   // takes the pointer (nothing behind it is pressable)
+            ui.listRoot = root;
+            ui.tabHistory = Btn(root.transform, "TabHistory", TabHistoryPos, TabSize, Ja(c, ListHistoryKey), c, pageUdon, "_ListTabHistory", log);
+            ui.tabQueue = Btn(root.transform, "TabQueue", TabQueuePos, TabSize, Ja(c, ListQueueKey), c, pageUdon, "_ListTabQueue", log);
+            ui.pagePrev = Btn(root.transform, "PagePrev", PagePrevPos, PageButtonSize, "◀", c, pageUdon, "_ListPagePrev", log);
+            ui.pageNext = Btn(root.transform, "PageNext", PageNextPos, PageButtonSize, "▶", c, pageUdon, "_ListPageNext", log);
+            ui.pageLabel = Label(root.transform, "PageLabel", PageLabelPos, PageLabelSize, "1/1", c.font, 20f, 14f, TextAlignmentOptions.Center, false);
+            ui.spriteAdd = Icon(AddIcon); ui.spriteRemove = Icon(CloseIcon);
+            var playIcon = Icon("play");
+            for (int i = 0; i < ListRows; i++)
+            {
+                var row = KD_ShopSetupEditor.EnsureUiChild(root.transform, "Row" + i, new Vector2(0f, RowY(i)), RowSize);
+                foreach (var g in row.GetComponents<Graphic>()) Object.DestroyImmediate(g);
+                var lgo = KD_ShopSetupEditor.EnsureUiChild(row.transform, "Label", RowLabelPos, RowLabelSize);
+                foreach (var g in lgo.GetComponents<Graphic>()) if (!(g is TextMeshProUGUI)) Object.DestroyImmediate(g);
+                var t = Comp<TextMeshProUGUI>(lgo);
+                t.font = c.font; t.text = ""; t.color = Ink; t.alignment = TextAlignmentOptions.MidlineLeft; t.raycastTarget = false; t.richText = false;
+                t.enableWordWrapping = false; t.overflowMode = TextOverflowModes.Ellipsis;   // one line; the box is 44 px for an 18 pt line (vrc-world-ui §10.1, Player/2 checks)
+                t.enableAutoSizing = true; t.fontSizeMax = RowFontMax; t.fontSizeMin = RowFontMin; t.fontSize = RowFontMax;
+                EditorUtility.SetDirty(t);
+                ui.rowPlays[i] = IconBtn(row.transform, "Play", RowPlayPos, RowButtonSize, playIcon, c, pageUdon, "_RowPlay" + i, log);
+                ui.rowSeconds[i] = IconBtn(row.transform, "Second", RowSecondPos, RowButtonSize, ui.spriteAdd, c, pageUdon, "_RowSecond" + i, log);
+                ui.rowSecondIcons[i] = IconOf(ui.rowSeconds[i]);
+                ui.rowRoots[i] = row; ui.rowLabels[i] = t;
+            }
+            ui.emptyLabel = Label(root.transform, "EmptyLabel", EmptyPos, EmptySize, Ja(c, ListEmptyKey), c.font, 20f, 14f, TextAlignmentOptions.Center, false);
+            root.SetActive(false);
+            EditorUtility.SetDirty(root);
+            log.Add("list: " + PageName + "/" + ListName + " " + ScreenSize + " at " + ScreenPos + " (hidden; over the screen), tabs history / queue, ◀ n/m ▶, " + ListRows + " rows x " + RowPitch
+                + " px (title one line Ellipsis " + RowFontMax + " -> " + RowFontMin + "pt, [▶] -> _RowPlay{i}, [+ / x] -> _RowSecond{i}), empty line. Row titles are runtime text (VRChat fallback glyphs)");
         }
 
         /// <summary>§7 依頼 1: 全画面の覆い panelRoot/VideoFull。黒い板全面 (押すと _FullClose)、その上に 16:9 の RawImage (Core の 2 枚目の screenTarget)、右上の [×] (_FullClose)。
@@ -697,21 +774,30 @@ namespace KominkaHillside.Editor
             v.frontend = p.frontend; v.core = p.core; v.language = c.language;
             v.urlInput = ui.url; v.screen = ui.screen;
             v.submitButton = ui.submit.GetComponent<Button>();
-            v.playButton = ui.controls[0].GetComponent<Button>(); v.pauseButton = ui.controls[1].GetComponent<Button>();
-            v.stopButton = ui.controls[2].GetComponent<Button>(); v.resyncButton = ui.controls[3].GetComponent<Button>();
+            v.playButton = ui.Ctl("Play").GetComponent<Button>(); v.pauseButton = ui.Ctl("Pause").GetComponent<Button>();
+            v.stopButton = ui.Ctl("Stop").GetComponent<Button>(); v.resyncButton = ui.Ctl("Resync").GetComponent<Button>();
+            // §8: skip / repeat / list
+            v.skipButton = ui.Ctl("Skip").GetComponent<Button>(); v.repeatButton = ui.Ctl("Repeat").GetComponent<Button>(); v.repeatIcon = ui.repeatIcon;
+            v.spriteRepeat = ui.spriteRepeat; v.spriteRepeatOne = ui.spriteRepeatOne; v.listButton = ui.Ctl("List").GetComponent<Button>();
+            v.listRoot = ui.listRoot; v.tabHistoryButton = ui.tabHistory.GetComponent<Button>(); v.tabQueueButton = ui.tabQueue.GetComponent<Button>();
+            v.tabHistoryLabel = LabelOf(ui.tabHistory); v.tabQueueLabel = LabelOf(ui.tabQueue); v.listEmptyLabel = ui.emptyLabel;
+            v.pagePrevButton = ui.pagePrev.GetComponent<Button>(); v.pageNextButton = ui.pageNext.GetComponent<Button>(); v.pageLabel = ui.pageLabel;
+            v.rowRoots = (GameObject[])ui.rowRoots.Clone(); v.rowLabels = (TextMeshProUGUI[])ui.rowLabels.Clone();
+            v.rowPlayButtons = ui.rowPlays.Select(g => g.GetComponent<Button>()).ToArray(); v.rowSecondButtons = ui.rowSeconds.Select(g => g.GetComponent<Button>()).ToArray();
+            v.rowSecondIcons = (Image[])ui.rowSecondIcons.Clone(); v.spriteAdd = ui.spriteAdd; v.spriteRemove = ui.spriteRemove;
             v.muteButton = ui.mute.GetComponent<Button>();
             v.volumeSlider = ui.slider;
             v.stateLabel = ui.state; v.noteLabel = ui.note; v.volumeLabel = ui.volumeLabel; v.urlPlaceholder = ui.placeholder;
             v.backLabel = LabelOf(ui.back);   // §7: the other buttons are icons (their *Label fields are gone)
             v.muteIcon = ui.muteIcon; v.spriteUnmuted = ui.spriteUnmuted; v.spriteMuted = ui.spriteMuted;
-            v.fullRoot = ui.fullRoot; v.fullScreen = ui.fullScreen; v.fullButton = ui.controls[4].GetComponent<Button>(); v.fullCloseButton = ui.fullClose.GetComponent<Button>();
+            v.fullRoot = ui.fullRoot; v.fullScreen = ui.fullScreen; v.fullButton = ui.Ctl("Full").GetComponent<Button>(); v.fullCloseButton = ui.fullClose.GetComponent<Button>();
             v.page = ui.page; v.headerLabel = LabelOf(header);   // opus-runtime 2026-10-15: two optional fields beyond the contract
             EditorUtility.SetDirty(v);
 
             c.pouch.videoPage = ui.page; c.pouch.videoPageBehaviour = v;
             EditorUtility.SetDirty(c.pouch);
             foreach (var b in c.bgms) { b.videoCore = p.core; EditorUtility.SetDirty(b); }
-            log.Add("wired: KH_VideoPage (frontend / core / language / URL / screen / 6 buttons / slider / 4 texts / back label / mute icon + 2 sprites / full root, screen, buttons / page / header label), pouch.videoPage / videoPageBehaviour, "
+            log.Add("wired: KH_VideoPage (frontend / core / language / URL / screen / 6 buttons / slider / 4 texts / back label / mute icon + 2 sprites / full root, screen, buttons / skip, repeat + 2 sprites, list + tabs, pager, 6 rows / page / header label), pouch.videoPage / videoPageBehaviour, "
                 + c.bgms.Count + " KD_BgmPlayer.videoCore");
         }
 
@@ -737,7 +823,7 @@ namespace KominkaHillside.Editor
                         var t = TextOrNull(c.catalog, lang.code, key);
                         if (t != null) glyphs.Append(System.Text.RegularExpressions.Regex.Replace(t, "<[^<>]+>", ""));
                     }
-            glyphs.Append("0123456789% ").Append(LongPlayerName);
+            glyphs.Append("0123456789%/◀▶ ").Append(LongPlayerName);
             return glyphs.ToString();
         }
 

@@ -3917,8 +3917,24 @@
           "text": "いまは入れられない"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "キューに追加 ({0} 件目)"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "履歴"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "キュー"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "まだありません"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL・再生・一時停止・停止はみんなに効く。\n音量と再同期は自分だけ。\n許可リスト外は「Allow Untrusted URLs」が要る。"
+          "text": "URL・再生・停止・次へ・リピートはみんなに効く。\n停止はキューも消す。音量と再同期は自分だけ。\n許可リスト外は「Allow Untrusted URLs」が要る。"
         },
         {
           "key": "pen.call.open",
@@ -7840,8 +7856,24 @@
           "text": "Can't add videos right now"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Added to the queue (#{0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "History"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Queue"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Nothing yet"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, play, pause and stop affect everyone.\nVolume and resync are just for you.\nSites off the allowlist need \"Allow Untrusted URLs\"."
+          "text": "URL, play, stop, skip and repeat affect everyone.\nStop also clears the queue. Volume and resync are yours only.\nSites off the allowlist need \"Allow Untrusted URLs\"."
         },
         {
           "key": "pen.call.open",
@@ -11763,8 +11795,24 @@
           "text": "Сейчас нельзя добавить видео"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Добавлено в очередь (№{0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "История"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Очередь"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Пока пусто"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, пуск, пауза и стоп — для всех.\nГромкость и синхр. — только для вас.\nДля сайтов вне списка нужно «Allow Untrusted URLs»."
+          "text": "URL, пуск, стоп, «далее» и повтор — для всех.\nСтоп очищает и очередь. Громкость и синхр. — только для вас.\nДля сайтов вне списка нужно «Allow Untrusted URLs»."
         },
         {
           "key": "pen.call.open",
@@ -15686,8 +15734,24 @@
           "text": "Зараз не можна додати відео"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Додано до черги (№{0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Історія"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Черга"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Поки порожньо"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, пуск, пауза і стоп — для всіх.\nГучність і синхр. — лише для вас.\nДля сайтів поза списком потрібно «Allow Untrusted URLs»."
+          "text": "URL, пуск, стоп, «далі» і повтор — для всіх.\nСтоп очищає й чергу. Гучність і синхр. — лише для вас.\nДля сайтів поза списком потрібно «Allow Untrusted URLs»."
         },
         {
           "key": "pen.call.open",
@@ -19609,8 +19673,24 @@
           "text": "지금은 넣을 수 없습니다"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "대기열에 추가 ({0}번째)"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "기록"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "대기열"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "아직 없습니다"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL·재생·일시정지·정지는 모두에게 적용됩니다.\n음량과 재동기화는 나에게만 적용됩니다.\n허용 목록 밖의 사이트는 「Allow Untrusted URLs」가 필요합니다."
+          "text": "URL·재생·정지·다음·반복은 모두에게 적용됩니다.\n정지하면 대기열도 지워집니다. 음량과 재동기화는 나에게만 적용됩니다.\n허용 목록 밖의 사이트는 「Allow Untrusted URLs」가 필요합니다."
         },
         {
           "key": "pen.call.open",
@@ -23532,8 +23612,24 @@
           "text": "Gerade nicht möglich"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "In die Warteliste gestellt (Nr. {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Verlauf"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Warteliste"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Noch nichts"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, Abspielen, Pause und Stopp gelten für alle.\nLautstärke und Resync nur für dich.\nSeiten außerhalb der Liste brauchen „Allow Untrusted URLs“."
+          "text": "URL, Abspielen, Stopp, Weiter und Wiederholen gelten für alle.\nStopp leert auch die Warteliste. Lautstärke und Resync nur für dich.\nSeiten außerhalb der Liste brauchen „Allow Untrusted URLs“."
         },
         {
           "key": "pen.call.open",
@@ -27455,8 +27551,24 @@
           "text": "现在无法加入"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "已加入队列（第 {0} 个）"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "历史"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "队列"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "还没有"
+        },
+        {
           "key": "video.player.note",
-          "text": "网址、播放、暂停、停止对所有人生效。\n音量和重新同步只对自己生效。\n不在允许列表的网站需要开启“Allow Untrusted URLs”。"
+          "text": "网址、播放、停止、下一个、循环对所有人生效。\n停止也会清空队列。音量和重新同步只对自己生效。\n不在允许列表的网站需要开启“Allow Untrusted URLs”。"
         },
         {
           "key": "pen.call.open",
@@ -31378,8 +31490,24 @@
           "text": "Ahora no se puede añadir"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Añadido a la cola (n.º {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Historial"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Cola"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Aún no hay nada"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, reproducir, pausa y detener afectan a todos.\nVolumen y resincr. solo para ti.\nSitios fuera de la lista: activa «Allow Untrusted URLs»."
+          "text": "URL, reproducir, detener, siguiente y repetir afectan a todos.\nDetener también vacía la cola. Volumen y resincr. solo para ti.\nSitios fuera de la lista: activa «Allow Untrusted URLs»."
         },
         {
           "key": "pen.call.open",
@@ -35301,8 +35429,24 @@
           "text": "Impossible d'ajouter pour l'instant"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Ajouté à la liste (n° {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Historique"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "À suivre"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Rien pour l'instant"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, lecture, pause et arrêt valent pour tous.\nVolume et resynchro : rien que pour toi.\nSites hors liste : active « Allow Untrusted URLs »."
+          "text": "URL, lecture, arrêt, suivant et répétition valent pour tous.\nL'arrêt vide aussi la liste. Volume et resynchro : rien que pour toi.\nSites hors liste : active « Allow Untrusted URLs »."
         },
         {
           "key": "pen.call.open",
@@ -39224,8 +39368,24 @@
           "text": "Não dá para adicionar agora"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Adicionado à fila (nº {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Histórico"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Fila"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Nada ainda"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, tocar, pausar e parar valem para todos.\nVolume e ressincr. só para você.\nSites fora da lista precisam de \"Allow Untrusted URLs\"."
+          "text": "URL, tocar, parar, próximo e repetir valem para todos.\nParar também limpa a fila. Volume e ressincr. só para você.\nSites fora da lista precisam de \"Allow Untrusted URLs\"."
         },
         {
           "key": "pen.call.open",
@@ -43147,8 +43307,24 @@
           "text": "Ora non puoi aggiungere video"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Aggiunto alla coda (n. {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Cronologia"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Coda"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Ancora niente"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, riproduci, pausa e stop valgono per tutti.\nVolume e risincr. solo per te.\nI siti fuori lista richiedono \"Allow Untrusted URLs\"."
+          "text": "URL, riproduci, stop, avanti e ripeti valgono per tutti.\nStop svuota anche la coda. Volume e risincr. solo per te.\nI siti fuori lista richiedono \"Allow Untrusted URLs\"."
         },
         {
           "key": "pen.call.open",
@@ -47070,8 +47246,24 @@
           "text": "Teraz nie można dodać wideo"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "Dodano do kolejki (nr {0})"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "Historia"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "Kolejka"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "Jeszcze nic"
+        },
+        {
           "key": "video.player.note",
-          "text": "URL, odtwórz, pauza i stop działają dla wszystkich.\nGłośność i synchr. tylko dla ciebie.\nStrony spoza listy wymagają „Allow Untrusted URLs”."
+          "text": "URL, odtwórz, stop, dalej i powtarzanie działają dla wszystkich.\nStop czyści też kolejkę. Głośność i synchr. tylko dla ciebie.\nStrony spoza listy wymagają „Allow Untrusted URLs”."
         },
         {
           "key": "pen.call.open",
@@ -50997,8 +51189,24 @@
           "text": "現在無法加入"
         },
         {
+          "key": "video.player.state.queued",
+          "text": "已加入佇列（第 {0} 個）"
+        },
+        {
+          "key": "video.player.list.history",
+          "text": "歷史"
+        },
+        {
+          "key": "video.player.list.queue",
+          "text": "佇列"
+        },
+        {
+          "key": "video.player.list.empty",
+          "text": "還沒有"
+        },
+        {
           "key": "video.player.note",
-          "text": "網址、播放、暫停、停止對所有人生效。\n音量和重新同步只對自己生效。\n不在允許清單的網站需要開啟「Allow Untrusted URLs」。"
+          "text": "網址、播放、停止、下一個、循環對所有人生效。\n停止也會清空佇列。音量和重新同步只對自己生效。\n不在允許清單的網站需要開啟「Allow Untrusted URLs」。"
         },
         {
           "key": "pen.call.open",
