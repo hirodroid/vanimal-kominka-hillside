@@ -59,7 +59,12 @@ namespace KominkaHillside.Editor
             check(s.pouch.extraSettingsPages.Contains(s.settingsPage) && !s.settingsPage.activeSelf,"settings extra page registered and hidden");
             check(s.settingsEntryLabel.transform.parent.parent==s.pouch.settingsHome.transform,"settings entry is on the existing home");
             var entry=(RectTransform)s.settingsEntryLabel.transform.parent;
-            check(entry.anchoredPosition==new Vector2(455,-214) && entry.sizeDelta==new Vector2(190,60),"entry fits free right cell");
+            check(entry.anchoredPosition==KD_MenuFinishEditor.HillsideWalkIntroPos && entry.sizeDelta==KD_MenuFinishEditor.HillsideReadEntrySize,"entry fits free right cell"); // IMP-WLD-017: the read row constants (4 x 260)
+            { // IMP-WLD-017 (Codex): the seat must not overlap any other active button on the settings home (Credit / Information at 340 wide in an older scene would)
+                var r0=new Rect(entry.anchoredPosition-entry.sizeDelta*0.5f,entry.sizeDelta); var hit="";
+                foreach(Transform ch in s.pouch.settingsHome.transform){ if(ch==entry||!ch.gameObject.activeSelf||ch.GetComponent<Button>()==null)continue; var rt=(RectTransform)ch; var r1=new Rect(rt.anchoredPosition-rt.sizeDelta*0.5f,rt.sizeDelta); if(r0.Overlaps(r1)){hit=ch.name;break;} }
+                check(hit=="","settings entry overlaps no other settings-home button"+(hit==""?"":" ("+hit+")"));
+            }
             foreach(var pair in new[]{(s.closeLabel,"_Close"),(s.settingsEntryLabel,"_OpenSettings"),(s.replayLabel,"_Replay"),(s.autoLabel,"_ToggleAuto"),(s.backLabel,"_BackSettings")})
             {
                 var button=pair.Item1.transform.parent.GetComponent<Button>();

@@ -2898,7 +2898,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "読む"
+          "text": "読む・書く"
         },
         {
           "key": "settings.volume.scope",
@@ -3919,6 +3919,10 @@
         {
           "key": "video.player.note",
           "text": "URL・再生・一時停止・停止はみんなに効く。\n音量と再同期は自分だけ。\n許可リスト外は「Allow Untrusted URLs」が要る。"
+        },
+        {
+          "key": "pen.call.open",
+          "text": "筆ペン"
         }
       ]
     },
@@ -6817,7 +6821,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -7838,6 +7842,10 @@
         {
           "key": "video.player.note",
           "text": "URL, play, pause and stop affect everyone.\nVolume and resync are just for you.\nSites off the allowlist need \"Allow Untrusted URLs\"."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Brush pen"
         }
       ]
     },
@@ -10736,7 +10744,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -11757,6 +11765,10 @@
         {
           "key": "video.player.note",
           "text": "URL, пуск, пауза и стоп — для всех.\nГромкость и синхр. — только для вас.\nДля сайтов вне списка нужно «Allow Untrusted URLs»."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Кисть-ручка"
         }
       ]
     },
@@ -14655,7 +14667,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -15676,6 +15688,10 @@
         {
           "key": "video.player.note",
           "text": "URL, пуск, пауза і стоп — для всіх.\nГучність і синхр. — лише для вас.\nДля сайтів поза списком потрібно «Allow Untrusted URLs»."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Пензлик"
         }
       ]
     },
@@ -18574,7 +18590,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -19595,6 +19611,10 @@
         {
           "key": "video.player.note",
           "text": "URL·재생·일시정지·정지는 모두에게 적용됩니다.\n음량과 재동기화는 나에게만 적용됩니다.\n허용 목록 밖의 사이트는 「Allow Untrusted URLs」가 필요합니다."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "붓펜"
         }
       ]
     },
@@ -20077,7 +20097,7 @@
         },
         {
           "key": "KD_ShopShelf.WordInUse",
-          "text": "Aktiv"
+          "text": "In Benutzung"
         },
         {
           "key": "KD_ShopShelf.WordUse",
@@ -22493,7 +22513,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -23514,6 +23534,10 @@
         {
           "key": "video.player.note",
           "text": "URL, Abspielen, Pause und Stopp gelten für alle.\nLautstärke und Resync nur für dich.\nSeiten außerhalb der Liste brauchen „Allow Untrusted URLs“."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pinselstift"
         }
       ]
     },
@@ -26412,7 +26436,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -27433,6 +27457,10 @@
         {
           "key": "video.player.note",
           "text": "网址、播放、暂停、停止对所有人生效。\n音量和重新同步只对自己生效。\n不在允许列表的网站需要开启“Allow Untrusted URLs”。"
+        },
+        {
+          "key": "pen.call.open",
+          "text": "毛笔"
         }
       ]
     },
@@ -30331,7 +30359,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -31352,6 +31380,10 @@
         {
           "key": "video.player.note",
           "text": "URL, reproducir, pausa y detener afectan a todos.\nVolumen y resincr. solo para ti.\nSitios fuera de la lista: activa «Allow Untrusted URLs»."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pincel"
         }
       ]
     },
@@ -34250,7 +34282,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -35271,6 +35303,10 @@
         {
           "key": "video.player.note",
           "text": "URL, lecture, pause et arrêt valent pour tous.\nVolume et resynchro : rien que pour toi.\nSites hors liste : active « Allow Untrusted URLs »."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pinceau"
         }
       ]
     },
@@ -38169,7 +38205,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -39190,6 +39226,10 @@
         {
           "key": "video.player.note",
           "text": "URL, tocar, pausar e parar valem para todos.\nVolume e ressincr. só para você.\nSites fora da lista precisam de \"Allow Untrusted URLs\"."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pincel"
         }
       ]
     },
@@ -42088,7 +42128,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -43109,6 +43149,10 @@
         {
           "key": "video.player.note",
           "text": "URL, riproduci, pausa e stop valgono per tutti.\nVolume e risincr. solo per te.\nI siti fuori lista richiedono \"Allow Untrusted URLs\"."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pennello"
         }
       ]
     },
@@ -46007,7 +46051,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -47028,6 +47072,10 @@
         {
           "key": "video.player.note",
           "text": "URL, odtwórz, pauza i stop działają dla wszystkich.\nGłośność i synchr. tylko dla ciebie.\nStrony spoza listy wymagają „Allow Untrusted URLs”."
+        },
+        {
+          "key": "pen.call.open",
+          "text": "Pędzelek"
         }
       ]
     },
@@ -49930,7 +49978,7 @@
         },
         {
           "key": "settings.group.read",
-          "text": "Read"
+          "text": "Read & Write"
         },
         {
           "key": "settings.volume.scope",
@@ -50951,6 +50999,10 @@
         {
           "key": "video.player.note",
           "text": "網址、播放、暫停、停止對所有人生效。\n音量和重新同步只對自己生效。\n不在允許清單的網站需要開啟「Allow Untrusted URLs」。"
+        },
+        {
+          "key": "pen.call.open",
+          "text": "毛筆"
         }
       ]
     }

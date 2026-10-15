@@ -36,20 +36,63 @@ namespace KominkaDogRun.Editor
         // 置くのは Tools/KominkaHillside/Photo/4 (任意)。置いたときだけ Verify 22 の群「自分」に数える
         public const string PhotoToggleName = "PhotoCaptureToggle";
         public static readonly Vector2 HillsidePhotoTogglePos = new Vector2(455f, HillsideEntryRowY), HillsidePhotoToggleSize = new Vector2(190f, 60f);
-        public static readonly Vector2 HillsideCreditEntryPos = new Vector2(-180f, HillsideReadRowY);
-        public static readonly Vector2 HillsideInformationEntryPos = new Vector2(180f, HillsideReadRowY);
+        // 裏山改変 IMP-WLD-017: 群「読む・書く」(settings.group.read) の行は 260 x 60 の 4 つを等間隔 (4 x 260 + 3 x 20 = 1100、x -550〜550):
+        // [クレジット] -420 / [インフォメーション] -140 / [散歩の案内] 140 (KH_WalkIntroEditor、IMP-UI-006) / [筆ペン] 420 (Pen/1)。
+        // 群「自分」の入口の行は HillsideEntrySize (340) のまま。この行の位置と大きさの正本はここ (Menu/11・Pen/1・WalkIntro が同じ定数を読む)
+        public static readonly Vector2 HillsideReadEntrySize = new Vector2(260f, 60f);
+        public static readonly Vector2 HillsideCreditEntryPos = new Vector2(-420f, HillsideReadRowY);
+        public static readonly Vector2 HillsideInformationEntryPos = new Vector2(-140f, HillsideReadRowY);
+        // 裏山改変 IMP-WLD-017: [散歩の案内] (KH_WalkIntroEditor が置く。任意)。置いたときだけ Verify 22 の群「読む」に数える
+        public const string WalkIntroButtonName = "WalkIntroButton";
+        public static readonly Vector2 HillsideWalkIntroPos = new Vector2(140f, HillsideReadRowY);
+        // 裏山改変 IMP-WLD-017: 筆ペンの [筆ペン] (押すと Page_Settings/PenPage)。群「読む・書く」の行の右端。写真の PhotoCaptureToggle と同じ型 (任意の部品)。
+        // 置くのは Tools/KominkaHillside/Pen/1 (Pen/9 で外せる)。置いたときだけ Verify 22 の群「読む」に数える
+        public const string PenCallButtonName = "PenCallButton";
+        public static readonly Vector2 HillsidePenCallPos = new Vector2(420f, HillsideReadRowY), HillsidePenCallSize = HillsideReadEntrySize;
+        /// <summary>裏山改変 IMP-WLD-017: 群「読む・書く」の行の 4 つ (名前, 位置)。大きさはどれも HillsideReadEntrySize。WalkIntro と PenCall は任意 (無ければ飛ばす)。</summary>
+        public static readonly (string name, Vector2 pos, bool optional)[] HillsideReadRow =
+        {
+            (CreditButtonName, HillsideCreditEntryPos, false), ("InformationButton", HillsideInformationEntryPos, false),
+            (WalkIntroButtonName, HillsideWalkIntroPos, true), (PenCallButtonName, HillsidePenCallPos, true),
+        };
+
+        /// <summary>裏山改変 IMP-WLD-017: 読む・書く の行にある入口を定数どおりに並べ直す (作らない。無い任意の部品は飛ばす)。ボタンの子 Label は size − (24, 4)。
+        /// Menu/11 (BuildHillsideSettings) と Pen/1 が呼ぶ。並べ直した名前を返す。</summary>
+        public static List<string> LayoutHillsideReadRow(Transform home)
+        {
+            var done = new List<string>();
+            foreach (var e in HillsideReadRow)
+            {
+                var t = home.Find(e.name) as RectTransform;
+                if (t == null) continue;
+                t.anchoredPosition = e.pos; t.sizeDelta = HillsideReadEntrySize;
+                var label = t.Find("Label") as RectTransform; if (label != null) { label.sizeDelta = HillsideReadEntrySize - new Vector2(24f, 4f); EditorUtility.SetDirty(label); }
+                EditorUtility.SetDirty(t);
+                done.Add(e.name);
+            }
+            return done;
+        }
+
+        /// <summary>裏山改変 IMP-WLD-017: Verify 22 の群「読む・書く」の項目 (必須の 2 つ + 置いてある任意の部品)。</summary>
+        static string[] ReadRowMembers(Transform home)
+        {
+            var names = new List<string>();
+            foreach (var e in HillsideReadRow) if (!e.optional || home.Find(e.name) != null) names.Add(e.name);
+            return names.ToArray();
+        }
         public static readonly Vector2 HillsideAccessNotePos = new Vector2(190f, HillsideGroupRoomY);
         public static readonly Vector2 HillsideAccessNoteSize = new Vector2(700f, 30f);
         static readonly Vector2 GroupHeadingSize = new Vector2(1080f, 30f);
         const float GroupHeadingPoints = 20f;
-        const float HomeTop = 195f, HomeBottom = -250f;
+        // 裏山改変 IMP-WLD-017: Pen/2 (KH_PenCallEditor.Verify) が同じ上下端で見るので public に
+        public const float HomeTop = 195f, HomeBottom = -250f;
 
         /// <summary>群見出しの (名前, 文言キー, y, 仮の ja)。文言キーは keys-U1.json (司令塔が UITranslations.json へ統合)。</summary>
         public static readonly (string name, string key, float y, string ja)[] HillsideGroups =
         {
             ("GroupSelf", "settings.group.self", HillsideGroupSelfY, "自分の見え方・聞こえ方"),
             ("GroupRoom", "settings.group.room", HillsideGroupRoomY, "この部屋のみんな"),
-            ("GroupRead", "settings.group.read", HillsideGroupReadY, "読む"),
+            ("GroupRead", "settings.group.read", HillsideGroupReadY, "読む・書く"),   // 裏山改変 IMP-WLD-017: 「読む」→「読む・書く」(書く = [筆ペン])
         };
 
         // ---------------------------------------------------------------- クレジット (設定面の頁。古民家の KD_CreditBoard は置かない)
@@ -107,15 +150,19 @@ namespace KominkaDogRun.Editor
                 label.enableWordWrapping = false; label.overflowMode = TextOverflowModes.Overflow;
             }
             // 6) 入口 4 つを表示 (0-b で非表示にしたものを戻す)。位置と大きさは上の定数
-            foreach (var entry in new[] { ("VolumeSettingsButton", HillsideVolumeEntryPos), ("DistanceFadeSettingsButton", HillsideFadeEntryPos),
-                                           (CreditButtonName, HillsideCreditEntryPos), ("InformationButton", HillsideInformationEntryPos) })
+            // 裏山改変 IMP-WLD-017: 読む・書く の行は HillsideReadEntrySize (260)、自分の行は HillsideEntrySize (340)
+            foreach (var entry in new[] { ("VolumeSettingsButton", HillsideVolumeEntryPos, HillsideEntrySize), ("DistanceFadeSettingsButton", HillsideFadeEntryPos, HillsideEntrySize),
+                                           (CreditButtonName, HillsideCreditEntryPos, HillsideReadEntrySize), ("InformationButton", HillsideInformationEntryPos, HillsideReadEntrySize) })
             {
                 var t = home.Find(entry.Item1) as RectTransform;
                 if (t == null) { log.AppendLine("FAIL settings entry missing: " + entry.Item1); continue; }
-                t.anchoredPosition = entry.Item2; t.sizeDelta = HillsideEntrySize;
-                var label = t.Find("Label") as RectTransform; if (label != null) label.sizeDelta = HillsideEntrySize - new Vector2(24f, 4f);
+                t.anchoredPosition = entry.Item2; t.sizeDelta = entry.Item3;
+                var label = t.Find("Label") as RectTransform; if (label != null) label.sizeDelta = entry.Item3 - new Vector2(24f, 4f);
                 if (!t.gameObject.activeSelf) { t.gameObject.SetActive(true); log.AppendLine("Settings: " + entry.Item1 + " shown (段階 3)"); }
             }
+            // 裏山改変 IMP-WLD-017: 任意の [散歩の案内] / [筆ペン] があれば同じ行の定数へ (作らない。それぞれの Setup が置く)
+            var readRow = LayoutHillsideReadRow(home);
+            log.AppendLine("Settings: read row (読む・書く) laid out 4 x " + HillsideReadEntrySize.x + ": " + string.Join(", ", readRow));
             // 7) 頁の登録を掃除 (消した頁の null を落とす)。音量・距離フェードの頁は KD_TreatPouch の専用フィールドで開くので登録しない
             var pages = new List<GameObject>();
             foreach (var p in pouch.extraSettingsPages ?? Array.Empty<GameObject>()) if (p != null && !pages.Contains(p)) pages.Add(p);
@@ -129,7 +176,7 @@ namespace KominkaDogRun.Editor
         internal static void BuildCreditPage(KD_TreatPouch pouch, KD_MenuSettings settings, TMP_FontAsset font, StringBuilder log)
         {
             var udon = UdonSharpEditorUtility.GetBackingUdonBehaviour(settings);
-            Button(pouch.settingsHome.transform, CreditButtonName, HillsideCreditEntryPos, HillsideEntrySize, HT("ui.extra.022", "クレジット", log), font, udon, "_OpenCredits", log);
+            Button(pouch.settingsHome.transform, CreditButtonName, HillsideCreditEntryPos, HillsideReadEntrySize /* 裏山改変 IMP-WLD-017 */, HT("ui.extra.022", "クレジット", log), font, udon, "_OpenCredits", log);
             var page = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, CreditPageName, Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth, KD_TreatSetupEditor.PanelHeight));
             var existing = page.transform.Find("ScrollView");
             var scroll = existing != null ? existing.GetComponent<ScrollRect>() : KD_CreditSetupEditor.BuildScrollArea(page.transform, "ScrollView", Vector2.zero, new Vector2(1000, 400), 36,
@@ -254,7 +301,8 @@ namespace KominkaDogRun.Editor
                     ? new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", PhotoToggleName, "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" }
                     : new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" },
                 new[] { "CallAccess", "LiveAccess" },
-                new[] { CreditButtonName, "InformationButton" },
+                // 裏山改変 IMP-WLD-017: [散歩の案内] (KH_WalkIntroEditor) と [筆ペン] (Pen/1) は置いたときだけ群「読む・書く」に入る (任意。写真の分岐と同じ)
+                ReadRowMembers(home),
             };
             for (int gi = 0; gi < members.Length; gi++)
             {

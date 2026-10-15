@@ -272,7 +272,7 @@ namespace KominkaDogRun.Editor
             string T(string key) { return KD_LocalizationEditor.Text(catalog, catalog.fallbackLanguage, key); }
             var udon = UdonSharpEditorUtility.GetBackingUdonBehaviour(settings);
             // 裏山改変: 群「読む」の右 (古民家は (180,0) 320x64)。位置の正本は KD_MenuFinishEditor.Hillside
-            Button(pouch.settingsHome.transform, "InformationButton", HillsideInformationEntryPos, HillsideEntrySize, T("information.title"), font, udon, "_OpenInformation", log);
+            Button(pouch.settingsHome.transform, "InformationButton", HillsideInformationEntryPos, HillsideReadEntrySize /* 裏山改変 IMP-WLD-017: 読む・書く の行は 260 */, T("information.title"), font, udon, "_OpenInformation", log);
             var info = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "Information", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth,KD_TreatSetupEditor.PanelHeight));
             var ai = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "AiInformation", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth,KD_TreatSetupEditor.PanelHeight));
             settings.informationPage = info; settings.aiInformationPage = ai;

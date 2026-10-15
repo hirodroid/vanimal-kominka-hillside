@@ -942,7 +942,7 @@ namespace KominkaDogRun
         private bool _stickLatched;
 
         public KD_Language language;
-        public void _RefreshLanguage() { Redraw(); VideoOnLanguageChanged(); }   // 裏山改変 IMP-UI-011: ヘッダの [動画] と面の文言も今の言語へ (KD_TreatPouch.Video.cs)
+        public void _RefreshLanguage() { Redraw(); VideoOnLanguageChanged(); PenOnLanguageChanged(); }   // 裏山改変 IMP-UI-011: ヘッダの [動画] と面の文言も今の言語へ (KD_TreatPouch.Video.cs)。IMP-WLD-017: 設定ホームの [筆ペン] と筆ペンの面も (KD_TreatPouch.Pen.cs)
         public GameObject[] extraSettingsPages;
         private GameObject _extraSettingsPage;
         private string _extraSettingsTitle;
@@ -1255,6 +1255,7 @@ namespace KominkaDogRun
             if (Utilities.IsValid(lp)) PlaceInFront(lp);
             Redraw();
             VideoOnPanelOpened();   // 裏山改変 IMP-UI-011: 動画の面を開いたまま閉じた板を開き直したら、面の見回りを再開する (KD_TreatPouch.Video.cs)
+            PenOnPanelOpened();     // 裏山改変 IMP-WLD-017: 筆ペンの面も同じ (KD_TreatPouch.Pen.cs)
         }
 
         // ============================================================

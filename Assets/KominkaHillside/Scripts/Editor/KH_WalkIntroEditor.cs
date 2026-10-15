@@ -136,8 +136,9 @@ namespace KominkaHillside.Editor
             intro.replayLabel=Button(page.transform,"Replay",new Vector2(0,-20),new Vector2(640,70),font,T(catalog,"replay"),udon,"_Replay");
             intro.autoLabel=Button(page.transform,"Auto",new Vector2(0,-115),new Vector2(640,70),font,T(catalog,"autoOn"),udon,"_ToggleAuto");
             intro.backLabel=Button(page.transform,"Back",new Vector2(-350,-245),new Vector2(340,60),font,T(catalog,"back"),udon,"_BackSettings");
-            // Existing settings home has a free right cell on the Read row. Keep all other entries untouched.
-            intro.settingsEntryLabel=Button(pouch.settingsHome.transform,"WalkIntroButton",new Vector2(455,-214),new Vector2(190,60),font,T(catalog,"title"),udon,"_OpenSettings");
+            // IMP-WLD-017: the read row (読む・書く) is 4 x 260 (Credit / Information / WalkIntro / PenCall); position and size come from KD_MenuFinishEditor.
+            intro.settingsEntryLabel=Button(pouch.settingsHome.transform,KD_MenuFinishEditor.WalkIntroButtonName,KD_MenuFinishEditor.HillsideWalkIntroPos,KD_MenuFinishEditor.HillsideReadEntrySize,font,T(catalog,"title"),udon,"_OpenSettings");
+            KD_MenuFinishEditor.LayoutHillsideReadRow(pouch.settingsHome.transform); // IMP-WLD-017 (Codex): an older scene still has Credit / Information at 340 wide; re-seat the whole row so nothing overlaps
             pouch.extraSettingsPages=(pouch.extraSettingsPages ?? new GameObject[0]).Where(x=>x!=null).Concat(new[]{page}).Distinct().ToArray();
             page.SetActive(false); manager.walkIntro=intro;
             Save(intro); Save(manager); Save(pouch);
