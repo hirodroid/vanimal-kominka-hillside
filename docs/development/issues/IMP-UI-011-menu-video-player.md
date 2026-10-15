@@ -5,7 +5,7 @@ system: UI
 status: review
 priority: Medium
 summary: VizVid 1.8.2 の動画プレイヤーを手元メニューの副画面に組み込んだ (2026-10-16 実装、Edit 検査 PASS)。入口はヘッダの [写真] の隣の [動画]。モニターは置かない。Play・実機は未確認
-next: "ユーザー: §3 の決定 1〜3 (推奨で実装済み。変えるなら Player/9 (未実行) で外してから直して Player/1)。PCVR で [動画] → 面 → URL の実再生 (上下の向き・音・音量・消音・BGM が消えて停止で戻る)、板を閉じても音が続くこと。2 人で同期・途中参加 (B)。Quest の再生と負荷 (D)。iOS は見るだけ (E)"
+next: "ユーザー: §3 の決定 1〜3・§3-7 (推奨で実装済み)。PCVR で [動画] → 面 → URL の実再生 (上下の向き・音・音量・消音・BGM)、[全画面] の覆いと戻り方 (どこかを押す / ×)、アイコンだけで意味が通るか (投入の矢印)、板を閉じても音が続くこと。2 人で同期 (B)。Quest (D)。iOS は見るだけ (E)"
 updated: 2026-10-16
 ---
 
@@ -75,3 +75,20 @@ Edit で確定できるもの:
 - **検証 (Edit、統括)**: C# 0 / U# 0 (172 scripts)。Player/0 → Player/1 BUILD_OK → Player/2 PASS fails=0 warns=0、Photo/2 PASS 0/0、Menu/21 317/0。シーンは保存済み (別セッションの未保存分も一緒に保存した)。**Play・実機は未確認** (ClientSim は動画を再生できない)。11 言語の収まりは VRChat のフォールバックフォントなので実機。
 - **Codex 独立レビューの反映**: BGM の静止画除外 / 板を開き直したときの見回り再開 / URL 投入の Locked 検査 / 閉じたままの言語切替 / 注意文を「URL・再生・一時停止・停止はみんなに効く。音量と再同期は自分だけ。許可リスト外は Allow Untrusted URLs が要る」の 3 行に (「ON にすると映る」の断定をやめた)。見送り: State 3 (Ready) を一時停止と表示する意味差 (実害なし)。統括の追補 (advisor): 自分が [消音] していれば BGM も消さない (`!videoCore.Muted`、Muted はローカル)。別件候補: `KD_TreatSetupEditor.PrunePanelChildren` が Photo/Video のボタンを keep しない (周回シーンでは RejectLegacyRebuild が先に止めるので今回の経路では起きない。KH_VideoPlayerEditor の冒頭に注意)。
 - **コミット**: Issue・overview・コード・翻訳・フォント (字形 早)・`KH_VideoPage.asset`・`KD_BgmPlayer.asset`・`Packages/vpm-manifest.json` と `packages-lock.json` (VizVid 1.8.2 + 依存。同じ diff の QvPen 3.3.15 も含む)・`ProjectSettings.asset` (LAZY_SWITCH 等の define)。シーンと他の .asset は別セッションの未コミット分を含むので stage しない (Player/1 で再生成できる)。
+
+## 7. 追加依頼 (2026-10-16 ユーザー)
+
+- 既製の VizVid コントロール UI を埋め込まなかった理由を説明 (Canvas と UiShape の二重化、フォント・言語系統の不一致、参照の多さ、要らない機能) → ユーザー「確かに機能過剰か」。**欲しかったのは画面をメニュー一杯にする全画面化**。
+- 依頼 1: **全画面** — 面の [全画面] で映像を板いっぱい (1140×641、16:9、黒地) に。画面のどこかを押すか [×] で戻る。面を閉じる・タブを変えると自動で戻る。
+- 依頼 2: **記号化** — 入れる / 再生 / 一時停止 / 停止 / 再同期 / 消音 / 音量 / 全画面 のボタンは記号 (フォントに無い字は ASCII) にして多言語化しない。翻訳キー `video.player.submit / play / pause / stop / resync / mute / unmute / volume` は削除。状態の 1 行・注意文・[もどる] は翻訳のまま。
+
+決定: 2026-10-16 (ユーザー依頼) 上の 2 点を実装する。既製 UI の埋め込みはしない。
+
+2026-10-16 §7 実装 (統括 Fable、実装 Opus 2 本、Codex 独立レビュー D/X 高 0・中 0・低 2)。
+
+- **全画面**: `panelRoot/VideoFull` (黒 1140×700 のボタン → `_FullClose`、RawImage 1140×641 中心 (0, -29.5) = Core の screenTargets の 2 枚目 (mode 4)、右上 [×] 44×44)。面の [全画面] → `_ToggleFull`。`_PageOpened` / `_VideoBack` / 板の開き直しで解除、タブ変更・板を閉じたら次の見回り (0.5 s) で解除。**並びは共有の購入確認カード (ConfirmPanel) の直前** (P13「カードは板の最後の子」を優先。全画面中にカードは開かない)。
+- **アイコン**: `KH_IconSpriteEditor` が Material Design 相当の 9 形 (play / pause / stop / sync / volume / muted / fullscreen / load / close) を 128×128 (4× SSAA) で `Assets/KominkaHillside/Textures/Icons/KH_Icon_*.png` に描き、Sprite として取り込む (既にあれば描き直さない。Player/8 で強制)。ボタン 7 個 + 覆いの [×] は Label を持たず子 `Icon` (白、短辺の 60%)。消音は `muteIcon` の sprite を切替、音量は "N%" だけ。翻訳キー 8 つ (submit / play / pause / stop / resync / mute / unmute / volume) を 13 言語から削除 (978 キー)。残る翻訳は 14 キー (入口・題・URL・状態 10・注意)。統括が montage で目視: 標準的な形。
+- **右の列**: URL 320×50 (270,120) + [投入] 60×50、2 段目 y 60 に 5 個 (76×50、x 150〜510)、3 段目 y -10 に音量 240×40 + "N%" 70×40 (390) + [消音] 76×50 (480)、注意 440×110 (330,-105)。
+- **検証 (Edit)**: C# 0 / U# 0。Player/1 BUILD_OK → Player/2 PASS 0/0 (206 項目)、Photo/2 PASS 0/0、Menu/21 317/0。途中 2 回の FAIL (包含判定が Rect.Contains で端が等しい矩形を弾いた / VideoFull を最後の子にして P13 と衝突) は直してから通した。Player/1 は dirty なシーンでは何もせず例外だけ残す (Unsaved scene) ので、先に SaveOpenScenes した (別セッションの未保存分も一緒に保存)。
+- **Codex 独立レビュー (低 2)**: (1) importer の検査が alphaSource 等を見ていない → `ImporterOk` に alphaSource / PPU / 最大サイズ / filter / sRGB を足して反映。(2) 投入アイコンがダウンロードの形で「端末へ保存」と読まれる余地 → 翻訳なしの方針のまま採用し、初見で通じるかを実機確認の項目に入れた。
+- **未確認**: 全画面の向き・戻り方、アイコンの理解度、実再生、2 人、Quest、iOS (NOT_TESTED)。

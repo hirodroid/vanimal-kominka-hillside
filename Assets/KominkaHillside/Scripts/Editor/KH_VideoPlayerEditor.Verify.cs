@@ -79,7 +79,7 @@ namespace KominkaHillside.Editor
             var page = p.settingsPage.transform.Find(PageName);
             if (roots.Length != 1)
             {
-                Check(page == null && p.videoPage == null && panel.Find(KD_HandMenuScrollEditor.VideoHeaderButtonName) == null, "no VizVid: no Page_Settings/" + PageName + ", no header [動画], pouch.videoPage null");
+                Check(page == null && p.videoPage == null && panel.Find(KD_HandMenuScrollEditor.VideoHeaderButtonName) == null && panel.Find(FullName) == null, "no VizVid: no Page_Settings/" + PageName + ", no header [動画], no " + FullName + ", pouch.videoPage null");
                 VerifyNetworkIds(baselineNull, Check, Warn, Note);
                 return;
             }
@@ -99,6 +99,9 @@ namespace KominkaHillside.Editor
             // ---------------------------------------------------------------- Core.screenTargets (7 parallel arrays) and the page's RawImage
             var screen = page != null ? page.Find("Screen") : null;
             var raw = screen != null ? screen.GetComponent<RawImage>() : null;
+            var fullT = panel.Find(FullName);
+            var fullScreenT = fullT != null ? fullT.Find("Screen") : null;
+            var fullRaw = fullScreenT != null ? fullScreenT.GetComponent<RawImage>() : null;
             using (var so = new SerializedObject(core))
             {
                 var props = ScreenArrays.Select(n => so.FindProperty(n)).ToArray();
@@ -108,16 +111,19 @@ namespace KominkaHillside.Editor
                 {
                     int n0 = props[0].arraySize;
                     Check(props.All(x => x.arraySize == n0), "Core screen arrays are the same length (" + string.Join(" / ", props.Select(x => x.arraySize)) + ")");
-                    var hits = Enumerable.Range(0, n0).Where(i => raw != null && props[0].GetArrayElementAtIndex(i).objectReferenceValue == raw).ToArray();
-                    Check(raw != null && hits.Length == 1, "Core.screenTargets holds " + PageName + "/Screen (RawImage) exactly once (" + hits.Length + ")");
-                    if (hits.Length == 1 && props.All(x => x.arraySize == n0))
+                    // the page's screen and the full-screen overlay's screen (§7): each exactly once, mode 4
+                    foreach (var target in new[] { (PageName + "/Screen", raw), (FullName + "/Screen", fullRaw) })
                     {
-                        int i = hits[0];
-                        Check(props[1].GetArrayElementAtIndex(i).intValue == RawImageMode && props[2].GetArrayElementAtIndex(i).intValue == -1
-                            && props[3].GetArrayElementAtIndex(i).stringValue == "_MainTex" && props[5].GetArrayElementAtIndex(i).stringValue == "_IsAVProVideo"
-                            && props[6].GetArrayElementAtIndex(i).vector4Value == Vector4.zero,
-                            "screen " + i + ": mode " + RawImageMode + " (UI RawImage; AVPro flips uvRect), index -1, _MainTex, _IsAVProVideo, ST 0 (actual mode " + props[1].GetArrayElementAtIndex(i).intValue + ")");
+                        var hits = Enumerable.Range(0, n0).Where(i => target.Item2 != null && props[0].GetArrayElementAtIndex(i).objectReferenceValue == target.Item2).ToArray();
+                        Check(target.Item2 != null && hits.Length == 1, "Core.screenTargets holds " + target.Item1 + " (RawImage) exactly once (" + hits.Length + ")");
+                        if (hits.Length != 1 || !props.All(x => x.arraySize == n0)) continue;
+                        int k = hits[0];
+                        Check(props[1].GetArrayElementAtIndex(k).intValue == RawImageMode && props[2].GetArrayElementAtIndex(k).intValue == -1
+                            && props[3].GetArrayElementAtIndex(k).stringValue == "_MainTex" && props[5].GetArrayElementAtIndex(k).stringValue == "_IsAVProVideo"
+                            && props[6].GetArrayElementAtIndex(k).vector4Value == Vector4.zero,
+                            "screen " + k + " (" + target.Item1 + "): mode " + RawImageMode + " (UI RawImage; AVPro flips uvRect), index -1, _MainTex, _IsAVProVideo, ST 0 (actual mode " + props[1].GetArrayElementAtIndex(k).intValue + ")");
                     }
+                    Check(n0 == 2, "Core has 2 screens (the page and the full-screen overlay; actual " + n0 + ")");
                     Note("Core screens: " + n0 + " (the default texture of an empty slot falls back to Core.defaultTexture)");
                 }
             }
@@ -170,13 +176,17 @@ namespace KominkaHillside.Editor
                 ("stopButton", vp.stopButton, Bt("Stop")), ("resyncButton", vp.resyncButton, Bt("Resync")), ("muteButton", vp.muteButton, Bt("Mute")),
                 ("volumeSlider", vp.volumeSlider, slider), ("stateLabel", vp.stateLabel, Tx("State")), ("noteLabel", vp.noteLabel, Tx("Note")),
                 ("volumeLabel", vp.volumeLabel, Tx("VolumeLabel")), ("urlPlaceholder", vp.urlPlaceholder, placeholder),
-                ("submitLabel", vp.submitLabel, Lb("Submit")), ("playLabel", vp.playLabel, Lb("Play")), ("pauseLabel", vp.pauseLabel, Lb("Pause")),
-                ("stopLabel", vp.stopLabel, Lb("Stop")), ("resyncLabel", vp.resyncLabel, Lb("Resync")), ("muteLabel", vp.muteLabel, Lb("Mute")), ("backLabel", vp.backLabel, Lb("Back")),
+                ("backLabel", vp.backLabel, Lb("Back")),
+                ("muteIcon", vp.muteIcon, page.Find("Mute") != null ? IconOf(page.Find("Mute").gameObject) : null),
+                ("spriteUnmuted", vp.spriteUnmuted, KH_IconSpriteEditor.Load(MuteIcon)), ("spriteMuted", vp.spriteMuted, KH_IconSpriteEditor.Load(MutedIcon)),
+                ("fullRoot", vp.fullRoot, fullT != null ? fullT.gameObject : null), ("fullScreen", vp.fullScreen, fullRaw),
+                ("fullButton", vp.fullButton, Bt("Full")), ("fullCloseButton", vp.fullCloseButton, fullT != null && fullT.Find("Close") != null ? fullT.Find("Close").GetComponent<Button>() : null),
                 ("page", vp.page, page.gameObject), ("headerLabel", vp.headerLabel, header != null ? LabelOf(header.gameObject) : null),
             };
             foreach (var f in fields) Check(f.got != null && f.want != null && f.got == f.want, "KH_VideoPage." + f.name + " = " + (f.want != null ? f.want.name : "(expected object missing)") + (f.got == null ? " (null)" : f.got != f.want ? " (actual " + f.got.name + ")" : ""));
             Heap(vpU, "core", B(core), Check, Warn); Heap(vpU, "frontend", B(front), Check, Warn); Heap(vpU, "screen", raw, Check, Warn);
             Heap(vpU, "urlInput", url, Check, Warn); Heap(vpU, "page", page.gameObject, Check, Warn); Heap(vpU, "language", B(c.language), Check, Warn);
+            Heap(vpU, "fullScreen", fullRaw, Check, Warn); Heap(vpU, "fullRoot", fullT != null ? fullT.gameObject : null, Check, Warn);
 
             // ---------------------------------------------------------------- events (persistent, static string -> SendCustomEvent)
             for (int i = 0; i < ControlNames.Length; i++) CheckEvent(page.Find(ControlNames[i]), "m_OnClick", vpU, ControlEvents[i], typeof(KH_VideoPage), Check);
@@ -186,6 +196,12 @@ namespace KominkaHillside.Editor
             CheckEvent(page.Find("VolumeSlider"), "m_OnValueChanged", vpU, "_VolumeChanged", typeof(KH_VideoPage), Check);
             CheckEvent(page.Find("Back"), "m_OnClick", pU, "_VideoBack", typeof(KD_TreatPouch), Check);
             CheckEvent(header, "m_OnClick", pU, "_VideoOpen", typeof(KD_TreatPouch), Check);
+            CheckEvent(fullT, "m_OnClick", vpU, "_FullClose", typeof(KH_VideoPage), Check);
+            CheckEvent(fullT != null ? fullT.Find("Close") : null, "m_OnClick", vpU, "_FullClose", typeof(KH_VideoPage), Check);
+
+            // ---------------------------------------------------------------- §7 icons and the full-screen overlay
+            VerifyIcons(page, fullT, Check);
+            VerifyFullOverlay(c, fullT, Check);
             foreach (var evt in new[] { "_PageOpened", "_RefreshLanguage" }) Check(typeof(KH_VideoPage).GetMethod(evt) != null, "KH_VideoPage." + evt + " exists (the pouch sends it)");
 
             // ---------------------------------------------------------------- pouch / BGM
@@ -287,6 +303,81 @@ namespace KominkaHillside.Editor
             Check(sceneHits.Count == 0, "header in the scene (" + r.header + "): no two of " + string.Join(" / ", scene.Select(x => x.Item1)) + " overlap" + (sceneHits.Count > 0 ? ": " + string.Join(", ", sceneHits) : ""));
         }
 
+        // ---------------------------------------------------------------- §7 icons
+
+        /// <summary>アイコン PNG 9 枚の存在と取り込み設定、各記号ボタンの Icon が期待の Sprite を指し、文字の Label が無いこと。</summary>
+        static void VerifyIcons(Transform page, Transform fullT, Action<bool, string> Check)
+        {
+            foreach (var name in KH_IconSpriteEditor.Names)
+            {
+                bool ok = KH_IconSpriteEditor.Exists(name);
+                string why = "";
+                if (ok) ok = KH_IconSpriteEditor.ImporterOk(name, out why);
+                Check(ok, "icon " + KH_IconSpriteEditor.PathOf(name) + ": Sprite (Single), alpha is transparency, no mips, RGBA32" + (why.Length > 0 ? " (" + why + ")" : KH_IconSpriteEditor.Exists(name) ? "" : " (missing: run Player/1)"));
+            }
+            var buttons = new List<(Transform t, string icon)> { (page.Find("Submit"), SubmitIcon), (page.Find("Mute"), MuteIcon) };
+            for (int i = 0; i < ControlNames.Length; i++) buttons.Add((page.Find(ControlNames[i]), ControlIcons[i]));
+            buttons.Add((fullT != null ? fullT.Find("Close") : null, CloseIcon));
+            foreach (var b in buttons)
+            {
+                var img = b.t != null ? IconOf(b.t.gameObject) : null;
+                var want = KH_IconSpriteEditor.Load(b.icon);
+                var rt = img != null ? img.rectTransform : null;
+                var size = b.t != null ? ((RectTransform)b.t).sizeDelta : Vector2.zero;
+                float side = Mathf.Min(size.x, size.y) * IconFraction;
+                Check(b.t != null && img != null && want != null && img.sprite == want && img.preserveAspect && !img.raycastTarget && img.color == Color.white
+                    && b.t.Find("Label") == null && b.t.childCount == 1 && rt != null && Vector2.Distance(rt.sizeDelta, new Vector2(side, side)) < 0.5f && rt.anchoredPosition.sqrMagnitude < 0.01f,
+                    "[" + (b.t != null ? b.t.name : "?") + "] shows the icon '" + b.icon + "' (white, preserveAspect, " + side + " px = " + (IconFraction * 100f) + "% of the short side), no text label"
+                    + (img != null && img.sprite != want ? " (actual " + (img.sprite != null ? img.sprite.name : "none") + ")" : "") + (b.t != null && b.t.Find("Label") != null ? " (a Label is left)" : ""));
+            }
+        }
+
+        /// <summary>全画面の覆い: 板の最後の子・非表示・黒い全面のボタン・16:9 の画面が板の内側・[×] が右上で画面とも板の外とも重ならない・レイヤー。</summary>
+        static void VerifyFullOverlay(Ctx c, Transform fullT, Action<bool, string> Check)
+        {
+            var panel = c.pouch.panelRoot.transform;
+            Check(fullT != null, "panelRoot/" + FullName + " exists (Player/1)");
+            if (fullT == null) return;
+            var rt = (RectTransform)fullT;
+            // P13: the shared purchase confirmation card is the last child; the overlay sits after every page (Page_*, Page_Settings) and right before the card (last when there is no card)
+            var card = ConfirmCard(c.pouch);
+            int idx = fullT.GetSiblingIndex();
+            var laterPages = new List<string>();
+            for (int i = idx + 1; i < panel.childCount; i++) { var ch = panel.GetChild(i); if (ch.name.StartsWith("Page_")) laterPages.Add(ch.name); }
+            bool placed = card != null ? idx == card.GetSiblingIndex() - 1 : idx == panel.childCount - 1;
+            Check(placed && laterPages.Count == 0, FullName + " sits after every Page_* and " + (card != null ? "right before the confirm card " + card.name + " (P13 keeps the card last)" : "last (no confirm card)")
+                + " (index " + idx + " of " + panel.childCount + (card != null ? ", card " + card.GetSiblingIndex() : "") + (laterPages.Count > 0 ? ", pages after it: " + string.Join(", ", laterPages) : "") + ")");
+            Check(!fullT.gameObject.activeSelf, FullName + " hidden in the scene (KH_VideoPage shows it)");
+            var bg = fullT.GetComponent<Image>(); var btn = fullT.GetComponent<Button>();
+            Check(Vector2.Distance(rt.anchoredPosition, Vector2.zero) < 0.5f && Vector2.Distance(rt.sizeDelta, FullSize) < 0.5f && bg != null && bg.raycastTarget && bg.color == Color.black
+                && btn != null && btn.targetGraphic == bg, FullName + ": black " + FullSize + " over the whole panel, takes the pointer (press anywhere -> _FullClose)");
+            var screen = fullT.Find("Screen") as RectTransform;
+            var raw = screen != null ? screen.GetComponent<RawImage>() : null;
+            var close = fullT.Find("Close") as RectTransform;
+            Rect panelRect = new Rect(-FullSize * 0.5f, FullSize);
+            if (screen != null)
+            {
+                var sr = RectOf(screen);
+                Check(raw != null && !raw.raycastTarget && Vector2.Distance(screen.sizeDelta, FullScreenSize) < 0.5f && Vector2.Distance(screen.anchoredPosition, FullScreenPos) < 0.5f
+                    && Mathf.Abs(FullScreenSize.x / FullScreenSize.y - 16f / 9f) < 0.01f, FullName + "/Screen: RawImage " + FullScreenSize + " (16:9) at " + FullScreenPos + ", takes no pointer");
+                Check(Inside(sr, panelRect), FullName + "/Screen " + sr + " inside the panel " + panelRect);
+                if (close != null)
+                {
+                    var cr = RectOf(close);
+                    Check(Vector2.Distance(close.sizeDelta, FullCloseSize) < 0.5f && Vector2.Distance(close.anchoredPosition, FullClosePos) < 0.5f && cr.center.x > 0f && cr.center.y > 0f
+                        && Inside(cr, panelRect) && !cr.Overlaps(sr),
+                        FullName + "/Close " + cr + " at the top right, inside the panel, not over the picture " + sr);
+                    Check(close.GetSiblingIndex() > screen.GetSiblingIndex(), FullName + "/Close draws over the screen");
+                }
+            }
+            else Check(false, FullName + "/Screen exists");
+            if (close == null) Check(false, FullName + "/Close exists");
+            Check(fullT.GetComponentsInChildren<Transform>(true).All(t => t.gameObject.layer == panel.gameObject.layer), FullName + " and its parts on the panel's layer " + panel.gameObject.layer);
+            var extra = new List<string>();
+            foreach (Transform child in fullT) if (child.name != "Screen" && child.name != "Close") extra.Add(child.name);
+            Check(extra.Count == 0, "no unexpected child in " + FullName + (extra.Count > 0 ? ": " + string.Join(", ", extra) : ""));
+        }
+
         // ---------------------------------------------------------------- page layout
 
         static void VerifyPageLayout(Transform page, Action<bool, string> Check, Action<string> Note)
@@ -321,12 +412,9 @@ namespace KominkaHillside.Editor
             if (header != null) MeasureOne(c, LabelOf(header.gameObject), code => TextOrNull(c.catalog, code, HeaderKey), "header [動画] (120 px)", Check);
             TextMeshProUGUI Lb(string name) { var t = page.Find(name); return t != null ? LabelOf(t.gameObject) : null; }
             TextMeshProUGUI Tx(string name) { var t = page.Find(name); return t != null ? t.GetComponent<TextMeshProUGUI>() : null; }
-            MeasureOne(c, Lb("Submit"), code => TextOrNull(c.catalog, code, "video.player.submit"), "[submit]", Check);
-            for (int i = 0; i < ControlNames.Length; i++) { string key = ControlKeys[i]; MeasureOne(c, Lb(ControlNames[i]), code => TextOrNull(c.catalog, code, key), "[" + ControlNames[i] + "]", Check); }
-            MeasureOne(c, Lb("Mute"), code => TextOrNull(c.catalog, code, "video.player.mute"), "[mute]", Check);
-            MeasureOne(c, Lb("Mute"), code => TextOrNull(c.catalog, code, "video.player.unmute"), "[unmute]", Check);
+            // §7: the control buttons are icons (no words to measure); the volume label is the number only
             MeasureOne(c, Lb("Back"), code => TextOrNull(c.catalog, code, "gift.back"), "[back]", Check);
-            MeasureOne(c, Tx("VolumeLabel"), code => { var t = TextOrNull(c.catalog, code, "video.player.volume"); return t != null ? t + " 100%" : null; }, "volume label (worst '<volume> 100%')", Check);
+            MeasureOne(c, Tx("VolumeLabel"), code => "100%", "volume label (worst '100%')", Check);
             MeasureOne(c, Tx("Note"), code => TextOrNull(c.catalog, code, "video.player.note"), "note (3 short lines, wraps, " + NoteFontMax + " -> " + NoteFontMin + "pt in " + NoteSize + ")", Check);
             { var note = Tx("Note"); Check(note != null && note.enableWordWrapping && note.enableAutoSizing && Mathf.Approximately(note.fontSizeMax, NoteFontMax) && Mathf.Approximately(note.fontSizeMin, NoteFontMin),
                 "note wraps and auto-sizes " + NoteFontMax + " -> " + NoteFontMin + "pt"); }
@@ -454,6 +542,12 @@ namespace KominkaHillside.Editor
         {
             var size = t.sizeDelta; var pos = t.anchoredPosition;
             return new Rect(pos.x - size.x * t.pivot.x, pos.y - size.y * t.pivot.y, size.x, size.y);
+        }
+
+        /// <summary>r が outer の内側か (端が等しくてもよい。0.5 px の許容)。Rect.Contains は xMax / yMax を含まないので使わない。</summary>
+        static bool Inside(Rect r, Rect outer)
+        {
+            return r.xMin >= outer.xMin - 0.5f && r.xMax <= outer.xMax + 0.5f && r.yMin >= outer.yMin - 0.5f && r.yMax <= outer.yMax + 0.5f;
         }
 
         static Rect Box(Vector2 center, Vector2 size) { return new Rect(center - size * 0.5f, size); }

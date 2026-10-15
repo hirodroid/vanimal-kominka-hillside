@@ -3873,38 +3873,6 @@
           "text": "動画プレイヤー"
         },
         {
-          "key": "video.player.submit",
-          "text": "入れる"
-        },
-        {
-          "key": "video.player.play",
-          "text": "再生"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "一時停止"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "停止"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "再同期"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "消音"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "音を出す"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "音量"
-        },
-        {
           "key": "video.player.url",
           "text": "動画の URL を入れる"
         },
@@ -7822,38 +7790,6 @@
         {
           "key": "video.player.title",
           "text": "Video Player"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Load"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Play"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pause"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Stop"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Resync"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Mute"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Unmute"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Volume"
         },
         {
           "key": "video.player.url",
@@ -11775,38 +11711,6 @@
           "text": "Видеоплеер"
         },
         {
-          "key": "video.player.submit",
-          "text": "Загрузить"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Пуск"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Пауза"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Стоп"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Синхр."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Без звука"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Вкл. звук"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Громкость"
-        },
-        {
           "key": "video.player.url",
           "text": "Вставьте ссылку на видео"
         },
@@ -15724,38 +15628,6 @@
         {
           "key": "video.player.title",
           "text": "Відеоплеєр"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Завантажити"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Пуск"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Пауза"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Стоп"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Синхр."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Без звуку"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Увімк. звук"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Гучність"
         },
         {
           "key": "video.player.url",
@@ -19677,38 +19549,6 @@
           "text": "동영상 플레이어"
         },
         {
-          "key": "video.player.submit",
-          "text": "넣기"
-        },
-        {
-          "key": "video.player.play",
-          "text": "재생"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "일시정지"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "정지"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "재동기화"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "음소거"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "소리 켜기"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "음량"
-        },
-        {
           "key": "video.player.url",
           "text": "동영상 URL 입력"
         },
@@ -23626,38 +23466,6 @@
         {
           "key": "video.player.title",
           "text": "Videoplayer"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Laden"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Abspielen"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pause"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Stopp"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Resync"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Stumm"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Ton an"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Lautstärke"
         },
         {
           "key": "video.player.url",
@@ -27579,38 +27387,6 @@
           "text": "视频播放器"
         },
         {
-          "key": "video.player.submit",
-          "text": "加载"
-        },
-        {
-          "key": "video.player.play",
-          "text": "播放"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "暂停"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "停止"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "重新同步"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "静音"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "取消静音"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "音量"
-        },
-        {
           "key": "video.player.url",
           "text": "输入视频网址"
         },
@@ -31528,38 +31304,6 @@
         {
           "key": "video.player.title",
           "text": "Reproductor de video"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Cargar"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Reproducir"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pausa"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Detener"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Resincr."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Silenciar"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Con sonido"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Volumen"
         },
         {
           "key": "video.player.url",
@@ -35481,38 +35225,6 @@
           "text": "Lecteur vidéo"
         },
         {
-          "key": "video.player.submit",
-          "text": "Charger"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Lecture"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pause"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Arrêt"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Resynchro"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Muet"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Son"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Volume"
-        },
-        {
           "key": "video.player.url",
           "text": "Colle l'URL d'une vidéo"
         },
@@ -39430,38 +39142,6 @@
         {
           "key": "video.player.title",
           "text": "Player de vídeo"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Carregar"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Tocar"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pausar"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Parar"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Ressincr."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Silenciar"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Ativar som"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Volume"
         },
         {
           "key": "video.player.url",
@@ -43383,38 +43063,6 @@
           "text": "Lettore video"
         },
         {
-          "key": "video.player.submit",
-          "text": "Carica"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Riproduci"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pausa"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Stop"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Risincr."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Muto"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Audio"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Volume"
-        },
-        {
           "key": "video.player.url",
           "text": "Incolla l'URL di un video"
         },
@@ -47332,38 +46980,6 @@
         {
           "key": "video.player.title",
           "text": "Odtwarzacz wideo"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "Wczytaj"
-        },
-        {
-          "key": "video.player.play",
-          "text": "Odtwórz"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "Pauza"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "Stop"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "Synchr."
-        },
-        {
-          "key": "video.player.mute",
-          "text": "Wycisz"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "Dźwięk"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "Głośność"
         },
         {
           "key": "video.player.url",
@@ -51287,38 +50903,6 @@
         {
           "key": "video.player.title",
           "text": "影片播放器"
-        },
-        {
-          "key": "video.player.submit",
-          "text": "載入"
-        },
-        {
-          "key": "video.player.play",
-          "text": "播放"
-        },
-        {
-          "key": "video.player.pause",
-          "text": "暫停"
-        },
-        {
-          "key": "video.player.stop",
-          "text": "停止"
-        },
-        {
-          "key": "video.player.resync",
-          "text": "重新同步"
-        },
-        {
-          "key": "video.player.mute",
-          "text": "靜音"
-        },
-        {
-          "key": "video.player.unmute",
-          "text": "取消靜音"
-        },
-        {
-          "key": "video.player.volume",
-          "text": "音量"
         },
         {
           "key": "video.player.url",

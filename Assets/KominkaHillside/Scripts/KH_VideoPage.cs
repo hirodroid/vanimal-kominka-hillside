@@ -53,12 +53,29 @@ namespace KominkaHillside
         [Tooltip("Core.screenTargets に入る RawImage (mode 4)。準備・再生・一時停止のときは白 (映像そのまま)、それ以外は idleScreenColor")]
         public UnityEngine.UI.RawImage screen;
         public Color idleScreenColor = new Color(0.06f, 0.06f, 0.07f, 1f);
+        [Tooltip("操作ボタン。文字は書かない (記号のスプライト。IMP-UI-011 §7 依頼 2: 多言語化しない)")]
         public UnityEngine.UI.Button submitButton, playButton, pauseButton, stopButton, resyncButton, muteButton;
         public UnityEngine.UI.Slider volumeSlider;
         public TMPro.TextMeshProUGUI stateLabel, noteLabel, volumeLabel, urlPlaceholder;
-        public TMPro.TextMeshProUGUI submitLabel, playLabel, pauseLabel, stopLabel, resyncLabel, muteLabel, backLabel;
+        [Tooltip("[もどる] の Label (gift.back)")]
+        public TMPro.TextMeshProUGUI backLabel;
         [Tooltip("ヘッダの [動画] の Label (任意)。video.player.menu を描く")]
         public TMPro.TextMeshProUGUI headerLabel;
+
+        [Header("消音ボタンの記号 (Muted で差し替え)")]
+        public UnityEngine.UI.Image muteIcon;
+        [Tooltip("音が出ているときの記号 (押すと消音)")]
+        public Sprite spriteUnmuted;
+        [Tooltip("消音中の記号 (押すと音を出す)")]
+        public Sprite spriteMuted;
+
+        [Header("全画面 (IMP-UI-011 §7 依頼 1。panelRoot/VideoFull、既定は非表示)")]
+        [Tooltip("板いっぱいの覆い。面が閉じた (タブ切替・板を閉じる) ら _Tick が隠す。_PageOpened でも隠す (開き直しは常に通常表示から)")]
+        public GameObject fullRoot;
+        [Tooltip("Core.screenTargets の 2 枚目 (mode 4)。地の色は screen と同じ規則")]
+        public UnityEngine.UI.RawImage fullScreen;
+        [Tooltip("面の [全画面] (→ _ToggleFull) と覆いの [×] (→ _FullClose)")]
+        public UnityEngine.UI.Button fullButton, fullCloseButton;
 
         private bool _inited;
         private float _lastSubmitAt = -100f;
@@ -70,6 +87,7 @@ namespace KominkaHillside
         private string _textLang;            // DrawTexts が最後に描いた言語 (null = まだ)
         private int _shownButtons = -1;      // interactable の組 (ビット)。-1 = まだ書いていない
         private int _screenTint = -1;        // 0 = 暗い / 1 = 白 / -1 = まだ
+        private int _muteShown = -1;         // 0 = 音あり / 1 = 消音 / -1 = まだ (muteIcon.sprite の差分)
 
         private string L(string key) { return language != null ? language._Text(key) : key; }
 
@@ -85,6 +103,7 @@ namespace KominkaHillside
         private void Start()
         {
             Init();
+            SetFull(false);
             DrawTexts();
             DrawState();
         }
@@ -152,12 +171,28 @@ namespace KominkaHillside
             DrawVolume();
         }
 
+        /// <summary>面の [全画面]。映像を板いっぱいの覆い (fullRoot) に出す。ローカル専用。</summary>
+        public void _ToggleFull()
+        {
+            Init();
+            if (fullRoot == null) return;
+            SetFull(!fullRoot.activeSelf);
+            if (fullRoot.activeSelf) { DrawState(); ScheduleTick(); }   // 見回りが面の閉じを見て覆いを隠す
+        }
+
+        /// <summary>覆いのどこか / [×]、および KD_TreatPouch._VideoBack から。通常表示へ戻す。ローカル専用。</summary>
+        public void _FullClose()
+        {
+            SetFull(false);
+        }
+
         // ================================================================ 受け口 (他の Behaviour から)
 
-        /// <summary>KD_TreatPouch._VideoOpen が面を開いた直後。文言を今の言語で描き直し、状態を描き、見回りを始める。ローカル専用。</summary>
+        /// <summary>KD_TreatPouch._VideoOpen (と板の開き直し) から。開き直しは常に通常表示から。文言を今の言語で描き直し、状態を描き、見回りを始める。ローカル専用。</summary>
         public void _PageOpened()
         {
             Init();
+            SetFull(false);
             DrawTexts();
             DrawState();
             ScheduleTick();
@@ -176,7 +211,7 @@ namespace KominkaHillside
         {
             if (Time.time - _tickAt < TickSeconds * 0.5f) return;   // 二重に予約された鎖の後の方は捨てる (1 本にまとまる)
             _tickPending = false;
-            if (!PageVisible()) return;
+            if (!PageVisible()) { SetFull(false); return; }   // タブ切替・板を閉じた: 全画面も自動で戻す
             Init();
             if (LanguageChanged()) DrawTexts();
             DrawState();
@@ -217,6 +252,11 @@ namespace KominkaHillside
             ScheduleTick();   // 待ちの秒数を数え直し、過ぎたら状態の行へ戻す
         }
 
+        private void SetFull(bool on)
+        {
+            if (fullRoot != null && fullRoot.activeSelf != on) fullRoot.SetActive(on);
+        }
+
         private void ClearInput()
         {
             if (urlInput != null) urlInput.SetUrl(VRCUrl.Empty);
@@ -230,12 +270,8 @@ namespace KominkaHillside
         /// <summary>言語で変わる固定の文言。状態の行は DrawState。</summary>
         private void DrawTexts()
         {
+            // 操作ボタンは記号 (文字を書かない)。翻訳するのはヘッダ・[もどる]・注意文・欄の placeholder と状態の 1 行だけ
             SetText(headerLabel, L("video.player.menu"));
-            SetText(submitLabel, L("video.player.submit"));
-            SetText(playLabel, L("video.player.play"));
-            SetText(pauseLabel, L("video.player.pause"));
-            SetText(stopLabel, L("video.player.stop"));
-            SetText(resyncLabel, L("video.player.resync"));
             SetText(backLabel, L("gift.back"));
             SetText(noteLabel, L("video.player.note"));
             SetText(urlPlaceholder, L("video.player.url"));
@@ -243,7 +279,7 @@ namespace KominkaHillside
             DrawVolume();
         }
 
-        /// <summary>音量の % と [消音] の文言。消音中は Core.Volume が 0 を返すので、スライダーは本人が選んだ位置のまま動かさない。</summary>
+        /// <summary>音量の % と [消音] の記号。消音中は Core.Volume が 0 を返すので、スライダーは本人が選んだ位置のまま動かさない。</summary>
         private void DrawVolume()
         {
             if (core == null) return;
@@ -255,8 +291,13 @@ namespace KominkaHillside
                 v = volumeSlider.value;
             }
             int pct = Mathf.RoundToInt(Mathf.Clamp01(v) * 100f);
-            SetText(volumeLabel, L("video.player.volume") + " " + pct.ToString() + "%");
-            SetText(muteLabel, L(muted ? "video.player.unmute" : "video.player.mute"));
+            SetText(volumeLabel, pct.ToString() + "%");
+            int m = muted ? 1 : 0;
+            if (muteIcon != null && m != _muteShown)
+            {
+                Sprite want = muted ? spriteMuted : spriteUnmuted;
+                if (want != null) { muteIcon.sprite = want; _muteShown = m; }
+            }
         }
 
         /// <summary>状態の 1 行、ボタンの押せる / 押せない、画面の地の色。</summary>
@@ -298,10 +339,12 @@ namespace KominkaHillside
             }
 
             int tint = st >= 3 ? 1 : 0;
-            if (screen != null && tint != _screenTint)
+            if (tint != _screenTint)
             {
                 _screenTint = tint;
-                screen.color = tint == 1 ? Color.white : idleScreenColor;
+                Color c = tint == 1 ? Color.white : idleScreenColor;
+                if (screen != null) screen.color = c;
+                if (fullScreen != null) fullScreen.color = c;
             }
         }
 

@@ -50,6 +50,7 @@ namespace KominkaDogRun
         /// <summary>動画プレイヤーの面の [もどる]。開く前のタブ (または設定ホーム) へ。ローカル専用。</summary>
         public void _VideoBack()
         {
+            if (videoPageBehaviour != null) videoPageBehaviour.SendCustomEvent("_FullClose");   // §7 依頼 1: 全画面のまま戻らない
             int tab = _videoReturnTab;
             bool toSettings = _videoReturnSettings;
             _videoReturnTab = -1;
