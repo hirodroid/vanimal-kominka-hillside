@@ -3863,6 +3863,94 @@
         {
           "key": "live.parade.progress",
           "text": "進行を見る"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "動画"
+        },
+        {
+          "key": "video.player.title",
+          "text": "動画プレイヤー"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "入れる"
+        },
+        {
+          "key": "video.player.play",
+          "text": "再生"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "一時停止"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "停止"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "再同期"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "消音"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "音を出す"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "音量"
+        },
+        {
+          "key": "video.player.url",
+          "text": "動画の URL を入れる"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "動画なし"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "読み込み中…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "{0} が入れた動画を再生中"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "再生中"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "一時停止中"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "再生できなかった"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "許可リスト外のサイト"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "読み込みが早すぎた。少し待って"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "あと {0} 秒待って"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "いまは入れられない"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL・再生・一時停止・停止はみんなに効く。\n音量と再同期は自分だけ。\n許可リスト外は「Allow Untrusted URLs」が要る。"
         }
       ]
     },
@@ -7726,6 +7814,94 @@
         {
           "key": "live.parade.progress",
           "text": "View progress"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Video"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Video Player"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Load"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Play"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pause"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Stop"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Resync"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Mute"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Unmute"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Volume"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Paste a video URL"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "No video"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Loading…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Playing {0}'s video"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Playing"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Paused"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Couldn't play this video"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Site not on the allowlist"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Too many loads. Wait a moment"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Wait {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Can't add videos right now"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, play, pause and stop affect everyone.\nVolume and resync are just for you.\nSites off the allowlist need \"Allow Untrusted URLs\"."
         }
       ]
     },
@@ -11589,6 +11765,94 @@
         {
           "key": "live.parade.progress",
           "text": "Ход парада"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Видео"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Видеоплеер"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Загрузить"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Пуск"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Пауза"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Стоп"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Синхр."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Без звука"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Вкл. звук"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Громкость"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Вставьте ссылку на видео"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Нет видео"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Загрузка…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Видео от {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Воспроизведение"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Пауза"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Не удалось воспроизвести"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Сайт не в списке разрешённых"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Слишком часто. Подождите немного"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Подождите {0} с"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Сейчас нельзя добавить видео"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, пуск, пауза и стоп — для всех.\nГромкость и синхр. — только для вас.\nДля сайтов вне списка нужно «Allow Untrusted URLs»."
         }
       ]
     },
@@ -15452,6 +15716,94 @@
         {
           "key": "live.parade.progress",
           "text": "Перебіг параду"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Відео"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Відеоплеєр"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Завантажити"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Пуск"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Пауза"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Стоп"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Синхр."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Без звуку"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Увімк. звук"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Гучність"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Вставте посилання на відео"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Немає відео"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Завантаження…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Відео від {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Відтворення"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Пауза"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Не вдалося відтворити"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Сайт не в списку дозволених"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Надто часто. Зачекайте трохи"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Зачекайте {0} с"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Зараз не можна додати відео"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, пуск, пауза і стоп — для всіх.\nГучність і синхр. — лише для вас.\nДля сайтів поза списком потрібно «Allow Untrusted URLs»."
         }
       ]
     },
@@ -19315,6 +19667,94 @@
         {
           "key": "live.parade.progress",
           "text": "진행 보기"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "동영상"
+        },
+        {
+          "key": "video.player.title",
+          "text": "동영상 플레이어"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "넣기"
+        },
+        {
+          "key": "video.player.play",
+          "text": "재생"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "일시정지"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "정지"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "재동기화"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "음소거"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "소리 켜기"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "음량"
+        },
+        {
+          "key": "video.player.url",
+          "text": "동영상 URL 입력"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "동영상 없음"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "불러오는 중…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "{0} 님이 넣은 동영상 재생 중"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "재생 중"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "일시정지 중"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "재생할 수 없음"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "허용 목록 밖의 사이트"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "너무 자주 불러옴. 잠시 기다려 주세요"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "{0}초 기다려 주세요"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "지금은 넣을 수 없습니다"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL·재생·일시정지·정지는 모두에게 적용됩니다.\n음량과 재동기화는 나에게만 적용됩니다.\n허용 목록 밖의 사이트는 「Allow Untrusted URLs」가 필요합니다."
         }
       ]
     },
@@ -23178,6 +23618,94 @@
         {
           "key": "live.parade.progress",
           "text": "Fortschritt"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Video"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Videoplayer"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Laden"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Abspielen"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pause"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Stopp"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Resync"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Stumm"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Ton an"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Lautstärke"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Video-URL einfügen"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Kein Video"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Lädt…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Video von {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Läuft"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Pausiert"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Nicht abspielbar"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Seite nicht auf der Freigabeliste"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Zu schnell. Kurz warten"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Noch {0} s warten"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Gerade nicht möglich"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, Abspielen, Pause und Stopp gelten für alle.\nLautstärke und Resync nur für dich.\nSeiten außerhalb der Liste brauchen „Allow Untrusted URLs“."
         }
       ]
     },
@@ -27041,6 +27569,94 @@
         {
           "key": "live.parade.progress",
           "text": "查看进度"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "视频"
+        },
+        {
+          "key": "video.player.title",
+          "text": "视频播放器"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "加载"
+        },
+        {
+          "key": "video.player.play",
+          "text": "播放"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "暂停"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "停止"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "重新同步"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "静音"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "取消静音"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "音量"
+        },
+        {
+          "key": "video.player.url",
+          "text": "输入视频网址"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "没有视频"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "加载中…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "正在播放 {0} 加入的视频"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "正在播放"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "已暂停"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "无法播放"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "不在允许列表中的网站"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "加载太频繁了，请稍等"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "请等 {0} 秒"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "现在无法加入"
+        },
+        {
+          "key": "video.player.note",
+          "text": "网址、播放、暂停、停止对所有人生效。\n音量和重新同步只对自己生效。\n不在允许列表的网站需要开启“Allow Untrusted URLs”。"
         }
       ]
     },
@@ -30904,6 +31520,94 @@
         {
           "key": "live.parade.progress",
           "text": "Ver progreso"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Video"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Reproductor de video"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Cargar"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Reproducir"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pausa"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Detener"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Resincr."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Silenciar"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Con sonido"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Volumen"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Pega la URL de un video"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Sin video"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Cargando…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Video de {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Reproduciendo"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "En pausa"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "No se pudo reproducir"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Sitio fuera de la lista permitida"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Demasiado rápido. Espera un momento"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Espera {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Ahora no se puede añadir"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, reproducir, pausa y detener afectan a todos.\nVolumen y resincr. solo para ti.\nSitios fuera de la lista: activa «Allow Untrusted URLs»."
         }
       ]
     },
@@ -34767,6 +35471,94 @@
         {
           "key": "live.parade.progress",
           "text": "Voir le déroulement"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Vidéo"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Lecteur vidéo"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Charger"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Lecture"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pause"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Arrêt"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Resynchro"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Muet"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Son"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Volume"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Colle l'URL d'une vidéo"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Aucune vidéo"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Chargement…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Vidéo de {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Lecture en cours"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "En pause"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Lecture impossible"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Site hors de la liste autorisée"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Trop rapide. Attends un peu"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Attends {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Impossible d'ajouter pour l'instant"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, lecture, pause et arrêt valent pour tous.\nVolume et resynchro : rien que pour toi.\nSites hors liste : active « Allow Untrusted URLs »."
         }
       ]
     },
@@ -38630,6 +39422,94 @@
         {
           "key": "live.parade.progress",
           "text": "Ver andamento"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Vídeo"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Player de vídeo"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Carregar"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Tocar"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pausar"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Parar"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Ressincr."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Silenciar"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Ativar som"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Volume"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Cole a URL de um vídeo"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Nenhum vídeo"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Carregando…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Vídeo de {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Tocando"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Pausado"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Não foi possível tocar"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Site fora da lista permitida"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Rápido demais. Espere um pouco"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Espere {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Não dá para adicionar agora"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, tocar, pausar e parar valem para todos.\nVolume e ressincr. só para você.\nSites fora da lista precisam de \"Allow Untrusted URLs\"."
         }
       ]
     },
@@ -42493,6 +43373,94 @@
         {
           "key": "live.parade.progress",
           "text": "Vedi andamento"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Video"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Lettore video"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Carica"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Riproduci"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pausa"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Stop"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Risincr."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Muto"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Audio"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Volume"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Incolla l'URL di un video"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Nessun video"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Caricamento…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Video di {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "In riproduzione"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "In pausa"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Impossibile riprodurre"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Sito fuori dalla lista consentita"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Troppo veloce. Aspetta un attimo"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Aspetta {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Ora non puoi aggiungere video"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, riproduci, pausa e stop valgono per tutti.\nVolume e risincr. solo per te.\nI siti fuori lista richiedono \"Allow Untrusted URLs\"."
         }
       ]
     },
@@ -46356,6 +47324,94 @@
         {
           "key": "live.parade.progress",
           "text": "Zobacz przebieg"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "Wideo"
+        },
+        {
+          "key": "video.player.title",
+          "text": "Odtwarzacz wideo"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "Wczytaj"
+        },
+        {
+          "key": "video.player.play",
+          "text": "Odtwórz"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "Pauza"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "Stop"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "Synchr."
+        },
+        {
+          "key": "video.player.mute",
+          "text": "Wycisz"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "Dźwięk"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "Głośność"
+        },
+        {
+          "key": "video.player.url",
+          "text": "Wklej adres URL wideo"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "Brak wideo"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "Wczytywanie…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "Wideo od {0}"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "Odtwarzanie"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "Wstrzymane"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "Nie udało się odtworzyć"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "Strona spoza listy dozwolonych"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "Za szybko. Poczekaj chwilę"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "Poczekaj {0} s"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "Teraz nie można dodać wideo"
+        },
+        {
+          "key": "video.player.note",
+          "text": "URL, odtwórz, pauza i stop działają dla wszystkich.\nGłośność i synchr. tylko dla ciebie.\nStrony spoza listy wymagają „Allow Untrusted URLs”."
         }
       ]
     },
@@ -50223,6 +51279,94 @@
         {
           "key": "live.parade.progress",
           "text": "查看進度"
+        },
+        {
+          "key": "video.player.menu",
+          "text": "影片"
+        },
+        {
+          "key": "video.player.title",
+          "text": "影片播放器"
+        },
+        {
+          "key": "video.player.submit",
+          "text": "載入"
+        },
+        {
+          "key": "video.player.play",
+          "text": "播放"
+        },
+        {
+          "key": "video.player.pause",
+          "text": "暫停"
+        },
+        {
+          "key": "video.player.stop",
+          "text": "停止"
+        },
+        {
+          "key": "video.player.resync",
+          "text": "重新同步"
+        },
+        {
+          "key": "video.player.mute",
+          "text": "靜音"
+        },
+        {
+          "key": "video.player.unmute",
+          "text": "取消靜音"
+        },
+        {
+          "key": "video.player.volume",
+          "text": "音量"
+        },
+        {
+          "key": "video.player.url",
+          "text": "輸入影片網址"
+        },
+        {
+          "key": "video.player.state.idle",
+          "text": "沒有影片"
+        },
+        {
+          "key": "video.player.state.loading",
+          "text": "載入中…"
+        },
+        {
+          "key": "video.player.state.playing",
+          "text": "正在播放 {0} 加入的影片"
+        },
+        {
+          "key": "video.player.state.playing.anon",
+          "text": "正在播放"
+        },
+        {
+          "key": "video.player.state.paused",
+          "text": "已暫停"
+        },
+        {
+          "key": "video.player.state.error",
+          "text": "無法播放"
+        },
+        {
+          "key": "video.player.state.untrusted",
+          "text": "不在允許清單的網站"
+        },
+        {
+          "key": "video.player.state.ratelimited",
+          "text": "載入太頻密了，請稍等"
+        },
+        {
+          "key": "video.player.state.wait",
+          "text": "請等 {0} 秒"
+        },
+        {
+          "key": "video.player.state.locked",
+          "text": "現在無法加入"
+        },
+        {
+          "key": "video.player.note",
+          "text": "網址、播放、暫停、停止對所有人生效。\n音量和重新同步只對自己生效。\n不在允許清單的網站需要開啟「Allow Untrusted URLs」。"
         }
       ]
     }

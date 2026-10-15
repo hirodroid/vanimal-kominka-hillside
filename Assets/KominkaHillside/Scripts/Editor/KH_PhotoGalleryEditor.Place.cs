@@ -216,12 +216,16 @@ namespace KominkaHillside.Editor
         {
             string T(string key) { return KD_LocalizationEditor.Text(c.catalog, c.catalog.fallbackLanguage, key); }
             var go = Btn(c.pouch.panelRoot.transform, KD_HandMenuScrollEditor.PhotoHeaderButtonName, HeaderButtonPos, HeaderButtonSize, T("photo.menu"), c, c.pouchUdon, "_PhotoOpen", log);
-            KD_HandMenuScrollEditor.LayoutFrame(c.pouch);   // title 430 -> 400 (-550..-150) and the button at (-65, 314) 120x44
+            KD_HandMenuScrollEditor.LayoutFrame(c.pouch);   // IMP-UI-011: 4 layouts (with / without [動画]); the values come from KD_HandMenuScrollEditor.HeaderLayout
+            bool video = c.pouch.panelRoot.transform.Find(KD_HandMenuScrollEditor.VideoHeaderButtonName) != null;
+            KD_HandMenuScrollEditor.HeaderLayout(true, video, out Vector2 titlePos, out Vector2 titleSize, out float photoX, out _, out _, out _, out _);
             var title = c.pouch.sectionTitleLabel != null ? (RectTransform)c.pouch.sectionTitleLabel.transform : null;
-            if (title != null && (Mathf.Abs(title.sizeDelta.x - TitleWithButtonWidth) > 0.5f || Mathf.Abs(title.anchoredPosition.x - TitleWithButtonX) > 0.5f))
-                throw new InvalidOperationException("LayoutFrame did not narrow the title for the photo button (" + title.anchoredPosition.x + " / " + title.sizeDelta.x + ")");
+            if (title != null && (Mathf.Abs(title.sizeDelta.x - titleSize.x) > 0.5f || Mathf.Abs(title.anchoredPosition.x - titlePos.x) > 0.5f))
+                throw new InvalidOperationException("LayoutFrame did not narrow the title for the photo button (" + title.anchoredPosition.x + " / " + title.sizeDelta.x + ", want " + titlePos.x + " / " + titleSize.x + ")");
+            var bt = (RectTransform)go.transform;
+            if (Mathf.Abs(bt.anchoredPosition.x - photoX) > 0.5f) throw new InvalidOperationException("LayoutFrame did not place [写真] at x " + photoX + " (" + bt.anchoredPosition.x + ")");
             EditorUtility.SetDirty(go);
-            log.Add("header [写真] at " + HeaderButtonPos + " " + HeaderButtonSize + " -> _PhotoOpen; title " + TitleWithButtonWidth + " wide at x " + TitleWithButtonX);
+            log.Add("header [写真] at x " + photoX + " " + HeaderButtonSize + " -> _PhotoOpen; title " + titleSize.x + " wide at x " + titlePos.x + (video ? " ([動画] present)" : ""));
         }
 
         static void PlaceSettingsToggle(Ctx c, Sys s, List<string> log)

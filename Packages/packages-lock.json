@@ -284,6 +284,24 @@
         "com.unity.postprocessing": "3.1.1"
       }
     },
+    "idv.jlchntoz.lazyswitch": {
+      "version": "file:idv.jlchntoz.lazyswitch",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "idv.jlchntoz.vrcw-foundation": {
+      "version": "file:idv.jlchntoz.vrcw-foundation",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "idv.jlchntoz.vvmw": {
+      "version": "file:idv.jlchntoz.vvmw",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "jp.lilxyzw.liltoon": {
       "version": "file:jp.lilxyzw.liltoon",
       "depth": 0,
@@ -297,6 +315,12 @@
       "dependencies": {
         "jp.lilxyzw.liltoon": "1.9.0"
       }
+    },
+    "net.ureishi.qvpen": {
+      "version": "file:net.ureishi.qvpen",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

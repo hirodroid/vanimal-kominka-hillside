@@ -41,6 +41,9 @@ namespace KominkaDogRun
         // Hillside parade has its own consent clock. Personal settings remain independent.
         public KominkaHillside.KH_HalloweenParadePlayback paradePlayback;
 
+        [Tooltip("裏山 IMP-UI-011: 動画プレイヤー (VizVid の Core)。再生中は BGM をライブと同じ掛け金で消す。Player/1 が配線。任意")]
+        public JLChnToZ.VRC.VVMW.Core videoCore;
+
         [Tooltip("IMP-ENV-011: 外と寝室の独立した個人音量を現在位置で補間する")]
         public KD_SleepAudio sleepAudio;
 
@@ -106,7 +109,8 @@ namespace KominkaDogRun
         /// 「これから何かが始まる」が濁る)。</summary>
         private bool LiveSilences()
         {
-            return (live != null && live.IsNightWanted) || (paradePlayback != null && paradePlayback.IsAudible);
+            return (live != null && live.IsNightWanted) || (paradePlayback != null && paradePlayback.IsAudible)
+                || (videoCore != null && videoCore.IsPlaying && !videoCore.IsStatic);   // IMP-UI-011: 静止画 (ImageViewer) では消さない (VizVid の BGMVolumeControl と同じ除外)
         }
 
         /// <summary>**出力を作り直す。** 差分ではなく毎回の掛け算。</summary>

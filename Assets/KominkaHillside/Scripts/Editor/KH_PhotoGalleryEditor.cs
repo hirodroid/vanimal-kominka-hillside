@@ -179,7 +179,8 @@ namespace KominkaHillside.Editor
 
         // ---------------------------------------------------------------- ヘッダの [写真] (Photo/4)
         public static readonly Vector2 HeaderButtonPos = new Vector2(-65f, 314f), HeaderButtonSize = new Vector2(120f, 44f);
-        /// <summary>[写真] があるときの見出しの箱 (KD_HandMenuScrollEditor.LayoutFrame と同じ値。-550〜-150)。</summary>
+        /// <summary>[写真] だけがあるときの見出しの箱 (-550〜-150)。IMP-UI-011 から正本は KD_HandMenuScrollEditor.HeaderLayout ([動画] もあると -390 / 320、
+        /// [写真] は -150)。Place / Verify は HeaderLayout と比べる。HeaderButtonPos は作るときの仮の位置 (直後の LayoutFrame が並べ直す)。</summary>
         public const float TitleWithButtonX = -350f, TitleWithButtonWidth = 400f;
 
         static readonly Color ThumbFrameColor = new Color(0.30f, 0.22f, 0.15f);

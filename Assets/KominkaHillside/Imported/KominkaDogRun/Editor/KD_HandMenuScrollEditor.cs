@@ -27,6 +27,52 @@ namespace KominkaDogRun.Editor
         const float HeaderY = 314, HeaderHeight = 44, TabY = 224, TabHeight = 46;
         /// <summary>IMP-WLD-005: ヘッダの [写真] の名前 (KH_PhotoGalleryEditor が置く)。LayoutFrame はこれがあるときだけ見出しを縮める。</summary>
         public const string PhotoHeaderButtonName = "PhotoButton";
+        /// <summary>IMP-UI-011: ヘッダの [動画] の名前 (KH_VideoPlayerEditor (Player/1) が置く)。</summary>
+        public const string VideoHeaderButtonName = "VideoButton";
+        /// <summary>ヘッダの行 (Y・高さ) と動かない [設定] / [閉じる] / 写真・動画のボタンの幅。HeaderLayout と Verify (Photo/2・Player/2) が読む。</summary>
+        public const float HeaderRowY = HeaderY, HeaderRowHeight = HeaderHeight;
+        public const float HeaderSettingsX = 370, HeaderSettingsWidth = 120, HeaderCloseX = 500, HeaderCloseWidth = 110, HeaderMediaButtonWidth = 120, PointsExtraHeight = 6;
+        /// <summary>IMP-UI-011 (Player/2 の WARN 2026-10-15、en:welcome.title 395 px が 320 幅に入らなかった): 見出し (SectionTitle) は 4 通りとも自動縮小 24 → 18pt。
+        /// 幅だけが通りごとに変わる。収まりの検査 (Photo/2・Player/2) は 18pt で入るかで判定する (TitleFits)。</summary>
+        public const float TitleFontMax = 24, TitleFontMin = 18;
+
+        /// <summary>見出しの文が今の見出しの箱に 18pt (TitleFontMin) で 1 行に入るか。sample は測定専用の TextMeshProUGUI (HideAndDontSave)。
+        /// isOrthographic を立てて UI 単位で測る (未 Awake だと約 1/10 になる。vrc-world-ui §10)。</summary>
+        public static bool TitleFits(TextMeshProUGUI sample, TMP_Text title, string text, out Vector2 preferred)
+        {
+            var size = title.rectTransform.rect.size;
+            sample.isOrthographic = true; sample.enableAutoSizing = false; sample.font = title.font; sample.fontSize = TitleFontMin; sample.fontStyle = title.fontStyle;
+            sample.enableWordWrapping = false; sample.margin = title.margin; sample.richText = title.richText;
+            sample.rectTransform.sizeDelta = size;
+            preferred = sample.GetPreferredValues(text, size.x, Mathf.Infinity);
+            return preferred.x <= size.x + 2f && preferred.y <= size.y + 2f;
+        }
+
+        /// <summary>IMP-UI-011 §3-2: ヘッダの並びの正本 (4 通り)。LayoutFrame はこれだけを使い、写真 / 動画の Verify もこれと比べる。
+        /// 無し     : 見出し -335 / 430、残高 150 / 文字 232 / 枠 284
+        /// 写真だけ : 見出し -350 / 400、[写真] -65 (残高は無しと同じ)
+        /// 動画だけ : 見出し -350 / 400、[動画] -65 (写真の席。Photo/5 で写真を外しても崩れない)
+        /// 両方     : 見出し -390 / 320 (-550〜-230)、[写真] -150、[動画] -20、残高 175 / 文字 210 / 枠 250 (50〜300)
+        /// [設定] 370 / [閉じる] 500 は不変。ボタンは 120 × 44、Y = HeaderY。使わないボタンの X は NaN。</summary>
+        public static void HeaderLayout(bool photo, bool video, out Vector2 titlePos, out Vector2 titleSize, out float photoX, out float videoX,
+            out float balanceX, out float balanceTextWidth, out float pointsWidth)
+        {
+            photoX = float.NaN; videoX = float.NaN;
+            balanceX = 150; balanceTextWidth = 232; pointsWidth = 284;
+            if (photo && video)
+            {
+                titlePos = new Vector2(-390, HeaderY); titleSize = new Vector2(320, HeaderHeight);
+                photoX = -150; videoX = -20;
+                balanceX = 175; balanceTextWidth = 210; pointsWidth = 250;
+            }
+            else if (photo || video)
+            {
+                titlePos = new Vector2(-350, HeaderY); titleSize = new Vector2(400, HeaderHeight);
+                if (photo) photoX = -65; else videoX = -65;
+            }
+            else { titlePos = new Vector2(-335, HeaderY); titleSize = new Vector2(430, HeaderHeight); }
+        }
+
         internal const float ContentTop = 186, ContentTopWithRow = 140, TopRowY = 164;
         // 裏山改変: Prefixes[2] = "WalkRow" (古民家 "FxRow")。かざり (5) だけ AccRow + FxRow の 2 種 (撫でFX の合流 D-2)
         static readonly string[] Prefixes = { "Row", "ToyRow", "WalkRow", "SleepRow", "LiveRow", "AccRow" };
@@ -227,15 +273,19 @@ namespace KominkaDogRun.Editor
             Place(panel.Find("Bg"),Vector2.zero,size);
             // P10 (2026-09-16): ヘッダ 310 → 318、タブ 248 → 238 にして間に帯 (Y=278.5、28px) を入れる
             // IMP-WLD-005: ヘッダの [写真] (Photo/4 が置く。任意) があるときだけ見出しを 430 → 400 (-550〜-150) に縮めて、見出しと残高の間 (x -65、120×44) を空ける。
-            // 無ければ従来どおり (Photo/5 で外すと元へ戻る)。値の正本は KH_PhotoGalleryEditor (HeaderButton* / TitleWithButton*)
-            var photoButton=panel.Find(PhotoHeaderButtonName);
-            if(photoButton!=null){Text(panel,"SectionTitle",new Vector2(-350,HeaderY),new Vector2(400,HeaderHeight),24);Action(panel,PhotoHeaderButtonName,-65,HeaderY,120);}
-            else Text(panel,"SectionTitle",new Vector2(-335,HeaderY),new Vector2(430,HeaderHeight),24);
-            // 2026-09-17: 文字の箱 232 / 枠 284 → 左右 26px の余白 (数字が枠線に触れていた)
-            Text(panel,"Balance",new Vector2(150,HeaderY),new Vector2(232,HeaderHeight),22);
-            { var points=panel.Find(KD_GiftCodeSetupEditor.PointsButtonName); if(points!=null)Place(points,new Vector2(150,HeaderY),new Vector2(284,HeaderHeight+6)); }
-            Action(panel,"SettingsButton",370,HeaderY,120);
-            Action(panel,"CloseButton",500,HeaderY,110);
+            // 無ければ従来どおり (Photo/5 で外すと元へ戻る)。
+            // IMP-UI-011: [動画] (Player/1 が置く。任意) も加えて 4 通り。値の正本は HeaderLayout。あるものを毎回全部並べ直す
+            bool hasPhoto=panel.Find(PhotoHeaderButtonName)!=null, hasVideo=panel.Find(VideoHeaderButtonName)!=null;
+            HeaderLayout(hasPhoto,hasVideo,out Vector2 titlePos,out Vector2 titleSize,out float photoX,out float videoX,out float balanceX,out float balanceTextWidth,out float pointsWidth);
+            Text(panel,"SectionTitle",titlePos,titleSize,24);
+            { var st=panel.Find("SectionTitle"); var stl=st!=null?st.GetComponent<TextMeshProUGUI>():null; if(stl!=null){stl.enableAutoSizing=true;stl.fontSizeMax=TitleFontMax;stl.fontSizeMin=TitleFontMin;EditorUtility.SetDirty(stl);} }   // IMP-UI-011: 4 通りとも同じ。幅だけ変わる
+            if(hasPhoto)Action(panel,PhotoHeaderButtonName,photoX,HeaderY,HeaderMediaButtonWidth);
+            if(hasVideo)Action(panel,VideoHeaderButtonName,videoX,HeaderY,HeaderMediaButtonWidth);
+            // 2026-09-17: 文字の箱 232 / 枠 284 → 左右 26px の余白 (数字が枠線に触れていた)。両方あるときは 210 / 250 (左右 20px)
+            Text(panel,"Balance",new Vector2(balanceX,HeaderY),new Vector2(balanceTextWidth,HeaderHeight),22);
+            { var points=panel.Find(KD_GiftCodeSetupEditor.PointsButtonName); if(points!=null)Place(points,new Vector2(balanceX,HeaderY),new Vector2(pointsWidth,HeaderHeight+PointsExtraHeight)); }
+            Action(panel,"SettingsButton",HeaderSettingsX,HeaderY,HeaderSettingsWidth);
+            Action(panel,"CloseButton",HeaderCloseX,HeaderY,HeaderCloseWidth);
             { var band=panel.Find(KD_TreatSetupEditor.EventBandName); if(band!=null){ Place(band,new Vector2(0,KD_TreatSetupEditor.EventBandY),new Vector2(1100,KD_TreatSetupEditor.EventBandHeight)); Text(band,"Label",Vector2.zero,new Vector2(1060,KD_TreatSetupEditor.EventBandHeight),18); } }
             Text(panel,"CloseHint",new Vector2(-400,-328),new Vector2(300,28),18);
             Text(panel,"Feedback",new Vector2(0,-285),new Vector2(1100,44),20);

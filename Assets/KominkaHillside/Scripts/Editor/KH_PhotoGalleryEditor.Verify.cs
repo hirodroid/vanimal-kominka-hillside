@@ -278,10 +278,15 @@ namespace KominkaHillside.Editor
             {
                 Check(OnClick(button, pU, "_PhotoOpen"), "header [写真] -> _PhotoOpen");
                 var bt = (RectTransform)button; var title = (RectTransform)p.sectionTitleLabel.transform;
-                Check(Vector2.Distance(bt.anchoredPosition, HeaderButtonPos) < 0.5f && Vector2.Distance(bt.sizeDelta, HeaderButtonSize) < 0.5f, "header [写真] at " + HeaderButtonPos + " " + HeaderButtonSize);
-                Check(Mathf.Abs(title.anchoredPosition.x - TitleWithButtonX) < 0.5f && Mathf.Abs(title.sizeDelta.x - TitleWithButtonWidth) < 0.5f, "title box " + TitleWithButtonWidth + " wide at x " + TitleWithButtonX + " (actual " + title.anchoredPosition.x + " / " + title.sizeDelta.x + ")");
+                // IMP-UI-011: the expected values follow KD_HandMenuScrollEditor.HeaderLayout (with or without the header [動画])
+                var videoT = p.panelRoot.transform.Find(KD_HandMenuScrollEditor.VideoHeaderButtonName) as RectTransform;
+                KD_HandMenuScrollEditor.HeaderLayout(true, videoT != null, out Vector2 wantTitlePos, out Vector2 wantTitleSize, out float wantPhotoX, out _, out _, out _, out _);
+                var wantButtonPos = new Vector2(wantPhotoX, KD_HandMenuScrollEditor.HeaderRowY);
+                Check(Vector2.Distance(bt.anchoredPosition, wantButtonPos) < 0.5f && Vector2.Distance(bt.sizeDelta, HeaderButtonSize) < 0.5f, "header [写真] at " + wantButtonPos + " " + HeaderButtonSize + (videoT != null ? " ([動画] present)" : "") + " (actual " + bt.anchoredPosition + " " + bt.sizeDelta + ")");
+                Check(Mathf.Abs(title.anchoredPosition.x - wantTitlePos.x) < 0.5f && Mathf.Abs(title.sizeDelta.x - wantTitleSize.x) < 0.5f, "title box " + wantTitleSize.x + " wide at x " + wantTitlePos.x + " (actual " + title.anchoredPosition.x + " / " + title.sizeDelta.x + ")");
                 var points = p.panelRoot.transform.Find(KD_GiftCodeSetupEditor.PointsButtonName) as RectTransform;
-                Check(!RectOf(bt).Overlaps(RectOf(title)) && (points == null || !RectOf(bt).Overlaps(RectOf(points))), "header [写真] overlaps neither the title nor the points");
+                Check(!RectOf(bt).Overlaps(RectOf(title)) && (points == null || !RectOf(bt).Overlaps(RectOf(points))) && (videoT == null || !RectOf(bt).Overlaps(RectOf(videoT))),
+                    "header [写真] overlaps neither the title, the points nor [動画]");
                 Check(al.headerLabel == LabelOf(button.gameObject), "album draws the header label");
                 MeasureTitles(c, title, Warn, Note);
                 MeasureOne(c, LabelOf(button.gameObject), "photo.menu", "", "header [写真]", Check, Note);
@@ -558,7 +563,7 @@ namespace KominkaHillside.Editor
             finally { Object.DestroyImmediate(go); }
         }
 
-        /// <summary>設計 §4.2: 見出しは 400 に縮む。全タブ・副画面の見出し × 自前で焼く言語 (ja / en) で 1 行に入るか。入らなければボタンを 100 幅にする判断材料 (WARN)。</summary>
+        /// <summary>設計 §4.2: 見出しは 400 (IMP-UI-011: [動画] もあると 320) に縮む。見出しは 24 → 18pt の自動縮小なので 18pt で入るかを見る。全タブ・副画面の見出し × 自前で焼く言語 (ja / en) で 1 行に入るか。入らなければボタンを 100 幅にする判断材料 (WARN)。</summary>
         static void MeasureTitles(Ctx c, RectTransform title, Action<string> Warn, Action<string> Note)
         {
             var label = title.GetComponent<TextMeshProUGUI>();
@@ -578,12 +583,12 @@ namespace KominkaHillside.Editor
                     {
                         if (!c.catalog.languages.First(l => l.code == c.catalog.fallbackLanguage).texts.Any(e => e.key == key)) continue;
                         checkedCount++;
-                        int fit = KD_LocalizationEditor.MeasureLabelFit(sample, label, KD_LocalizationEditor.Text(c.catalog, lang.code, key), out Vector2 pref);
-                        if (fit == 2) over.Add(lang.code + ":" + key + " " + pref.x.ToString("F0"));
+                        // IMP-UI-011: the title auto-sizes 24 -> 18pt (KD_HandMenuScrollEditor.LayoutFrame); only a text that overflows at 18pt is a problem
+                        if (!KD_HandMenuScrollEditor.TitleFits(sample, label, KD_LocalizationEditor.Text(c.catalog, lang.code, key), out Vector2 pref)) over.Add(lang.code + ":" + key + " " + pref.x.ToString("F0"));
                     }
                 }
-                if (over.Count > 0) Warn("TITLE_OVERFLOW at 400 wide (design §4.2: then make [写真] 100 wide): " + string.Join(", ", over));
-                else Note("section titles fit 400 wide (" + checkedCount + " ja / en titles; the course titles and the 11 client languages are a device check)");
+                if (over.Count > 0) Warn("TITLE_OVERFLOW at " + title.sizeDelta.x + " wide even at " + KD_HandMenuScrollEditor.TitleFontMin + "pt (design §4.2: then make [写真] 100 wide; IMP-UI-011: 320 with [動画]): " + string.Join(", ", over));
+                else Note("section titles fit " + title.sizeDelta.x + " wide at " + KD_HandMenuScrollEditor.TitleFontMin + "pt or more (" + checkedCount + " ja / en titles; the course titles and the 11 client languages are a device check)");
             }
             finally { Object.DestroyImmediate(go); }
         }
