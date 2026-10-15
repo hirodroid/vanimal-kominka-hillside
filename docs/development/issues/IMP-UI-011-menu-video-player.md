@@ -4,8 +4,8 @@ type: IMP
 system: UI
 status: review
 priority: Medium
-summary: VizVid (1.8.2、パッケージ導入済み・シーン未配置) の動画プレイヤーを手元メニューの副画面に組み込む。入口はヘッダの [写真] の隣の [動画]。モニターは置かない
-next: "ユーザー: §3 の決定 1〜3 (推奨で実装済み。変えるなら Player/9 → 直して Player/1)。PCVR で [動画] → 面 → URL の実再生 (上下の向き・音・音量・消音・BGM が消えて停止で戻る)、板を閉じても音が続くこと。2 人で同期・途中参加 (B)。Quest の再生と負荷 (D)。iOS は見るだけ (E)"
+summary: VizVid 1.8.2 の動画プレイヤーを手元メニューの副画面に組み込んだ (2026-10-16 実装、Edit 検査 PASS)。入口はヘッダの [写真] の隣の [動画]。モニターは置かない。Play・実機は未確認
+next: "ユーザー: §3 の決定 1〜3 (推奨で実装済み。変えるなら Player/9 (未実行) で外してから直して Player/1)。PCVR で [動画] → 面 → URL の実再生 (上下の向き・音・音量・消音・BGM が消えて停止で戻る)、板を閉じても音が続くこと。2 人で同期・途中参加 (B)。Quest の再生と負荷 (D)。iOS は見るだけ (E)"
 updated: 2026-10-16
 ---
 
@@ -33,14 +33,16 @@ updated: 2026-10-16
 
 | # | 決めること | 推奨 | 代案 |
 |---|---|---|---|
-| 1 | **同期と音** | **A: VizVid の素の挙動**。URL・再生位置はインスタンスで同期 (誰かが入れた動画を全員が自分のメニューで見られる)。音は **2D** (spatialBlend 0、`VRC_SpatialAudioSource` の spatialization OFF) で、再生中は面を閉じていても聞こえる。面に本人だけの音量スライダーと [消音] (`Core.Volume / Muted`。台帳には載せない)。再生中は BGM をライブと同じ掛け金で消し、停止・エラーで戻す。面を閉じてもデコードは続く (ActiveRegion は停止しない。Quest の負荷は実機で測る) | B: ローカル専用 (自分の面で自分だけが見る・聞く)。同期なしで軽いが「一緒に見る」ができない |
-| 2 | **入口** | **ヘッダの [写真] の隣に [動画]** (ユーザー案。どのタブからも 1 回で開く)。両方あるとき: 見出し 中心 -390 / 幅 320 (-550〜-230)、[写真] -150 (-210〜-90)、[動画] -20 (-80〜40)、残高の枠 中心 175 / 幅 250 (50〜300)・文字 210、[設定] 370、[閉じる] 500 (隙間 20 / 10 / 10 / 10)。`LayoutFrame` は「無し / 写真だけ / 動画だけ / 両方」の 4 通りを 1 つの関数で並べる (動画だけのときは写真の席 -65 に座る。Photo/5 で写真を外しても崩れない) | 写真の面の下段 ([撮影カメラ] の隣) に [動画プレイヤー]。ヘッダは縮まないが 1 タップ増える |
+| 1 | **同期と音** | **A: VizVid の素の挙動**。URL・再生位置はインスタンスで同期 (誰かが入れた動画を全員が自分のメニューで見られる)。音は **2D** (spatialBlend 0、`VRC_SpatialAudioSource` の spatialization OFF) で、再生中は面を閉じていても聞こえる。面に本人だけの音量スライダーと [消音] (`Core.Volume / Muted`。台帳には載せない)。再生中は BGM をライブと同じ掛け金で消し、停止・エラーで戻す。面を閉じてもデコードは続く (ActiveRegion は停止しない。Quest の負荷は実機で測る)。**帰結**: 公開インスタンスでは誰かが入れた動画の音が、面を一度も開いていない人の耳にも 2D で届き、その人の BGM も消える。逃げ道は面の [消音] (自分の BGM は消音で戻る) と音量だけ | B: ローカル専用 (自分の面で自分だけが見る・聞く)。同期なしで軽いが「一緒に見る」ができない |
+| 2 | **入口** | **ヘッダの [写真] の隣に [動画]** (ユーザー案。どのタブからも 1 回で開く)。両方あるとき: 見出し 中心 -390 / 幅 320 (-550〜-230)、[写真] -150 (-210〜-90)、[動画] -20 (-80〜40)、残高の枠 中心 175 / 幅 250 (50〜300)・文字 210、[設定] 370、[閉じる] 500 (隙間 20 / 10 / 10 / 10)。`LayoutFrame` は「無し / 写真だけ / 動画だけ / 両方」の 4 通りを 1 つの関数で並べる (動画だけのときは写真の席 -65 に座る。Photo/5 で写真を外しても崩れない)。**代償**: 見出しの箱が 400 → 320 になり、長い言語のタブの題 (38 文) は 24 → 18pt に自動縮小する (英語のようこそ題は 18pt)。代案ならこの縮小は起きない | 写真の面の下段 ([撮影カメラ] の隣) に [動画プレイヤー]。ヘッダは縮まないが 1 タップ増える |
 | 3 | **ボタンの語** | **「動画」** (ja 2 字。en "Video"。120 px に 13 言語が収まる) | ユーザーの語「プレイヤー」(5 字、120 px・22 pt では窮屈。"Player" は英語圏で曖昧) |
 | 4 | 面の構成 | 本文の帯 (Y 148〜-232) に収める: 左に 16:9 の画面 **640×360** (RawImage、`Core.screenTargets` mode 4)、右の列 (x 110〜550) に URL 欄 (`VRCUrlInputField`) + [入れる]、[再生] [一時停止] [停止] [再同期 (自分だけ)]、音量スライダー + [消音]、端末の注意 1 行。上段は状態の 1 行 (読み込み中 / エラー / 再生中・入れた人) と [もどる] (450, 170) 220×44 (写真の面と同じ)。描画の更新はリスナーのイベント + 面が開いている間だけ 0.5 s の自己再予約。URL は 5 秒に 1 回の制限に合わせて連打を抑える。`enableQueueList = false` (即時再生) | — |
 | 5 | 端末 | Android も URL を解決する (公式)。面の注意は「許可リスト外のサイトは設定の Allow Untrusted URLs が要る」の 1 行。iOS は NOT_TESTED (保証しない) | — |
 | 6 | 置き方 | VizVid の `VVMW (No Controls)` (Core + FrontendHandler (core 配線済み) + AVPro / Builtin / Image の各バックエンド + 音源) をビルダーが **シーンに展開 (UnpackPrefabInstance Completely)** してから配線する (プレハブ内 → 外の参照をオーバーライドで持たない。`vrc-udonsharp` §3)。再実行は削除 → 再生成で冪等 (NetworkIDs の残骸も検査)。`[Resolve]` はビルド時に foundation が埋めるが **`SingletonCoreControl` は Inspector の印で、Frontend の `core` は配線を Verify で見る**。バックエンドの映像取得用 Renderer は消さない | — |
 
-決定: (未。ユーザーの回答待ち。推奨で実装済み 2026-10-16。変えるときは Player/9 で外してから直す)
+| 7 | **操作できる人** | **誰でも** (`FrontendHandler.locked = false`。`enableQueueList = false` なので新しい URL は今の動画を即座に置き換える) | Master だけ (`locked = true`、1 フィールド。面は Locked なら URL 欄と [入れる] を押せなくする実装済み) |
+
+決定: (未。ユーザーの回答待ち。推奨で実装済み 2026-10-16。変えるときは Player/9 (未実行) で外してから直す)
 
 ## 4. 作業範囲
 
@@ -71,5 +73,5 @@ Edit で確定できるもの:
 - **ランタイム**: `KH_VideoPage.cs` (新規 U#、ローカル専用、sync None。`FrontendHandler._AddListener` で `_OnUIUpdate / _OnVolumeChange / _OnVideoBeginLoad / _OnVideoError` を受け、`core.State` で状態の 1 行 (なし / 読み込み中 / 再生中 + 入れた人 (履歴の先頭から) / 一時停止 / エラー = RateLimited・許可リスト外・他)、URL は `VRCUrlInputField` → `frontend.PlayUrl(url, url, type)` (type 0 は 1 で投入 = VizVid の UI と同じ)、5 秒制限の連打抑止 (同じ URL は捨て、別の URL は「あと {0} 秒待って」)、Locked なら投入しない、音量 → `core.Volume`、消音 → `core.Muted`、面が開いている間だけ 0.5 s の見回り、板を開き直しても再開 (`SetOpen` から)、言語切替でヘッダの [動画] も描き直し)。`KD_TreatPouch.Video.cs` (partial: `videoPage / videoPageBehaviour`、`_VideoOpen / _VideoBack`。`KD_TreatPouch.cs` 本体は 2 行)。`KD_BgmPlayer.videoCore`: `IsPlaying && !IsStatic` で BGM を消す (静止画では消さない)。翻訳 `video.player.*` 22 キー × 13 言語 (back は既存 `gift.back` を再利用)。
 - **Editor**: `KH_VideoPlayerEditor.cs / .Verify.cs` (Player/0 Program Asset、1 Build = `VVMW (No Controls)` を展開 (Unpack Completely) → `KH_VideoPlayer (VizVid)` (Core + FrontendHandler + AVPro / Builtin)、Core の 7 配列に面の RawImage (mode 4)、`enableQueueList=false`、音源 2D (spatialBlend 0・VRCSpatialAudioSource OFF)、`Page_Settings/VideoPage` (画面 640×360 (-230,-46)、右の列に URL 320×50 + [入れる]、[再生][一時停止][停止][再同期]、音量 220×40 + [消音]、注意 440×110 3 行 18→14pt、[もどる] (450,170))、ヘッダ `VideoButton` (-20)、配線と字形 (早 を追加)、保存前検査、2 Verify (178 項目: 7 配列・配線・ヘッダ 4 通り・帯・収まり・NetworkIDs)、9 Remove)。`KD_HandMenuScrollEditor.HeaderLayout(photo, video)` がヘッダの正本 (4 通り。両方: 見出し -390/320 自動縮小 24→18pt、[写真] -150、[動画] -20、残高 175/210 枠 250)。Photo の Place / Verify はこれに追従。
 - **検証 (Edit、統括)**: C# 0 / U# 0 (172 scripts)。Player/0 → Player/1 BUILD_OK → Player/2 PASS fails=0 warns=0、Photo/2 PASS 0/0、Menu/21 317/0。シーンは保存済み (別セッションの未保存分も一緒に保存した)。**Play・実機は未確認** (ClientSim は動画を再生できない)。11 言語の収まりは VRChat のフォールバックフォントなので実機。
-- **Codex 独立レビューの反映**: BGM の静止画除外 / 板を開き直したときの見回り再開 / URL 投入の Locked 検査 / 閉じたままの言語切替 / 注意文を「URL・再生・一時停止・停止はみんなに効く。音量と再同期は自分だけ。許可リスト外は Allow Untrusted URLs が要る」の 3 行に (「ON にすると映る」の断定をやめた)。見送り: State 3 (Ready) を一時停止と表示する意味差 (実害なし)。別件候補: `KD_TreatSetupEditor.PrunePanelChildren` が Photo/Video のボタンを keep しない (周回シーンでは RejectLegacyRebuild が先に止めるので今回の経路では起きない。KH_VideoPlayerEditor の冒頭に注意)。
+- **Codex 独立レビューの反映**: BGM の静止画除外 / 板を開き直したときの見回り再開 / URL 投入の Locked 検査 / 閉じたままの言語切替 / 注意文を「URL・再生・一時停止・停止はみんなに効く。音量と再同期は自分だけ。許可リスト外は Allow Untrusted URLs が要る」の 3 行に (「ON にすると映る」の断定をやめた)。見送り: State 3 (Ready) を一時停止と表示する意味差 (実害なし)。統括の追補 (advisor): 自分が [消音] していれば BGM も消さない (`!videoCore.Muted`、Muted はローカル)。別件候補: `KD_TreatSetupEditor.PrunePanelChildren` が Photo/Video のボタンを keep しない (周回シーンでは RejectLegacyRebuild が先に止めるので今回の経路では起きない。KH_VideoPlayerEditor の冒頭に注意)。
 - **コミット**: Issue・overview・コード・翻訳・フォント (字形 早)・`KH_VideoPage.asset`・`KD_BgmPlayer.asset`・`Packages/vpm-manifest.json` と `packages-lock.json` (VizVid 1.8.2 + 依存。同じ diff の QvPen 3.3.15 も含む)・`ProjectSettings.asset` (LAZY_SWITCH 等の define)。シーンと他の .asset は別セッションの未コミット分を含むので stage しない (Player/1 で再生成できる)。

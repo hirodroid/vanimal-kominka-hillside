@@ -110,7 +110,7 @@ namespace KominkaDogRun
         private bool LiveSilences()
         {
             return (live != null && live.IsNightWanted) || (paradePlayback != null && paradePlayback.IsAudible)
-                || (videoCore != null && videoCore.IsPlaying && !videoCore.IsStatic);   // IMP-UI-011: 静止画 (ImageViewer) では消さない (VizVid の BGMVolumeControl と同じ除外)
+                || (videoCore != null && videoCore.IsPlaying && !videoCore.IsStatic && !videoCore.Muted);   // IMP-UI-011: 静止画 (ImageViewer) では消さない (VizVid の BGMVolumeControl と同じ除外)。自分が消音していれば BGM も消さない (Muted はローカル)
         }
 
         /// <summary>**出力を作り直す。** 差分ではなく毎回の掛け算。</summary>
