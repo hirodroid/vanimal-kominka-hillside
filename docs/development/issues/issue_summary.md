@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-152 件 — 対応中 19 / 確認待ち 90 / 未着手 8 / 保留 3 / 完了 32
+153 件 — 対応中 19 / 確認待ち 90 / 未着手 9 / 保留 3 / 完了 32
 
 ## 実行キュー
 
@@ -122,6 +122,7 @@
 | [IMP-UI-005](IMP-UI-005-complete-thirteen-language-ui.md) | High | 13言語の枠だけでなく、散歩・追加画面を含む全UIの翻訳を揃える | todo | 実装着手時に現行コードと仕様の差を整理する。今回はIssueと資料の更新のみ |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | 先行 Animal Wash との比較の記録 (上回った点・残る違和感の文言は聞いていない)、2 人協力 (B2)、Desktop/Touch、Quest 単体・iOS の実機、負荷・容量。PCVR 1 人の洗い心地 (A17 を含む) は 10-02 ユーザー総合判断で確認済み (比較の記録はなし)。すすぎ改善 (f9ed660) は 10-02 の判断に含まない (確定、c64ae42)。その後 10-08 にユーザーが IMP-DOG-025 の完了を明言 (項目別の記録なし、A-1 の個別結果は無い) |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。10-04 に Quest で真っ黒とユーザーが確認 (iOS も同じらしい)。原因の見立ては材質の金属 1 で、修正は BUG-ENV-001 で行う | todo | BUG-ENV-001 でディスクと顔の材質を金属 0 へ直した後、Quest と iOS で 6 色と顔が見分けられるかを確認する |
+| [BUG-DOG-016](BUG-DOG-016-plaza-disc-under-cart.md) | Medium | 広場に置いてあるフリスビーがカートに踏まれている (ユーザー報告 2026-10-15)。乗り場の見本カートがディスクの列の真上にあり、走行の軌道も 1.4 m しか離れていない。ディスクの置き場所を見直す | todo | ディスク 6 枚の置き場所を、見本カート・パネルの外かつ軌道の中心から 2.5 m 以上離れた広場の平坦部に決め、シーンの 6 枚と DiscHome を動かし、Walking/5 と Cart Verify に距離の検査を足す |
 | [IMP-DOG-048](IMP-DOG-048-collar-and-leash-patterns.md) | Medium | 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色 | todo | 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo | Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外 |
 | [BUG-ENV-004](BUG-ENV-004-prop-zfight-photoboard-guideroof.md) | Low | 自作の小物 2 件に同一平面の重なり (写真ボードの仕上げ板 KH_PhotoBoard/Structure/FinishedVisual 219 cm² gap 2 mm、門前の案内板の屋根の棟 Ridge と RoofFront / RoofBack 7 cm² gap 0)。BUG-ENV-003 の走査で見つかった古民家以外の残り | todo | ユーザーが Play でちらつきを見た時に着手。直すなら生成側 (KH_PropFinishEditor の仕上げ板の押し出し、KH_GuideBoardsEditor の屋根の棟の高さ) を 4 mm 離す。ZFight/1 で再確認 |
