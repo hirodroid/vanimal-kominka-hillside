@@ -121,10 +121,11 @@ if [ "$DO_UDON" = "1" ] && [ "$cs_state" != "error" ] && [ "$cs_state" != "timeo
     seg="$(tail_from "$posU")"
     # 完了ログの実物: "[<color=#0c824c>UdonSharp</color>] Compile of 82 scripts finished in 00:08.375" (SDK 3.10.5、実測 2026-09-25)
     if printf '%s' "$seg" | grep -qE 'UdonSharp.*Compile of [0-9]+ scripts finished'; then udon_state="ok"; break; fi
-    if printf '%s' "$seg" | grep -qiE '\[UdonSharp\].*(error|exception)|error CS'; then udon_state="error"; break; fi
+    # エラー行の実物も色付き: "[<color=#FF00FF>UdonSharp</color>] <path>(行,列): Method is not exposed to Udon: ..." (2026-10-15 実測。素の [UdonSharp] だけだと拾えず timeout に化けた)
+    if printf '%s' "$seg" | grep -qiE 'UdonSharp(</color>)?\].*(error|exception|not exposed)|error CS'; then udon_state="error"; break; fi
     sleep 2
   done
-  udon_lines="$(tail_from "$posU" | grep -iE '\[UdonSharp\].*(error|exception)|error CS' | sed 's/\r$//' | sort -u)"
+  udon_lines="$(tail_from "$posU" | grep -iE 'UdonSharp(</color>)?\].*(error|exception|not exposed)|error CS' | sed 's/\r$//' | sort -u)"
   [ -n "$udon_lines" ] && { udon_errors=$(printf '%s\n' "$udon_lines" | wc -l | tr -d ' '); udon_state="error"; }
 fi
 
