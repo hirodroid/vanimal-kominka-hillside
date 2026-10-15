@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.SDK3.UdonNetworkCalling;
@@ -274,7 +274,8 @@ namespace KominkaDogRun
             if (!Networking.IsOwner(gameObject) || !Utilities.IsValid(player) || OwnerId() != owner) return;
             if (op != Cancel && op != Release && pack != null && pack.dogWander != null
                 && dogIndex >= 0 && dogIndex < pack.dogWander.Length && pack.dogWander[dogIndex] != null
-                && pack.dogWander[dogIndex].candyPerformanceActive) return;
+                && (pack.dogWander[dogIndex].candyPerformanceActive || (pack.dogWander[dogIndex].ParadeReserved
+                    && (op == Reserve || op == Commit || pack.dogWander[dogIndex].paradeDog.Committed || pack.dogWander[dogIndex].paradeDog.Isolated)))) return;
             int now = Networking.GetServerTimeInMilliseconds(), age = now - sentMs;
             if (age < -1000 || age > RequestMaxAgeMs) return;
             int id = player.playerId;
@@ -438,6 +439,15 @@ namespace KominkaDogRun
             sleeperId = -1; calledMs = 0; hasSpot = false; spot = Vector3.zero; spotYaw = 0f;
             poseId = 0; pawHeld = false; chinHand = 0; trickKind = TrickNone; stretchMs = 0; callToken = 0; arrived = false;   // 裏山改変: IMP-DOG-054 解除で芸と間隔の履歴を両方消す
             ClearReservation();
+        }
+
+        public void _ReleaseForParade()
+        {
+            if (!Networking.IsOwner(gameObject) || pack == null || pack.dogWander == null
+                || dogIndex < 0 || dogIndex >= pack.dogWander.Length || pack.dogWander[dogIndex] == null
+                || pack.dogWander[dogIndex].paradeDog == null || !pack.dogWander[dogIndex].paradeDog.Committed) return;
+            _EndSelection();
+            if (sleeperId >= 0 || reservedId >= 0) PublishRelease();
         }
 
         public void _ReleaseForCandyPerformance()

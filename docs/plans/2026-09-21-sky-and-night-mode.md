@@ -196,3 +196,7 @@ Editor: `Night/1 Setup` が `KH_AutoNight` の Program Asset (無ければ作っ
 - 2 人: A・B ともオートで同じ暗さ。A がマニュアルにしても B は変わらない。夜になってから C が入る → C は昼から 3 s で同じ暗さへ。最初に入った人 (Owner) が退室しても暗さが巻き戻らない (入ったばかりの人が Owner を受け取る順も試す)
 - ライブ: オートの夜にライブを始める・終える → ライブ中は強い方、終了後はオートの値へ戻る (0 にならない)
 - Quest 単体 / iOS: 上の 1 人の項目と、夜のメニューの読みやすさ・fps を分けて記録
+
+### パレードの灯り006（2026-10-15）
+
+ユーザー指定で開演中を薄暮化。KH_NightModeの表示値はmax(オート/マニュアルの表示値, liveDarkness, paradeDarkness)。パレードPlaybackだけが専用paradeDarknessを書き、共有Elapsedで開始4秒・終端5秒、最大0.72へフェードする。停止/Disableでは専用入力のみ0に戻す。手動値やPlayerData、Autoの時計、通常live入力を変更しない。通常Emissionも暗くする覆い4999の後に、パレード専用の深度判定付き発光を5000で描画。限定VM結果とビジュアル証拠は[統合制作票](halloween-parade/production.md)。この結果を上記Auto全項目や端末の合格へ読み替えない。

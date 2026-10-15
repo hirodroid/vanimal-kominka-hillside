@@ -1,0 +1,8 @@
+{
+    "sceneHash":  "4D51849C1314AC8C6A2A277E11DA917777B7707802B123DCF3383D9E7862B910",
+    "showplanHash":  "7C7FE139EE9C3B1B6A09C26D5FBEA7474027BD192943FF7972E52ED070DB8F90",
+    "wiring":  "16 backing subjects,178 effects,162 detail renderers; public preview verified; scene saved",
+    "runtimeEvidence":  "20261014-110733-975-390cd5 (before material-only correction)",
+    "materialFix":  "Explicit straight-alpha shader on paw; Edit render verified, no subsequent runtime replay",
+    "date":  "2026-10-14T20:17:08.6137863+09:00"
+}

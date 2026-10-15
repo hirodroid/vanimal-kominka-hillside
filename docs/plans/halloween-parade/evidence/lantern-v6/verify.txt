@@ -1,0 +1,16 @@
+2026-10-14T23:30:26.6765917Z
+darkness(-1)=0
+darkness(0)=0
+darkness(2)=0.36
+darkness(4)=0.72
+darkness(100)=0.72
+darkness(215)=0.72
+darkness(217.5)=0.36
+darkness(220)=0
+Candle emissive bounds=Center: (0.00, 0.98, 0.00), Extents: (0.02, 0.02, 0.02)
+CandleBoo emissive bounds=Center: (0.00, 0.98, 0.00), Extents: (0.02, 0.02, 0.02)
+CandlePumpkin emissive bounds=Center: (0.00, 0.71, 0.00), Extents: (0.07, 0.04, 0.07)
+LampL emissive bounds=Center: (0.00, 1.27, -0.01), Extents: (0.08, 0.08, 0.08)
+PumpkinLamp emissive bounds=Center: (0.00, 1.15, 0.00), Extents: (0.51, 0.29, 0.03)
+candles=10 streetlights=6 ribbons=6 dirty=False
+PASS Edit structure only

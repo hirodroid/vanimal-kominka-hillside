@@ -1,0 +1,819 @@
+{
+  "id": "20261014-162453-1068",
+  "command": "verify",
+  "data": {
+    "title": "kh-halloween-parade",
+    "timeline": {
+      "path": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/kh-halloween-parade.playable",
+      "exists": true,
+      "duration": 232.999999999999,
+      "activationTracks": 127,
+      "animationTracks": 254,
+      "audioTracks": 1,
+      "otherTracks": 1,
+      "clips": 382,
+      "markers": 100
+    },
+    "prefabs": {
+      "count": 127,
+      "stale": 0,
+      "missing": [],
+      "particleSystems": 254,
+      "layered": 127,
+      "maxParticlesTotal": 127,
+      "nullMaterial": 0,
+      "errorShader": 0,
+      "noTexture": 0,
+      "nullMesh": 0,
+      "items": [
+        {
+          "name": "particles_trail_khp_greeting__greeting-0_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_greeting__greeting-1_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_greeting__greeting-2_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_greeting__greeting-3_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_greeting__greeting-4_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_greeting__greeting-5_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_guide__guide-journey_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_0__lantern-0_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_1__lantern-1_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_2__lantern-2_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_3__lantern-3_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_4__lantern-4_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lantern_5__lantern-5_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-10_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-15_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-19_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-24_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-28_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-33_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-37_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-42_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-46_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-51_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-55_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-60_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-64_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-69_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-73_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-78_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-82_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-87_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-91_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-93_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-95_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-97_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-99_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-101_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-103_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-108_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-114_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-119_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-123_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-01-event-128_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-1_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-6_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-10_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-15_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-19_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-24_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-28_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-33_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-37_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-42_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-46_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-51_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-55_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-60_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-64_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-69_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-73_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-77_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-80_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-84_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-87_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-91_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-94_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_leaf__note-track-03-event-98_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-0_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-1_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-2_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-3_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-4_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-5_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-6_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-7_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-8_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-9_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-10_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_lift__lift-11_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-1_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-7_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-13_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-19_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-25_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-31_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-37_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-43_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-49_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-55_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-61_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-67_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-73_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-79_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-85_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-91_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-97_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-103_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-109_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-115_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-121_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-127_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-133_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-139_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-145_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-151_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-157_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-163_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-169_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-175_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-181_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-187_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-193_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-199_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-205_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-211_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-217_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-223_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-229_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-235_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-241_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-247_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-253_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-259_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-265_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-271_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-277_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        },
+        {
+          "name": "particles_trail_khp_paw__note-track-02-event-283_0",
+          "systems": 2,
+          "maxParticles": 1,
+          "issues": []
+        }
+      ]
+    },
+    "showplan": {
+      "sections": 12,
+      "effects": 127,
+      "effectKeys": 127
+    },
+    "scene": {
+      "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+      "stageFound": true,
+      "children": 127,
+      "director": true,
+      "directorAsset": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/kh-halloween-parade.playable",
+      "unboundTracks": []
+    },
+    "materialsUnique": 3,
+    "lightCount": 0,
+    "budget": {
+      "maxParticles": 127,
+      "maxMaterials": 22,
+      "maxLights": 0
+    },
+    "issues": [],
+    "ok": true
+  },
+  "ok": true,
+  "startedAt": "2026-10-14T16:24:53.9418794+09:00",
+  "finishedAt": "2026-10-14T16:24:54.0193844+09:00"
+}

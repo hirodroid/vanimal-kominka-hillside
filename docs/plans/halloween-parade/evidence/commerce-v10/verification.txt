@@ -1,0 +1,3 @@
+2026-10-15T03:48:48.5820045Z
+PASS: paid menu wiring; no preview bypass; plaza board removed; authenticated owner gate; consent UI preserved.
+PENDING: dedicated Product/Listing IDs; purchasing and hosting unavailable.

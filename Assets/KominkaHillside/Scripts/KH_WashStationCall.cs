@@ -41,6 +41,7 @@ namespace KominkaHillside
     public class KH_WashStationCall : UdonSharpBehaviour
     {
         [Header("配線 (ビルダー)")]
+        public KH_HalloweenParade parade;
         public int stationIndex;             // 0 = main station, 1.. = along the walk
         public Transform anchor;             // where the dog stands: the top centre of the stand (a child of liftRoot)
         public Transform liftRoot;           // the stand (slats + collider); its local y follows lift
@@ -433,6 +434,7 @@ namespace KominkaHillside
         /// <summary>Owner: the rules of §3 / §7 for a call of `dog` by player `pid` (_Availability).</summary>
         void Arbitrate(int dog, int pid)
         {
+            if (parade != null && parade._BlocksDog(dog)) { Refuse(dog, RefuseBusy); return; }
             int a = _Availability(dog, pid);
             if (a == RefuseInvalid) { Refuse(dog, RefuseInvalid); return; }
             // Codex 6: a new choice cancels an older wait (only the latest selection is processed)
@@ -458,6 +460,7 @@ namespace KominkaHillside
 
         void Accept(int dog, int pid)
         {
+            if (parade != null && parade._BlocksDog(dog)) return;
             _pendingDog = -1;
             // One dog per station: the previous dog is simply let go (its side sees heldDog change and walks off)
             heldDog = dog; callerId = pid; arrived = false;
@@ -475,6 +478,12 @@ namespace KominkaHillside
             refusedDog = dog; refusedReason = reason; refuseSerial++;
             Debug.Log("[KH_WashStationCall] station " + stationIndex + " refuse dog=" + dog + " reason=" + reason);
             RequestSerialization();
+        }
+
+        public void _EndForParade()
+        {
+            if (parade == null || !parade.Committed || !Networking.IsOwner(gameObject)) return;
+            Release();
         }
 
         void Release()

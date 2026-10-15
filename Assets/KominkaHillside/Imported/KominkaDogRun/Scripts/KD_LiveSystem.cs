@@ -33,6 +33,7 @@ namespace KominkaDogRun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public partial class KD_LiveSystem : UdonSharpBehaviour
     {
+        public KominkaHillside.KH_HalloweenParade parade;
         public KD_LiveAccess access;
         public KD_GroupActivities activities;
         public KD_ShopItem[] hostingItems;
@@ -179,7 +180,7 @@ namespace KominkaDogRun
 
         /// <summary>今すぐ開催してよいか (§1.1: 現在の 1 本を保護し、完了後 60 秒は誰も開催できない)。</summary>
         // net: callable-ok: 副作用の無い問い合わせ
-        public bool CanStart { get { return SecondsUntilAvailable <= 0f && (activities == null || !activities.Busy); } }
+        public bool CanStart { get { return (parade == null || (!parade.BlocksNewUses && !parade.HasRecoveryFailure)) && SecondsUntilAvailable <= 0f && (activities == null || !activities.Busy); } }
 
         // ============================================================
         // 書き込み (**ローカル専用。`_` はセキュリティの印**)

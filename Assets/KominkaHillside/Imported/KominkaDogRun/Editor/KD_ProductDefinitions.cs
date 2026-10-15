@@ -23,7 +23,7 @@ namespace KominkaDogRun.Editor
             public readonly int price, packCount, initialStock, stockCap, ceCredits;
             public Row(string key,string category,string sceneName,int price,int pack,int initial,int cap,string listing,string productId="",int credits=0,string asset="")
             { this.key=key; categoryKey=category; this.sceneName=sceneName; this.price=price; packCount=pack; initialStock=initial; stockCap=cap; ceListingId=listing; ceProductId=productId; ceCredits=credits; ceAsset=asset; }
-            public bool IsCE { get { return !string.IsNullOrEmpty(ceListingId); } }
+            public bool IsCE { get { return key == KominkaHillside.KH_HalloweenParade.ProductKey || !string.IsNullOrEmpty(ceListingId); } }
         }
         // 裏山改変 (IMP-DOG-050): 末尾に collar (首輪とリードのおそろいセット)。Categories と Defaults は添字で対応する
         // 裏山改変 (IMP-DOG-056): 末尾に wash (洗い場の追加道具のセット)。既定は "" (live と同じ: 初期品なし)。
@@ -49,6 +49,9 @@ namespace KominkaDogRun.Editor
         public const string WashStationProduct = "prod_396c89c7-3bd9-46d3-93af-28983d95feb7", WashStationListing = "prod_0632ffa5-a39e-4459-8ca3-5648c1d43356";
         public const string WashAllListing = "prod_a5b387a0-a5ea-4e48-a2a5-d53b3169e02e";
         public const int WashAllCredits = 1500;
+        // Dedicated Hillside IDs; never reuse the Kominka Pumpkin product.
+        public const string HillsideParadeProduct = "prod_1f3a7a1e-3fc0-45b3-b868-c2cf00839a83", HillsideParadeListing = "prod_a628b66e-0526-4cb7-b720-a559bdb40465";
+        public static bool PendingParade(Row d) { return d.key == KominkaHillside.KH_HalloweenParade.ProductKey && string.IsNullOrEmpty(d.ceProductId) && string.IsNullOrEmpty(d.ceListingId); }
 
         public static readonly Row[] All = {
             new Row("action.belly_up", "action", "KD_ShopItem_Action_BellyUp", 30, 0, 0, 0, ""),
@@ -126,6 +129,7 @@ namespace KominkaDogRun.Editor
             new Row("wash.water_set", "wash", "KD_ShopItem_Wash_Water", 0, 0, 0, 0, WashWaterListing, WashWaterProduct, 500, "KD_Product_WashWater"),
             new Row("wash.finish_set", "wash", "KD_ShopItem_Wash_Finish", 0, 0, 0, 0, WashFinishListing, WashFinishProduct, 500, "KD_Product_WashFinish"),
             new Row("wash.station_set", "wash", "KD_ShopItem_Wash_Station", 0, 0, 0, 0, WashStationListing, WashStationProduct, 500, "KD_Product_WashStation"),
+            new Row(KominkaHillside.KH_HalloweenParade.ProductKey, "live", "KD_ShopItem_Live_HillsideHalloweenParade", 0, 0, 0, 0, HillsideParadeListing, HillsideParadeProduct, 300, "KD_Product_HillsideHalloweenParade"),
         };
         // 裏山改変 (IMP-DOG-056): 洗い場のセット。添字 = 洗い場の分類 (0 泡 / 1 水 / 2 仕上げ / 3 洗い場)。
         // KH_WashSelection.setItems の並びと Setup / 検査がこの 2 つを読む (Validate が All の行と突き合わせる)
@@ -152,6 +156,7 @@ namespace KominkaDogRun.Editor
         public static string CeAssetPath(Row d) { return string.IsNullOrEmpty(d.ceAsset) ? "" : CeAssetFolder + "/" + d.ceAsset + ".asset"; }
         public static VRC.Economy.UdonProduct LoadCeProduct(Row d)
         {
+            if(PendingParade(d)) return null;
             string path=CeAssetPath(d); if(path.Length==0) return null;
             var asset=AssetDatabase.LoadAssetAtPath<VRC.Economy.UdonProduct>(path);
             if(asset==null) throw new InvalidOperationException("CE asset missing (run Products/1 - Apply Metadata): "+path);
@@ -165,6 +170,7 @@ namespace KominkaDogRun.Editor
             int created=0; var done=new HashSet<string>();
             foreach(var d in All)
             {
+                if(PendingParade(d)) continue;
                 string path=CeAssetPath(d); if(path.Length==0 || !done.Add(path)) continue;
                 var asset=AssetDatabase.LoadAssetAtPath<VRC.Economy.UdonProduct>(path);
                 if(asset==null)
@@ -203,6 +209,8 @@ namespace KominkaDogRun.Editor
                 if(r.price<0 || r.price>KD_ProgressLedger.MaxPoints || r.packCount<0 || r.initialStock<0 || r.stockCap<0 || (r.packCount==0 && (r.initialStock!=0 || r.stockCap!=0)) || (r.packCount>0 && r.price==0) || (r.IsCE && (r.price!=0 || r.packCount!=0))) throw new InvalidOperationException("Invalid product metadata: "+r.key);
                 if(r.IsCE)
                 {
+                    // The sole reserved CE row may await both real IDs. No blank UdonProduct is created.
+                    if(PendingParade(r) && r.ceCredits==300 && r.ceAsset=="KD_Product_HillsideHalloweenParade") continue;
                     // 本物の ID だけ (仮の TODO- は 09-15 で消えた)。Credits は表示用だが 0 は「値段が無い」に見えるので通さない
                     if(!ProdId.IsMatch(r.ceListingId) || !ProdId.IsMatch(r.ceProductId) || r.ceCredits<=0 || string.IsNullOrEmpty(r.ceAsset) || !Regex.IsMatch(r.ceAsset,@"^KD_Product_[A-Za-z0-9]+$"))
                         throw new InvalidOperationException("Invalid CE metadata: "+r.key);
@@ -243,7 +251,7 @@ namespace KominkaDogRun.Editor
             if(!item.IsConfigured() || item.categoryKey!=d.categoryKey || item.price!=d.price || item.packCount!=d.packCount || item.initialStock!=d.initialStock || item.stockCap!=d.stockCap || item.ceListingId!=d.ceListingId || item.ceCredits!=d.ceCredits) throw new InvalidOperationException("Stale product: "+d.key);
             if(!d.IsCE) { if(item.ceProduct!=null) throw new InvalidOperationException("Non-CE item carries a product asset: "+d.key); return; }
             // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は Product を持たないことが正
-            if(IsWithheld(d)) { if(item.ceProduct!=null) throw new InvalidOperationException("Withheld CE item still carries a product asset (IMP-PRG-002): "+d.key); return; }
+            if(IsWithheld(d) || PendingParade(d)) { if(item.ceProduct!=null) throw new InvalidOperationException("Withheld/pending CE item still carries a product asset: "+d.key); return; }
             if(item.ceProduct==null || AssetDatabase.GetAssetPath(item.ceProduct)!=CeAssetPath(d) || item.ceProduct.ID!=d.ceProductId) throw new InvalidOperationException("Stale CE asset: "+d.key);
         }
     }

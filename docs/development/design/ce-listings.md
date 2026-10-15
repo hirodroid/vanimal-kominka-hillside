@@ -71,7 +71,21 @@ Product は Listing に含めた「udon」種別の ID。Role 商品の ID を�
 
 リスティング画像 (1024×1024、価格なし、犬なし) は [artifacts/wash-listings/2026-10-13-v05/](../../../artifacts/wash-listings/2026-10-13-v05/README.md) の 5 枚 (9 品の再設計版)。それ以前の撮影分 ([2026-10-13](../../../artifacts/wash-listings/2026-10-13/README.md)、[2026-10-08](../../../artifacts/wash-listings/2026-10-08/README.md)) は保全で、Storefront には使わない。
 
-## 3. Listing 文面 (ユーザー起草。Storefront へそのまま貼る)
+### D. 裏山専用ハロウィンパレード（新規制作）
+
+2026-10-15にユーザーから実機・マルチプラットフォームでの総合確認OKを受領。個別の実購入・ギフト取引とStorefront設定の内訳は未報告。確認の範囲は[統合制作票](../../plans/halloween-parade/production.md)冒頭に記録。
+
+2026-10-14ユーザー回答「300CE、１０月３１日まで」と、2026-10-15に受領した専用IDを反映。販売仕様の正本は[DES-LIV-001](../issues/DES-LIV-001-hillside-live.md)。古民家のB-4とは別商品。
+
+| # | 演目 / Listing名 | 価格 / 販売期間 | **Product ID** | **Listing ID** | Unity配線 |
+|---|---|---|---|---|---|
+| D-1 | かぼちゃ灯りの坂道行進（Listing上の正式名は未照合） | **300 CE（Credits） / 2026-10-31まで**（古民家と同じ23:59 JST境界、Storefront側設定は未照合） | `prod_1f3a7a1e-3fc0-45b3-b868-c2cf00839a83` | `prod_a628b66e-0526-4cb7-b720-a559bdb40465` | `live.hillside_halloween_parade` / `KD_Product_HillsideHalloweenParade`。2026-10-15専用asset作成、通常メニュー購入/ギフト・CE所持開催へ配線、保存再読込・backing ID照合PASS。実購入/ギフトと公開アップロードは未実施。古民家Pumpkinは流用しない |
+
+2026-10-15: ライブはユーザー採用。無料previewと広場の常設入口を廃止。受領したIDを`KD_ProductDefinitions.HillsideParadeProduct`と`HillsideParadeListing`へ転記し、`Parade/55 - Apply Paid Menu`→`56 - Verify Paid Menu`→保存・再読込後の検査まで完了。片方だけの入力や仮IDは検査で拒否する。実購入／ギフト受取／再入室後の所持確認は未了。
+
+専用IDと購入権の接続は完了。Storefront側の価格・販売期限・商品包含と実取引は未確認。販売終了日を購入済みの開催権の失効日にしない。Listing文面はユーザー起草の既存方針に従い、同梱物や提供期限を補って記載しない。
+
+CE登録画像はユーザー了承済みの[ハロウィンパレード用PNG](../../plans/halloween-parade/storefront/halloween-parade-ce-thumbnail-1024.png)（1024×1024、RGB、約705KB、価格表記なし）。実際のUnity演出画像とVAnimal配色を使用。再出力手順と出所は[画像記録](../../plans/halloween-parade/storefront/thumbnail-photo.txt)。アップロード済みとは扱わない。
 
 古民家と同じく**文面はユーザーが書き、開発 AI は文意を足し引きしない**。§4 の確認事項だけユーザーへ返す。2026-10-14 時点で裏山の文面は 1 本も無い。
 

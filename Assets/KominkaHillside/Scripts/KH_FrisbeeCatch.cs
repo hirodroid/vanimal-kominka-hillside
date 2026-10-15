@@ -744,6 +744,7 @@ namespace KominkaHillside
         [NetworkCallable(maxEventsPerSecond: 5)]
         public void ReqCatch(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve)
         {
+            if (wander != null && wander.ParadeReserved) return;
             // BUG-DOG-003: local = KH_Frisbee._Launch called straight into us on the thrower's own client; net = it
             // came over the wire, and only on that path is CallingPlayer defined (ClientSim sets it the same way).
             // InNetworkCall is INHERITED by a direct call made from inside a network event handler, so this would
@@ -830,6 +831,12 @@ namespace KominkaHillside
 
         // BUG-DOG-003 (Codex M3). The one way a live launch ends: the reason is said exactly once (GiveUp alone is
         // silent, and TransitionTo(StateIdle) clears _haveLaunch, so the line cannot repeat on the next frame).
+        public void _EndForParade()
+        {
+            if (!IsDogOwner() || wander == null || wander.paradeDog == null || !wander.paradeDog.Committed) return;
+            ClearPending(); CancelLaunch("parade");
+        }
+
         void CancelLaunch(string reason)
         {
             if (_haveLaunch) LogLaunchCancel(reason);
@@ -1234,6 +1241,10 @@ namespace KominkaHillside
 
         bool CanPlay(Vector3 at, int requester)
         {
+            // Reserve must keep the existing holder's Ready play. It excludes only new admissions;
+            // ReqCatch independently rejects a new throw, and committed EndUses ends the existing state.
+            if (wander != null && wander.ParadeReserved && (wander.paradeDog.Committed || wander.paradeDog.Isolated || state != StateReady
+                || !wander.paradeDog.parade._HasUser(requester))) { _canPlayWhy = "parade"; return false; }
             _canPlayWhy = "cannot-play";
             if (Claimed()) { _canPlayWhy = "claimed"; return false; }
             if (fetch != null && !fetch.IsIdle) return false;

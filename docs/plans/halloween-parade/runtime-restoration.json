@@ -1,0 +1,5243 @@
+{
+  "schema": "kh-halloween-runtime-restoration/2",
+  "showplanSha256": "13cbdd4a473130efe49a9d04a79ba43feb84eefc4480af043ae3bf38a5ab785e",
+  "clock": "audio-start-seconds",
+  "duration": 220,
+  "mode": "host-after-director-evaluate",
+  "algorithm": [
+    "Set director.time to the shared show clock and Evaluate once to restore animated emitter transforms/activation.",
+    "For every listed child ParticleSystem: Stop(false, StopEmittingAndClear). Do not process empty container roots.",
+    "If startSeconds <= clock < endSeconds: fixed seed; analytic Local linear modules; Simulate(clock-startSeconds,false,true,false), then Play(false). Otherwise stopped and cleared.",
+    "Restore at initial playback/late join/discontinuous seek only; clear every listed system on stop/replay.",
+    "One Local layer, single burst at zero, constant zero startSpeed, optional Box distribution and Local linear velocity; gravity/collision/trails/noise/external forces/inherited velocity/distance emission disabled. Fixed scale, no rotation path."
+  ],
+  "apiExposure": "Existing Udon-exposed Simulate(float,bool,bool,bool), Play/Stop/Evaluate. New bank equivalence is measured separately.",
+  "evidence": "Edit comparison required; runtime multiplayer and device performance remain separate.",
+  "systems": [
+    {
+      "phraseId": "guide-journey",
+      "instancePath": "particles_trail_khp_guide__guide-journey_0/Silhouette",
+      "startSeconds": 0,
+      "endSeconds": 150,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-0",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-0_0/Silhouette",
+      "startSeconds": 28,
+      "endSeconds": 33,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-1",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-1_0/Silhouette",
+      "startSeconds": 28.15625,
+      "endSeconds": 33.15625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-2",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-2_0/Silhouette",
+      "startSeconds": 28.3125,
+      "endSeconds": 33.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-3",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-3_0/Silhouette",
+      "startSeconds": 28.46875,
+      "endSeconds": 33.46875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-4",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-4_0/Silhouette",
+      "startSeconds": 28.625,
+      "endSeconds": 33.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome--1-5",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome--1-5_0/Silhouette",
+      "startSeconds": 28.78125,
+      "endSeconds": 33.78125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-0",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-0_0/Silhouette",
+      "startSeconds": 28,
+      "endSeconds": 33,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-1",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-1_0/Silhouette",
+      "startSeconds": 28.15625,
+      "endSeconds": 33.15625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-2",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-2_0/Silhouette",
+      "startSeconds": 28.3125,
+      "endSeconds": 33.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-3",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-3_0/Silhouette",
+      "startSeconds": 28.46875,
+      "endSeconds": 33.46875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-4",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-4_0/Silhouette",
+      "startSeconds": 28.625,
+      "endSeconds": 33.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-welcome-1-5",
+      "instancePath": "particles_trail_khp_story_leaf__gate-welcome-1-5_0/Silhouette",
+      "startSeconds": 28.78125,
+      "endSeconds": 33.78125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-0",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-0_0/Silhouette",
+      "startSeconds": 117,
+      "endSeconds": 122,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-1",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-1_0/Silhouette",
+      "startSeconds": 117.15625,
+      "endSeconds": 122.15625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-2",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-2_0/Silhouette",
+      "startSeconds": 117.3125,
+      "endSeconds": 122.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-3",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-3_0/Silhouette",
+      "startSeconds": 117.46875,
+      "endSeconds": 122.46875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-4",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-4_0/Silhouette",
+      "startSeconds": 117.625,
+      "endSeconds": 122.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival--1-5",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival--1-5_0/Silhouette",
+      "startSeconds": 117.78125,
+      "endSeconds": 122.78125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-0",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-0_0/Silhouette",
+      "startSeconds": 117,
+      "endSeconds": 122,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-1",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-1_0/Silhouette",
+      "startSeconds": 117.15625,
+      "endSeconds": 122.15625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-2",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-2_0/Silhouette",
+      "startSeconds": 117.3125,
+      "endSeconds": 122.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-3",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-3_0/Silhouette",
+      "startSeconds": 117.46875,
+      "endSeconds": 122.46875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-4",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-4_0/Silhouette",
+      "startSeconds": 117.625,
+      "endSeconds": 122.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "gate-arrival-1-5",
+      "instancePath": "particles_trail_khp_story_leaf__gate-arrival-1-5_0/Silhouette",
+      "startSeconds": 117.78125,
+      "endSeconds": 122.78125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-0",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-0_0/Silhouette",
+      "startSeconds": 75.25,
+      "endSeconds": 80.25,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-1",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-1_0/Silhouette",
+      "startSeconds": 75.328125,
+      "endSeconds": 80.328125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-2",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-2_0/Silhouette",
+      "startSeconds": 75.40625,
+      "endSeconds": 80.40625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-3",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-3_0/Silhouette",
+      "startSeconds": 75.484375,
+      "endSeconds": 80.484375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-4",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-4_0/Silhouette",
+      "startSeconds": 75.5625,
+      "endSeconds": 80.5625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-5",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-5_0/Silhouette",
+      "startSeconds": 75.640625,
+      "endSeconds": 80.640625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-6",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-6_0/Silhouette",
+      "startSeconds": 75.71875,
+      "endSeconds": 80.71875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop--1-7",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop--1-7_0/Silhouette",
+      "startSeconds": 75.796875,
+      "endSeconds": 80.796875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-0",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-0_0/Silhouette",
+      "startSeconds": 75.25,
+      "endSeconds": 80.25,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-1",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-1_0/Silhouette",
+      "startSeconds": 75.328125,
+      "endSeconds": 80.328125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-2",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-2_0/Silhouette",
+      "startSeconds": 75.40625,
+      "endSeconds": 80.40625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-3",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-3_0/Silhouette",
+      "startSeconds": 75.484375,
+      "endSeconds": 80.484375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-4",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-4_0/Silhouette",
+      "startSeconds": 75.5625,
+      "endSeconds": 80.5625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-5",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-5_0/Silhouette",
+      "startSeconds": 75.640625,
+      "endSeconds": 80.640625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-6",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-6_0/Silhouette",
+      "startSeconds": 75.71875,
+      "endSeconds": 80.71875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "reply-hop-1-7",
+      "instancePath": "particles_trail_khp_story_leaf__reply-hop-1-7_0/Silhouette",
+      "startSeconds": 75.796875,
+      "endSeconds": 80.796875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5--1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5--1-0_0/Silhouette",
+      "startSeconds": 17.5,
+      "endSeconds": 21.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5--1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5--1-1_0/Silhouette",
+      "startSeconds": 17.8125,
+      "endSeconds": 21.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5--1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5--1-2_0/Silhouette",
+      "startSeconds": 18.125,
+      "endSeconds": 22.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5--1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5--1-3_0/Silhouette",
+      "startSeconds": 18.4375,
+      "endSeconds": 22.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5-1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5-1-0_0/Silhouette",
+      "startSeconds": 17.5,
+      "endSeconds": 21.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5-1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5-1-1_0/Silhouette",
+      "startSeconds": 17.8125,
+      "endSeconds": 21.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5-1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5-1-2_0/Silhouette",
+      "startSeconds": 18.125,
+      "endSeconds": 22.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-17-5-1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-17-5-1-3_0/Silhouette",
+      "startSeconds": 18.4375,
+      "endSeconds": 22.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5--1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5--1-0_0/Silhouette",
+      "startSeconds": 22.5,
+      "endSeconds": 26.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5--1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5--1-1_0/Silhouette",
+      "startSeconds": 22.8125,
+      "endSeconds": 26.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5--1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5--1-2_0/Silhouette",
+      "startSeconds": 23.125,
+      "endSeconds": 27.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5--1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5--1-3_0/Silhouette",
+      "startSeconds": 23.4375,
+      "endSeconds": 27.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5-1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5-1-0_0/Silhouette",
+      "startSeconds": 22.5,
+      "endSeconds": 26.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5-1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5-1-1_0/Silhouette",
+      "startSeconds": 22.8125,
+      "endSeconds": 26.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5-1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5-1-2_0/Silhouette",
+      "startSeconds": 23.125,
+      "endSeconds": 27.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-22-5-1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-22-5-1-3_0/Silhouette",
+      "startSeconds": 23.4375,
+      "endSeconds": 27.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5--1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5--1-0_0/Silhouette",
+      "startSeconds": 97.5,
+      "endSeconds": 101.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5--1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5--1-1_0/Silhouette",
+      "startSeconds": 97.8125,
+      "endSeconds": 101.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5--1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5--1-2_0/Silhouette",
+      "startSeconds": 98.125,
+      "endSeconds": 102.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5--1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5--1-3_0/Silhouette",
+      "startSeconds": 98.4375,
+      "endSeconds": 102.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5-1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5-1-0_0/Silhouette",
+      "startSeconds": 97.5,
+      "endSeconds": 101.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5-1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5-1-1_0/Silhouette",
+      "startSeconds": 97.8125,
+      "endSeconds": 101.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5-1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5-1-2_0/Silhouette",
+      "startSeconds": 98.125,
+      "endSeconds": 102.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-97-5-1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-97-5-1-3_0/Silhouette",
+      "startSeconds": 98.4375,
+      "endSeconds": 102.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5--1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5--1-0_0/Silhouette",
+      "startSeconds": 102.5,
+      "endSeconds": 106.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5--1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5--1-1_0/Silhouette",
+      "startSeconds": 102.8125,
+      "endSeconds": 106.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5--1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5--1-2_0/Silhouette",
+      "startSeconds": 103.125,
+      "endSeconds": 107.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5--1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5--1-3_0/Silhouette",
+      "startSeconds": 103.4375,
+      "endSeconds": 107.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5-1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5-1-0_0/Silhouette",
+      "startSeconds": 102.5,
+      "endSeconds": 106.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5-1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5-1-1_0/Silhouette",
+      "startSeconds": 102.8125,
+      "endSeconds": 106.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5-1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5-1-2_0/Silhouette",
+      "startSeconds": 103.125,
+      "endSeconds": 107.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-102-5-1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-102-5-1-3_0/Silhouette",
+      "startSeconds": 103.4375,
+      "endSeconds": 107.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5--1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5--1-0_0/Silhouette",
+      "startSeconds": 107.5,
+      "endSeconds": 111.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5--1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5--1-1_0/Silhouette",
+      "startSeconds": 107.8125,
+      "endSeconds": 111.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5--1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5--1-2_0/Silhouette",
+      "startSeconds": 108.125,
+      "endSeconds": 112.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5--1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5--1-3_0/Silhouette",
+      "startSeconds": 108.4375,
+      "endSeconds": 112.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5-1-0",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5-1-0_0/Silhouette",
+      "startSeconds": 107.5,
+      "endSeconds": 111.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5-1-1",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5-1-1_0/Silhouette",
+      "startSeconds": 107.8125,
+      "endSeconds": 111.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5-1-2",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5-1-2_0/Silhouette",
+      "startSeconds": 108.125,
+      "endSeconds": 112.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "brass-answer-107-5-1-3",
+      "instancePath": "particles_trail_khp_story_spark__brass-answer-107-5-1-3_0/Silhouette",
+      "startSeconds": 108.4375,
+      "endSeconds": 112.4375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-0",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-0_0/Silhouette",
+      "startSeconds": 150.3125,
+      "endSeconds": 155.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-1",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-1_0/Silhouette",
+      "startSeconds": 152.8125,
+      "endSeconds": 157.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-2",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-2_0/Silhouette",
+      "startSeconds": 155.3125,
+      "endSeconds": 160.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-3",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-3_0/Silhouette",
+      "startSeconds": 157.8125,
+      "endSeconds": 162.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-4",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-4_0/Silhouette",
+      "startSeconds": 160.3125,
+      "endSeconds": 165.3125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "greeting-5",
+      "instancePath": "particles_trail_khp_story_leaf__greeting-5_0/Silhouette",
+      "startSeconds": 162.8125,
+      "endSeconds": 167.8125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-0",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-0_0/Silhouette",
+      "startSeconds": 170,
+      "endSeconds": 175,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-1",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-1_0/Silhouette",
+      "startSeconds": 170.625,
+      "endSeconds": 175.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-2",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-2_0/Silhouette",
+      "startSeconds": 171.25,
+      "endSeconds": 176.25,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-3",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-3_0/Silhouette",
+      "startSeconds": 171.875,
+      "endSeconds": 176.875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-4",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-4_0/Silhouette",
+      "startSeconds": 172.5,
+      "endSeconds": 177.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-5",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-5_0/Silhouette",
+      "startSeconds": 173.125,
+      "endSeconds": 178.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-6",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-6_0/Silhouette",
+      "startSeconds": 173.75,
+      "endSeconds": 178.75,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-7",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-7_0/Silhouette",
+      "startSeconds": 174.375,
+      "endSeconds": 179.375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-8",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-8_0/Silhouette",
+      "startSeconds": 175,
+      "endSeconds": 180,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift--1-9",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift--1-9_0/Silhouette",
+      "startSeconds": 175.625,
+      "endSeconds": 180.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-0",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-0_0/Silhouette",
+      "startSeconds": 170,
+      "endSeconds": 175,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-1",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-1_0/Silhouette",
+      "startSeconds": 170.625,
+      "endSeconds": 175.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-2",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-2_0/Silhouette",
+      "startSeconds": 171.25,
+      "endSeconds": 176.25,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-3",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-3_0/Silhouette",
+      "startSeconds": 171.875,
+      "endSeconds": 176.875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-4",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-4_0/Silhouette",
+      "startSeconds": 172.5,
+      "endSeconds": 177.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-5",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-5_0/Silhouette",
+      "startSeconds": 173.125,
+      "endSeconds": 178.125,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-6",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-6_0/Silhouette",
+      "startSeconds": 173.75,
+      "endSeconds": 178.75,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-7",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-7_0/Silhouette",
+      "startSeconds": 174.375,
+      "endSeconds": 179.375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-8",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-8_0/Silhouette",
+      "startSeconds": 175,
+      "endSeconds": 180,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "canopy-lift-1-9",
+      "instancePath": "particles_trail_khp_story_leaf__canopy-lift-1-9_0/Silhouette",
+      "startSeconds": 175.625,
+      "endSeconds": 180.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-0_0/Silhouette",
+      "startSeconds": 185,
+      "endSeconds": 192,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-1_0/Silhouette",
+      "startSeconds": 185.09,
+      "endSeconds": 192.09,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-2_0/Silhouette",
+      "startSeconds": 185.18,
+      "endSeconds": 192.18,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-3_0/Silhouette",
+      "startSeconds": 185.27,
+      "endSeconds": 192.27,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-4_0/Silhouette",
+      "startSeconds": 185.36,
+      "endSeconds": 192.36,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-5_0/Silhouette",
+      "startSeconds": 185.45,
+      "endSeconds": 192.45,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-6_0/Silhouette",
+      "startSeconds": 185.54,
+      "endSeconds": 192.54,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0--1-7_0/Silhouette",
+      "startSeconds": 185.63,
+      "endSeconds": 192.63,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-0_0/Silhouette",
+      "startSeconds": 185,
+      "endSeconds": 192,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-1_0/Silhouette",
+      "startSeconds": 185.09,
+      "endSeconds": 192.09,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-2_0/Silhouette",
+      "startSeconds": 185.18,
+      "endSeconds": 192.18,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-3_0/Silhouette",
+      "startSeconds": 185.27,
+      "endSeconds": 192.27,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-4_0/Silhouette",
+      "startSeconds": 185.36,
+      "endSeconds": 192.36,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-5_0/Silhouette",
+      "startSeconds": 185.45,
+      "endSeconds": 192.45,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-6_0/Silhouette",
+      "startSeconds": 185.54,
+      "endSeconds": 192.54,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-0-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-0-1-7_0/Silhouette",
+      "startSeconds": 185.63,
+      "endSeconds": 192.63,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-0_0/Silhouette",
+      "startSeconds": 186.875,
+      "endSeconds": 193.875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-1_0/Silhouette",
+      "startSeconds": 186.965,
+      "endSeconds": 193.965,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-2_0/Silhouette",
+      "startSeconds": 187.055,
+      "endSeconds": 194.055,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-3_0/Silhouette",
+      "startSeconds": 187.145,
+      "endSeconds": 194.145,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-4_0/Silhouette",
+      "startSeconds": 187.235,
+      "endSeconds": 194.235,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-5_0/Silhouette",
+      "startSeconds": 187.325,
+      "endSeconds": 194.325,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-6_0/Silhouette",
+      "startSeconds": 187.415,
+      "endSeconds": 194.415,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1--1-7_0/Silhouette",
+      "startSeconds": 187.505,
+      "endSeconds": 194.505,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-0_0/Silhouette",
+      "startSeconds": 186.875,
+      "endSeconds": 193.875,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-1_0/Silhouette",
+      "startSeconds": 186.965,
+      "endSeconds": 193.965,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-2_0/Silhouette",
+      "startSeconds": 187.055,
+      "endSeconds": 194.055,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-3_0/Silhouette",
+      "startSeconds": 187.145,
+      "endSeconds": 194.145,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-4_0/Silhouette",
+      "startSeconds": 187.235,
+      "endSeconds": 194.235,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-5_0/Silhouette",
+      "startSeconds": 187.325,
+      "endSeconds": 194.325,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-6_0/Silhouette",
+      "startSeconds": 187.415,
+      "endSeconds": 194.415,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-1-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-1-1-7_0/Silhouette",
+      "startSeconds": 187.505,
+      "endSeconds": 194.505,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-0_0/Silhouette",
+      "startSeconds": 188.75,
+      "endSeconds": 195.75,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-1_0/Silhouette",
+      "startSeconds": 188.84,
+      "endSeconds": 195.84,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-2_0/Silhouette",
+      "startSeconds": 188.93,
+      "endSeconds": 195.93,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-3_0/Silhouette",
+      "startSeconds": 189.02,
+      "endSeconds": 196.02,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-4_0/Silhouette",
+      "startSeconds": 189.11,
+      "endSeconds": 196.11,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-5_0/Silhouette",
+      "startSeconds": 189.2,
+      "endSeconds": 196.2,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-6_0/Silhouette",
+      "startSeconds": 189.29,
+      "endSeconds": 196.29,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2--1-7_0/Silhouette",
+      "startSeconds": 189.38,
+      "endSeconds": 196.38,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-0_0/Silhouette",
+      "startSeconds": 188.75,
+      "endSeconds": 195.75,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-1_0/Silhouette",
+      "startSeconds": 188.84,
+      "endSeconds": 195.84,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-2_0/Silhouette",
+      "startSeconds": 188.93,
+      "endSeconds": 195.93,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-3_0/Silhouette",
+      "startSeconds": 189.02,
+      "endSeconds": 196.02,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-4_0/Silhouette",
+      "startSeconds": 189.11,
+      "endSeconds": 196.11,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-5_0/Silhouette",
+      "startSeconds": 189.2,
+      "endSeconds": 196.2,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-6_0/Silhouette",
+      "startSeconds": 189.29,
+      "endSeconds": 196.29,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-2-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-2-1-7_0/Silhouette",
+      "startSeconds": 189.38,
+      "endSeconds": 196.38,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-0_0/Silhouette",
+      "startSeconds": 190.625,
+      "endSeconds": 197.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-1_0/Silhouette",
+      "startSeconds": 190.715,
+      "endSeconds": 197.715,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-2_0/Silhouette",
+      "startSeconds": 190.805,
+      "endSeconds": 197.805,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-3_0/Silhouette",
+      "startSeconds": 190.895,
+      "endSeconds": 197.895,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-4_0/Silhouette",
+      "startSeconds": 190.985,
+      "endSeconds": 197.985,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-5_0/Silhouette",
+      "startSeconds": 191.075,
+      "endSeconds": 198.075,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-6_0/Silhouette",
+      "startSeconds": 191.165,
+      "endSeconds": 198.165,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3--1-7_0/Silhouette",
+      "startSeconds": 191.255,
+      "endSeconds": 198.255,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-0_0/Silhouette",
+      "startSeconds": 190.625,
+      "endSeconds": 197.625,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-1_0/Silhouette",
+      "startSeconds": 190.715,
+      "endSeconds": 197.715,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-2_0/Silhouette",
+      "startSeconds": 190.805,
+      "endSeconds": 197.805,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-3_0/Silhouette",
+      "startSeconds": 190.895,
+      "endSeconds": 197.895,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-4_0/Silhouette",
+      "startSeconds": 190.985,
+      "endSeconds": 197.985,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-5_0/Silhouette",
+      "startSeconds": 191.075,
+      "endSeconds": 198.075,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-6_0/Silhouette",
+      "startSeconds": 191.165,
+      "endSeconds": 198.165,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-3-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-3-1-7_0/Silhouette",
+      "startSeconds": 191.255,
+      "endSeconds": 198.255,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-0_0/Silhouette",
+      "startSeconds": 192.5,
+      "endSeconds": 199.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-1_0/Silhouette",
+      "startSeconds": 192.59,
+      "endSeconds": 199.59,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-2_0/Silhouette",
+      "startSeconds": 192.68,
+      "endSeconds": 199.68,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-3_0/Silhouette",
+      "startSeconds": 192.77,
+      "endSeconds": 199.77,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-4_0/Silhouette",
+      "startSeconds": 192.86,
+      "endSeconds": 199.86,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-5_0/Silhouette",
+      "startSeconds": 192.95,
+      "endSeconds": 199.95,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-6_0/Silhouette",
+      "startSeconds": 193.04,
+      "endSeconds": 200.04,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4--1-7_0/Silhouette",
+      "startSeconds": 193.13,
+      "endSeconds": 200.13,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-0_0/Silhouette",
+      "startSeconds": 192.5,
+      "endSeconds": 199.5,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-1_0/Silhouette",
+      "startSeconds": 192.59,
+      "endSeconds": 199.59,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-2_0/Silhouette",
+      "startSeconds": 192.68,
+      "endSeconds": 199.68,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-3_0/Silhouette",
+      "startSeconds": 192.77,
+      "endSeconds": 199.77,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-4_0/Silhouette",
+      "startSeconds": 192.86,
+      "endSeconds": 199.86,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-5_0/Silhouette",
+      "startSeconds": 192.95,
+      "endSeconds": 199.95,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-6_0/Silhouette",
+      "startSeconds": 193.04,
+      "endSeconds": 200.04,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-4-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-4-1-7_0/Silhouette",
+      "startSeconds": 193.13,
+      "endSeconds": 200.13,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-0_0/Silhouette",
+      "startSeconds": 194.375,
+      "endSeconds": 201.375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-1_0/Silhouette",
+      "startSeconds": 194.465,
+      "endSeconds": 201.465,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-2_0/Silhouette",
+      "startSeconds": 194.555,
+      "endSeconds": 201.555,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-3_0/Silhouette",
+      "startSeconds": 194.645,
+      "endSeconds": 201.645,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-4_0/Silhouette",
+      "startSeconds": 194.735,
+      "endSeconds": 201.735,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-5_0/Silhouette",
+      "startSeconds": 194.825,
+      "endSeconds": 201.825,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-6_0/Silhouette",
+      "startSeconds": 194.915,
+      "endSeconds": 201.915,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5--1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5--1-7_0/Silhouette",
+      "startSeconds": 195.005,
+      "endSeconds": 202.005,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-0",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-0_0/Silhouette",
+      "startSeconds": 194.375,
+      "endSeconds": 201.375,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-1",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-1_0/Silhouette",
+      "startSeconds": 194.465,
+      "endSeconds": 201.465,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-2",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-2_0/Silhouette",
+      "startSeconds": 194.555,
+      "endSeconds": 201.555,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-3",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-3_0/Silhouette",
+      "startSeconds": 194.645,
+      "endSeconds": 201.645,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-4",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-4_0/Silhouette",
+      "startSeconds": 194.735,
+      "endSeconds": 201.735,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-5",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-5_0/Silhouette",
+      "startSeconds": 194.825,
+      "endSeconds": 201.825,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-6",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-6_0/Silhouette",
+      "startSeconds": 194.915,
+      "endSeconds": 201.915,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "blessing-5-1-7",
+      "instancePath": "particles_trail_khp_story_rain__blessing-5-1-7_0/Silhouette",
+      "startSeconds": 195.005,
+      "endSeconds": 202.005,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-0",
+      "instancePath": "particles_trail_khp_lantern_0__lantern-0_0/Silhouette",
+      "startSeconds": 185,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-1",
+      "instancePath": "particles_trail_khp_lantern_1__lantern-1_0/Silhouette",
+      "startSeconds": 185.625,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-2",
+      "instancePath": "particles_trail_khp_lantern_2__lantern-2_0/Silhouette",
+      "startSeconds": 186.25,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-3",
+      "instancePath": "particles_trail_khp_lantern_3__lantern-3_0/Silhouette",
+      "startSeconds": 186.875,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-4",
+      "instancePath": "particles_trail_khp_lantern_4__lantern-4_0/Silhouette",
+      "startSeconds": 187.5,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "phraseId": "lantern-5",
+      "instancePath": "particles_trail_khp_lantern_5__lantern-5_0/Silhouette",
+      "startSeconds": 188.125,
+      "endSeconds": 220,
+      "localSimulation": true,
+      "seed": 1,
+      "burstCount": 1,
+      "shapeEnabled": false,
+      "shapeScale": [
+        1,
+        1,
+        1
+      ],
+      "shapePosition": [
+        0,
+        0,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

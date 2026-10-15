@@ -1077,6 +1077,7 @@ namespace KominkaHillside
         // they have a channel each).
         public void _LocalContact(int tool, int colliderIndex, Vector3 worldPoint, float seconds, float radiusMeters)
         {
+            if (Networking.LocalPlayer != null && !ParadeStrokeAllowed(Networking.LocalPlayer.playerId)) return;
             int ch = ToolChannel(tool);
             if (!_ready || ch < 0 || !ColliderUsable(colliderIndex)) return;
             Vector3 m = partBones[colliderIndex].InverseTransformPoint(worldPoint);
@@ -1118,6 +1119,7 @@ namespace KominkaHillside
         // Whether it was a wash is the Owner's call (touchedFoam -> the synced hold).
         public bool _HandContact(int hand, int colliderIndex, Vector3 worldPoint, Vector3 handWorld, float seconds)
         {
+            if (Networking.LocalPlayer != null && !ParadeStrokeAllowed(Networking.LocalPlayer.playerId)) return false;
             if (!_ready || hand < 0 || hand > 1 || !ColliderUsable(colliderIndex)) return false;
             int ch = ChHandL + hand;
             float now = Time.time;
@@ -1227,6 +1229,7 @@ namespace KominkaHillside
         // Same as _LocalStroke with an explicit radius in metres. radius <= 0 = the tool's default.
         public void _LocalStrokeR(int tool, int colliderIndex, Vector3 worldFrom, Vector3 worldTo, float seconds, float radiusMeters)
         {
+            if (Networking.LocalPlayer != null && !ParadeStrokeAllowed(Networking.LocalPlayer.playerId)) return;
             int ch = ToolChannel(tool);
             if (!_ready || ch < 0 || !ColliderUsable(colliderIndex)) return;
             Transform bone = partBones[colliderIndex];
@@ -1315,6 +1318,7 @@ namespace KominkaHillside
             // dropped, also a stroke of a reset that has not reached this client yet (a short visual gap only; the
             // cells come with the reset).
             if (strokeEpoch != 0 && strokeEpoch != epoch) return;
+            if (!ParadeStrokeAllowed(caller.playerId)) return;
 
             if (dogRoot != null && Vector3.Distance(caller.GetPosition(), dogRoot.position) > maxWasherDistance) return;
             bool hand = tool == ToolHand;

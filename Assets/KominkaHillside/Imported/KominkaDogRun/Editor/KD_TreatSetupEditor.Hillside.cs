@@ -735,14 +735,15 @@ namespace KominkaDogRun.Editor
             v.Check(pouch.liveTitleKeys != null && pouch.liveTitleKeys.Length == n,
                 PouchName + ".liveTitleKeys が " + n + " 本 (Data/UILocalizationBindings.json の names。Menu/11 が書く。actual "
                 + (pouch.liveTitleKeys == null ? -1 : pouch.liveTitleKeys.Length) + ")");
-            v.Check(pouch.liveSubLabels != null && pouch.liveSubLabels.Length == n
-                && pouch.liveButtons != null && pouch.liveButtons.Length == n
-                && pouch.liveButtonComponents != null && pouch.liveButtonComponents.Length == n
-                && pouch.liveButtonImages != null && pouch.liveButtonImages.Length == n
-                && pouch.liveButtonLabels != null && pouch.liveButtonLabels.Length == n
-                && pouch.liveGiftButtons != null && pouch.liveGiftButtons.Length == n
-                && pouch.liveGiftLabels != null && pouch.liveGiftLabels.Length == n,
-                PouchName + ".liveSubLabels / liveButton* / liveGift* が " + n + " 本ずつ");
+            int rowCount = Mathf.Max(n, KD_DogDefs.LiveProducts.Length);
+            v.Check(pouch.liveSubLabels != null && pouch.liveSubLabels.Length == rowCount
+                && pouch.liveButtons != null && pouch.liveButtons.Length == rowCount
+                && pouch.liveButtonComponents != null && pouch.liveButtonComponents.Length == rowCount
+                && pouch.liveButtonImages != null && pouch.liveButtonImages.Length == rowCount
+                && pouch.liveButtonLabels != null && pouch.liveButtonLabels.Length == rowCount
+                && pouch.liveGiftButtons != null && pouch.liveGiftButtons.Length == rowCount
+                && pouch.liveGiftLabels != null && pouch.liveGiftLabels.Length == rowCount,
+                PouchName + ".liveSubLabels / liveButton* / liveGift* が " + rowCount + " 本ずつ");
             var catalog = KD_LocalizationEditor.Load();
             for (int i = 0; i < n; i++)
             {
@@ -782,7 +783,10 @@ namespace KominkaDogRun.Editor
             for (int i = 0; pouch.liveProducts != null && i < pouch.liveProducts.Length && i < products.Length; i++)
             {
                 var it = pouch.liveProducts[i];
-                v.Check(it != null && it.productKey == products[i].productKey && System.Array.IndexOf(pouch.liveItems ?? new KD_ShopItem[0], it) >= 0,
+                bool parade = it != null && it.productKey == KominkaHillside.KH_HalloweenParade.ProductKey;
+                bool mapped = parade ? pouch.hillsideParadePanel != null && pouch.hillsideParadePanel.parade != null && pouch.hillsideParadePanel.parade.hostingProduct == it
+                    : System.Array.IndexOf(pouch.liveItems ?? new KD_ShopItem[0], it) >= 0;
+                v.Check(it != null && it.productKey == products[i].productKey && mapped,
                     "ライブ商品行 " + i + " が " + products[i].productKey + " で、作品の表 (liveItems) に居る");
                 if (it == null) continue;
                 string k = it.productKey.StartsWith("live.") ? it.productKey.Substring(5) : it.productKey;

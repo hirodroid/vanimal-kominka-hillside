@@ -44,6 +44,8 @@ namespace KominkaHillside
         public float fadeSeconds = DefaultFadeSeconds; // <= 0 switches instantly
         [Header("Live input (KH_LiveNight writes 0..1 and returns it to 0 when the live ends)")]
         public float liveDarkness;
+        [Header("Parade input (local playback; never changes saved Auto/Manual settings)")]
+        public float paradeDarkness;
         [Header("Auto input (KH_AutoNight writes the shared timeline's darkness 0..1)")]
         public float autoDarkness;
 
@@ -84,7 +86,7 @@ namespace KominkaHillside
         // net: callable-ok: pure query for the menu (true = Auto)
         public bool IsAuto { get { return _auto; } }
         // net: callable-ok: pure query. max(Auto / Manual, live) so a live never multiplies on top of a night viewer.
-        public float Darkness { get { return Mathf.Max(Mathf.Clamp01(_shown), Mathf.Clamp01(liveDarkness)); } }
+        public float Darkness { get { return Mathf.Max(Mathf.Clamp01(_shown), Mathf.Max(Mathf.Clamp01(liveDarkness), Mathf.Clamp01(paradeDarkness))); } }
 
         /// <summary>Manual OFF / ON (kept from IMP-ENV-002; no current caller). Switches to Manual like the slider does.</summary>
         public void _Toggle() { _SetDarkness(_on ? 0f : Mathf.Clamp01(onDarkness)); }

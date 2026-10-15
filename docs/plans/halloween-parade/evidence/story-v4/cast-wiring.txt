@@ -1,0 +1,2 @@
+2026-10-14T14:56:40.3595577Z
+PASS: 18 actors,19 tracks; child curves; meshes/materials/bindings present; no Collider/new PS. Edit structure only.

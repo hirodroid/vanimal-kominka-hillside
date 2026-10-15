@@ -1,0 +1,4 @@
+[KD_TreatSetup] Assign Network IDs (VRC.SDKBase.Network.NetworkIDAssignment.ConfigureNetworkIDs)
+   new 451 KD_ShopItem_Live_HillsideHalloweenParade
+NetworkIDs: 390 -> 391 (assigned 391 / new 1 / errors 0。InvalidObject は消えた器の残骸で、この呼び出しが取り除く)
+RESULT: PASS (シーンは保存していない)

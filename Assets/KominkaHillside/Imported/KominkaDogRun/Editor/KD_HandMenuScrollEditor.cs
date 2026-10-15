@@ -34,7 +34,7 @@ namespace KominkaDogRun.Editor
         /// <summary>タブ id の Content に並べる行の (prefix, 行数)。**並び順もこの順** (かざりは AccRow の後ろに FxRow)。</summary>
         internal static (string prefix, int count)[] RowsFor(int id)
         {
-            if (id == KD_TreatPouch.TabLive) return new[] { (Prefixes[id], KD_DogDefs.LiveShows.Length) };
+            if (id == KD_TreatPouch.TabLive) return new[] { (Prefixes[id], Mathf.Max(KD_DogDefs.LiveShows.Length,KD_DogDefs.LiveProducts.Length)) };
             if (id == KD_TreatPouch.TabWalk) return new[] { (Prefixes[id], KD_TreatSetupEditor.WalkRowCount) };
             // 裏山改変 (IMP-DOG-015): AccRow16 → 撫でFX の群見出し 2 セル (FxHead0 見出し / FxHead1 空き) → FxRow11
             // 裏山改変 (IMP-DOG-050): その後ろに「首輪とリード」の小見出し 3 セル (CollarHead0 段そろえの空き / 1 見出し / 2 空き) → CollarRow5 (Collar/1 が足す。無い行は Build が飛ばす)
@@ -468,7 +468,7 @@ namespace KominkaDogRun.Editor
                 Check(grid.cellSize.x*2+grid.spacing.x+grid.padding.horizontal<=s.viewport.rect.width,"two columns fit width "+id);
                 Check(grid.cellSize.y*3+grid.spacing.y*2+grid.padding.vertical<=s.viewport.rect.height,"six choices fit height "+id);
                 if (id == KD_TreatPouch.TabLive)
-                    Check(s.content.childCount == KD_DogDefs.LiveShows.Length, "all live rows in scroll content");
+                    Check(s.content.childCount == Mathf.Max(KD_DogDefs.LiveShows.Length,KD_DogDefs.LiveProducts.Length), "all live rows in scroll content");
                 // 裏山改変: 子の並びが行の表 (RowsFor) と一致する。かざりは AccRow0..15 の後ろに FxRow0..10 (Verify 表 0-b「かざりの混在行」)
                 {
                     var want=new System.Collections.Generic.List<string>();

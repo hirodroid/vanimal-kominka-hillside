@@ -1,0 +1,5 @@
+{
+  "reason": "Validation re-rendered the same score; final audio hash metadata and coverage refreshed after import. All authored visual properties identical.",
+  "audioHash": "27a6b94146a0f2c52f96041c4aeb8665f2aecff212a468e92ee3e9f33b6ed5da",
+  "importedAudioMatches": true
+}

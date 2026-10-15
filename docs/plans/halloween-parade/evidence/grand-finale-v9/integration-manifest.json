@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-15T03:08:58.047Z",
+  "integration": "009",
+  "song": "005",
+  "presentation": "008",
+  "timeline": "004",
+  "sceneClean": true,
+  "play": false,
+  "files": [
+    {
+      "file": "Assets/Scenes/VRCDefaultWorldScene.unity",
+      "sha256": "31bda7bba7afda3582a29ddec857c1a0469471afc618cd0fcfc6c4b6f49be33d"
+    },
+    {
+      "file": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav",
+      "sha256": "fd51f28b321c4add1f66c1b6c358608e61171f878053d5040f4c28eb4d8ff0df"
+    },
+    {
+      "file": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav.meta",
+      "sha256": "efa47ea69e7c512ad71b177767be4401b8960f183f7d71e04e57bcf21599e793"
+    }
+  ]
+}

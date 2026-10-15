@@ -1,0 +1,145 @@
+Static Live tab preview; cloned UI/fonts. No click or multiplayer simulation.
+ja LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+ja LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+ja Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+ja EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+ja detail/Title overflowOrMinSize=False pt=24
+ja detail/Meta overflowOrMinSize=False pt=18
+ja detail/Mood overflowOrMinSize=False pt=19
+ja detail/Scene overflowOrMinSize=False pt=18
+ja detail/Note overflowOrMinSize=False pt=16
+ja detail/Label overflowOrMinSize=False pt=22
+ja detail/Label overflowOrMinSize=False pt=18
+en LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+en LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+en Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+en EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+en detail/Title overflowOrMinSize=False pt=24
+en detail/Meta overflowOrMinSize=False pt=18
+en detail/Mood overflowOrMinSize=False pt=19
+en detail/Scene overflowOrMinSize=False pt=18
+en detail/Note overflowOrMinSize=False pt=16
+en detail/Label overflowOrMinSize=False pt=22
+en detail/Label overflowOrMinSize=False pt=18
+ru LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+ru LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+ru Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+ru EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+ru detail/Title overflowOrMinSize=False pt=24
+ru detail/Meta overflowOrMinSize=False pt=18
+ru detail/Mood overflowOrMinSize=False pt=19
+ru detail/Scene overflowOrMinSize=False pt=18
+ru detail/Note overflowOrMinSize=False pt=16
+ru detail/Label overflowOrMinSize=False pt=22
+ru detail/Label overflowOrMinSize=False pt=18
+uk LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+uk LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+uk Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+uk EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+uk detail/Title overflowOrMinSize=False pt=24
+uk detail/Meta overflowOrMinSize=False pt=18
+uk detail/Mood overflowOrMinSize=False pt=19
+uk detail/Scene overflowOrMinSize=False pt=18
+uk detail/Note overflowOrMinSize=False pt=16
+uk detail/Label overflowOrMinSize=False pt=22
+uk detail/Label overflowOrMinSize=False pt=18
+ko LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+ko LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+ko Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+ko EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+ko detail/Title overflowOrMinSize=False pt=24
+ko detail/Meta overflowOrMinSize=False pt=18
+ko detail/Mood overflowOrMinSize=False pt=19
+ko detail/Scene overflowOrMinSize=False pt=18
+ko detail/Note overflowOrMinSize=False pt=16
+ko detail/Label overflowOrMinSize=False pt=22
+ko detail/Label overflowOrMinSize=False pt=18
+de LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+de LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+de Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+de EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+de detail/Title overflowOrMinSize=False pt=24
+de detail/Meta overflowOrMinSize=False pt=18
+de detail/Mood overflowOrMinSize=False pt=19
+de detail/Scene overflowOrMinSize=False pt=18
+de detail/Note overflowOrMinSize=False pt=16
+de detail/Label overflowOrMinSize=False pt=22
+de detail/Label overflowOrMinSize=False pt=18
+zh-cn LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+zh-cn LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+zh-cn Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+zh-cn EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+zh-cn detail/Title overflowOrMinSize=False pt=24
+zh-cn detail/Meta overflowOrMinSize=False pt=18
+zh-cn detail/Mood overflowOrMinSize=False pt=19
+zh-cn detail/Scene overflowOrMinSize=False pt=18
+zh-cn detail/Note overflowOrMinSize=False pt=16
+zh-cn detail/Label overflowOrMinSize=False pt=22
+zh-cn detail/Label overflowOrMinSize=False pt=18
+es LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+es LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+es Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+es EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+es detail/Title overflowOrMinSize=False pt=24
+es detail/Meta overflowOrMinSize=False pt=18
+es detail/Mood overflowOrMinSize=False pt=19
+es detail/Scene overflowOrMinSize=False pt=18
+es detail/Note overflowOrMinSize=False pt=16
+es detail/Label overflowOrMinSize=False pt=22
+es detail/Label overflowOrMinSize=False pt=18
+fr LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+fr LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+fr Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+fr EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+fr detail/Title overflowOrMinSize=False pt=24
+fr detail/Meta overflowOrMinSize=False pt=18
+fr detail/Mood overflowOrMinSize=False pt=19
+fr detail/Scene overflowOrMinSize=False pt=18
+fr detail/Note overflowOrMinSize=False pt=16
+fr detail/Label overflowOrMinSize=False pt=22
+fr detail/Label overflowOrMinSize=False pt=18
+pt-br LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+pt-br LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+pt-br Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+pt-br EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+pt-br detail/Title overflowOrMinSize=False pt=24
+pt-br detail/Meta overflowOrMinSize=False pt=18
+pt-br detail/Mood overflowOrMinSize=False pt=19
+pt-br detail/Scene overflowOrMinSize=False pt=18
+pt-br detail/Note overflowOrMinSize=False pt=16
+pt-br detail/Label overflowOrMinSize=False pt=22
+pt-br detail/Label overflowOrMinSize=False pt=18
+it LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+it LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+it Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+it EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+it detail/Title overflowOrMinSize=False pt=24
+it detail/Meta overflowOrMinSize=False pt=18
+it detail/Mood overflowOrMinSize=False pt=19
+it detail/Scene overflowOrMinSize=False pt=18
+it detail/Note overflowOrMinSize=False pt=16
+it detail/Label overflowOrMinSize=False pt=22
+it detail/Label overflowOrMinSize=False pt=18
+pl LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+pl LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+pl Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+pl EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+pl detail/Title overflowOrMinSize=False pt=24
+pl detail/Meta overflowOrMinSize=False pt=18
+pl detail/Mood overflowOrMinSize=False pt=19
+pl detail/Scene overflowOrMinSize=False pt=18
+pl detail/Note overflowOrMinSize=False pt=16
+pl detail/Label overflowOrMinSize=False pt=22
+pl detail/Label overflowOrMinSize=False pt=18
+zh-hk LiveRow1 overflowOrMinSize=False pt=22 rect=(480.00, 36.00)
+zh-hk LiveRow1 overflowOrMinSize=False pt=18 rect=(328.00, 60.00)
+zh-hk Button overflowOrMinSize=False pt=20 rect=(124.00, 40.00)
+zh-hk EventBand overflowOrMinSize=False pt=18 rect=(1060.00, 30.00)
+zh-hk detail/Title overflowOrMinSize=False pt=24
+zh-hk detail/Meta overflowOrMinSize=False pt=18
+zh-hk detail/Mood overflowOrMinSize=False pt=19
+zh-hk detail/Scene overflowOrMinSize=False pt=18
+zh-hk detail/Note overflowOrMinSize=False pt=16
+zh-hk detail/Label overflowOrMinSize=False pt=22
+zh-hk detail/Label overflowOrMinSize=False pt=18
+overflow=0 sourceSceneDirty=False

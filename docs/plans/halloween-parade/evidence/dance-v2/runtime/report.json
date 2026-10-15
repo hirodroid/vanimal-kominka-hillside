@@ -1,0 +1,62 @@
+{
+    "runId": "20261014-110733-975-390cd5",
+    "status": "PASS",
+    "reason": "Actual start, 0-82 s, six Animator dance states and cancel/restore. Visual/entertainment acceptance remains separate.",
+    "utc": "2026-10-14T11:07:33.9750310Z",
+    "endedUtc": "2026-10-14T11:09:20.2924748Z",
+    "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+    "hashBefore": "72DF352376564B280109C5C00554A9588AB608A74836F5860F03777C6B4F4CBD",
+    "hashAfter": "72DF352376564B280109C5C00554A9588AB608A74836F5860F03777C6B4F4CBD",
+    "sourceHashBefore": "2C0DEA9A328BBA81E0A1CD342CBBE76E587EDF42CA9824889A10403D1FB35103",
+    "sourceHashAfter": "2C0DEA9A328BBA81E0A1CD342CBBE76E587EDF42CA9824889A10403D1FB35103",
+    "assembly": "2f39591d-00c9-4022-97e9-90ac36821def",
+    "playerDataBackup": "Logs/kh-halloween-parade-harness/20261014-110733-975-390cd5/playerdata",
+    "originalBackground": true,
+    "sceneFileUnchanged": true,
+    "sourceUnchanged": true,
+    "sceneCleanAfter": true,
+    "playerDataRestored": true,
+    "settingsRestored": true,
+    "runtimeOverridesRestored": true,
+    "normalPassed": true,
+    "failurePassed": false,
+    "faultWindowCaptured": false,
+    "petBeforePoseRecovered": false,
+    "danceCapture": true,
+    "originalDevelopment": true,
+    "captureEye": {
+        "x": 57.56222152709961,
+        "y": 14.224281311035157,
+        "z": 82.65213012695313
+    },
+    "captureTarget": {
+        "x": 55.812225341796878,
+        "y": 13.074280738830567,
+        "z": 90.17658996582031
+    },
+    "captureFollowEye": {
+        "x": 51.722347259521487,
+        "y": 14.224281311035157,
+        "z": 86.4132308959961
+    },
+    "capturedFrames": 333,
+    "normalRequest": 1,
+    "failureRequest": 0,
+    "faultDog": 5,
+    "failedMask": 0,
+    "externalClientErrors": 0,
+    "deadline": 45796.2905215,
+    "observations": [
+        "t=3.012 frame=217 Resolved one manager and six dogs; real getter/return VM symbols and private pet heap are readable. No ownership changed.",
+        "t=3.012 frame=217 N1 normal/cancel request=1",
+        "t=3.080 frame=218 phase=2 request=1 prepared=0 ended=0 placed=0 restored=0",
+        "t=3.284 frame=236 phase=3 request=1 prepared=63 ended=0 placed=0 restored=0",
+        "t=3.685 frame=272 phase=4 request=1 prepared=63 ended=63 placed=0 restored=0",
+        "t=4.299 frame=327 phase=5 request=1 prepared=63 ended=63 placed=63 restored=0",
+        "t=87.800 frame=2899 Dance observations=True,True,True,True,True,True frames=333",
+        "t=87.827 frame=2900 phase=6 request=1 prepared=63 ended=63 placed=63 restored=63",
+        "t=87.984 frame=2913 phase=0 request=1 prepared=63 ended=63 placed=63 restored=63"
+    ],
+    "errors": [],
+    "limitations": "One local ClientSim / actual Udon VM. Real start and 0-82 s progression, no seek. Captures 55-80 s from fixed roadside and following eyes. Not full 220 s, multiplayer, device or entertainment acceptance. Audio mux is source aligned to frames.csv, not loopback recording."
+}

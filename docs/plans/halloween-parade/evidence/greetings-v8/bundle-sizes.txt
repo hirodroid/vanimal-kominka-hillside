@@ -1,0 +1,3 @@
+android target=Android download=84.49 MB uncompressed=254.73 MB headroom=15.51 MB left of the 100MB mobile limit secs=101
+Temp/kd-buildsize/bundle-android/kdscene bytes=88593668 modified=2026-10-15T00:59:22.621Z
+Temp/kd-buildsize/bundle-android-raw/kdscene bytes=267106560 modified=2026-10-15T00:59:55.409Z

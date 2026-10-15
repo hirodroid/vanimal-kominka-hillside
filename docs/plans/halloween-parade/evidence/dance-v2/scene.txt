@@ -1,0 +1,49 @@
+Corgi ParadeGroove wiring=True
+Corgi ParadeReply wiring=True
+Corgi ParadeBow wiring=True
+Corgi ParadeLookLeft wiring=True
+Corgi ParadeLookRight wiring=True
+Corgi ParadeHop wiring=True
+Pome ParadeGroove wiring=True
+Pome ParadeReply wiring=True
+Pome ParadeBow wiring=True
+Pome ParadeLookLeft wiring=True
+Pome ParadeLookRight wiring=True
+Pome ParadeHop wiring=True
+Lab ParadeGroove wiring=True
+Lab ParadeReply wiring=True
+Lab ParadeBow wiring=True
+Lab ParadeLookLeft wiring=True
+Lab ParadeLookRight wiring=True
+Lab ParadeHop wiring=True
+Dachs ParadeGroove wiring=True
+Dachs ParadeReply wiring=True
+Dachs ParadeBow wiring=True
+Dachs ParadeLookLeft wiring=True
+Dachs ParadeLookRight wiring=True
+Dachs ParadeHop wiring=True
+Shiba ParadeGroove wiring=True
+Shiba ParadeReply wiring=True
+Shiba ParadeBow wiring=True
+Shiba ParadeLookLeft wiring=True
+Shiba ParadeLookRight wiring=True
+Shiba ParadeHop wiring=True
+Samoyed ParadeGroove wiring=True
+Samoyed ParadeReply wiring=True
+Samoyed ParadeBow wiring=True
+Samoyed ParadeLookLeft wiring=True
+Samoyed ParadeLookRight wiring=True
+Samoyed ParadeHop wiring=True
+dog=0 finaleBranchWalkable=True
+dog=0 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.106 (runtime StepToward uses SnapToGround)
+dog=1 finaleBranchWalkable=True
+dog=1 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.105 (runtime StepToward uses SnapToGround)
+dog=2 finaleBranchWalkable=True
+dog=2 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.099 (runtime StepToward uses SnapToGround)
+dog=3 finaleBranchWalkable=True
+dog=3 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.122 (runtime StepToward uses SnapToGround)
+dog=4 finaleBranchWalkable=True
+dog=4 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.056 (runtime StepToward uses SnapToGround)
+dog=5 finaleBranchWalkable=True
+dog=5 targetMaxSpeed=0.999 walkSpeed=1.100 navHorizontalOffset=0.000 navHeightDifference=0.156 (runtime StepToward uses SnapToGround)
+minimum root separation=1.154m dogs 1/3 at 134.45 (not body/terrain clearance acceptance); errors=0

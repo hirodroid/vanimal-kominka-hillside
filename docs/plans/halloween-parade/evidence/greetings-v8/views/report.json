@@ -1,0 +1,49 @@
+{
+  "utc": "2026-10-15T00:57:01.6319731Z",
+  "directory": "docs/plans/halloween-parade/evidence/greetings-v8/views",
+  "dirtyBefore": false,
+  "dirtyAfter": false,
+  "views": [
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/175.8-plaza-standing.png",
+      "view": "plaza-standing",
+      "seconds": 175.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/190.8-plaza-standing.png",
+      "view": "plaza-standing",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/190.8-plaza-middle.png",
+      "view": "plaza-middle",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/190.8-plaza-low.png",
+      "view": "plaza-low",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/190.8-plaza-near.png",
+      "view": "plaza-near",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/210.8-plaza-standing.png",
+      "view": "plaza-standing",
+      "seconds": 210.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/210.8-plaza-low.png",
+      "view": "plaza-low",
+      "seconds": 210.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/greetings-v8/views/210.8-plaza-near.png",
+      "view": "plaza-near",
+      "seconds": 210.8000030517578
+    }
+  ],
+  "limits": "Edit mono parade twilight at authored shared-clock envelope. Dog meshes are static snapshots; no runtime/dog-dance/audio-sync/VR/network acceptance. Plaza render/UI overlay temporarily suppressed and restored in finally; runtime visibility proved separately by plaza-lifecycle.json."
+}

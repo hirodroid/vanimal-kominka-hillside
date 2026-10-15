@@ -1,0 +1,1 @@
+android target=Android download=84.71 MB uncompressed=252.44 MB headroom=15.29 MB left of the 100MB mobile limit secs=200

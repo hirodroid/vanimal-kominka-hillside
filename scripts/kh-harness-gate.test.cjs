@@ -10,12 +10,20 @@ const washAll = 'Course/100 - Harness Wash (all groups)';
 const washGroup = 'Course/100f - Harness Wash call + height';
 
 test('every Play entry needs both a purpose and the consult conclusion', () => {
-  for (const [kind, args] of [['walk', [washGroup]], ['segment', ['bridge-190-choice-2-dogs-6']], ['photo', []], ['proto', ['terrain', '--shots=T-up04']]]) {
+  for (const [kind, args] of [['walk', [washGroup]], ['segment', ['bridge-190-choice-2-dogs-6']], ['photo', []], ['parade', []], ['proto', ['terrain', '--shots=T-up04']]]) {
     assert.throws(() => check(kind, args), /--reason/);
     assert.throws(() => check(kind, [...args, '--reason', 'x']), /--consult/);
     assert.throws(() => check(kind, [...args, '--consult', 'x']), /--reason/);
     assert.deepEqual(check(kind, [...args, ...ok]).rest, args);
   }
+});
+
+test('parade permits only its two bounded cases and cannot expand by a hidden flag', () => {
+  assert.equal(check('parade', ok).wide, false);
+  assert.equal(check('parade', ['--night', ...ok]).wide, false);
+  assert.throws(() => check('parade', ['--night', '--dance', ...ok]), /bounded/);
+  assert.throws(() => check('parade', ['--all', ...ok]), /bounded/);
+  assert.throws(() => check('parade', ['--cases=all', ...ok]), /bounded/);
 });
 test('blank, missing, duplicated and multi-line values are refused', () => {
   for (const bad of [['--reason', '  ', '--consult', 'x'], ['--reason', '--consult', 'x'], ['--reason'], ['--reason=', '--consult=x'],
@@ -85,6 +93,7 @@ test('kh-harness-run.sh never reaches Unity on a refusal, and records the run on
     { encoding: 'utf8', env: { ...process.env, KH_UNITY_API: 'bash ' + stub, KH_HARNESS_LEDGER: ledger } });
   const called = () => fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : [];
   for (const args of [['walk', washGroup], ['segment', 'bridge-190-choice-2-dogs-6', '--reason', 'x'], ['walk', washAll, ...ok], ['photo'],
+    ['parade'], ['parade', '--all', ...ok], ['menu', 'Parade/10 - Bounded Harness'],
     ['measure', 'Course/1 - Measure Current Scene'], ['measure', 'Course/100a - Harness Wash base', ...ok], ['menu', 'Course/1 - Measure Current Scene'],
     ['menu', washAll], ['menu', 'Testing/Live Buy Probe (ClientSim)'], ['menu', 'Photo/3 - Harness'], ['menu', 'Course/41 - Stop Walk Harness']])
     assert.equal(sh(...args).status, 64, args.join(' '));

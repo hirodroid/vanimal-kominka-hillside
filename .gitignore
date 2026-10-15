@@ -163,3 +163,9 @@ InitTestScene*.unity*
 
 # ライブの音源 WAV は Git に入れない (正本は vrc-music-agent の曲フォルダ。hash は docs/plans の配線計画に記録。.meta は GUID 維持のため追跡)
 /[Aa]ssets/VirtualCampers.LiveGenerator/Shows/*/master.wav
+
+# Purchased Halloween pack and locally generated mesh derivatives. Regenerate with Parade/41.
+/[Aa]ssets/IKA 3DCG art studio/
+/[Aa]ssets/IKA 3DCG art studio.meta
+/[Aa]ssets/KominkaHillside/Data/HalloweenParade/IKA2022/*.asset
+/[Aa]ssets/KominkaHillside/Data/HalloweenParade/IKA2022/*.mat

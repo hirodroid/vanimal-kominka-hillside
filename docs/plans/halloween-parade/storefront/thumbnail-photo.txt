@@ -1,0 +1,29 @@
+2026-10-15 — Halloween parade storefront image: actual Unity capture
+Output: halloween-parade-thumbnail-photo.png
+Source: ../evidence/greetings-v8/views/190.8-plaza-low.png
+Resolution: 1280 x 720 (16:9)
+Selection: six actual dog models, authored plaza formation, pumpkin arch, lanterns, candles and particles in the hillside world.
+Method: unchanged copy of an existing Unity Edit-mode rendered capture. Authored Timeline/particle time: 190.8 seconds. Dog meshes are static snapshots placed at authored targets; this is not a VRChat runtime photograph or an animation-verification record.
+No AI image generation, retouching, replacement models, color correction or compositing applied.
+The user rejected generated thumbnail v1 for its AI appearance. This actual-scene image supersedes v1 as the proposed storefront thumbnail. The earlier v1 files remain only as history.
+No Storefront upload or Unity scene/asset modification performed.
+2026-10-15 — Added VAnimal palette typography at user request
+Output: halloween-parade-thumbnail-photo-title.png (1280 x 720)
+Typography: ハロウィンパレード; VAnimal / 古民家の裏山. Meiryo Bold.
+Colors: forest #364E3C outline, warm white #FFFDF8 text, wood #846449 rules.
+Palette reference: C:/work/unity/vrc-asset-lab/assets/wash-premium/design/2026-10-08/brand-direction.md (existing official-site colors).
+Method: deterministic System.Drawing text overlay via render-photo-title.ps1. The source scene image is retained, without generative editing or retouching.
+Visual inspection: title renders correctly, stays above pumpkins, and does not cover dogs. No price or date included.
+2026-10-15 — CE listing square thumbnail aligned with KominkaDogRun
+Delivery: halloween-parade-ce-thumbnail-1024.png
+Format: 1024 x 1024, RGB PNG, 722017 bytes, no price/date. Size/hash recorded in ce-thumbnail-verification.json.
+Reference: C:/work/unity/vcc/KominkaDogRun/artifacts/product-thumbnails/2026-09-15/README.md, source/Compose.cs and 06-halloween-set.png. Matches square delivery, Yu Gothic typography, title/subtitle placement, margins, and rounded photo frame. This is matching the existing project deliverable, not asserting a current VRChat platform upload limit.
+VAnimal palette: paper #F7F4EC, forest #364E3C, ink #303A30, wood #846449.
+Source photo: halloween-parade-thumbnail-photo.png. Full original aspect ratio retained within 944 x 531 frame. Original six dogs and actual authored effects retained; no generated additions. Same Edit-render provenance and limitations as recorded above.
+No costume/FX product inclusions copied from KominkaDogRun; description refers only to this parade.
+Rebuild: powershell -NoProfile -ExecutionPolicy Bypass -File render-ce-thumbnail.ps1
+Inspection: full 1024 image and 256 preview checked. Product title readable at 256, no text clipping, six dogs visible. Storefront not uploaded.
+2026-10-15 — User acceptance and cleanup
+User accepted the 1024 x 1024 CE thumbnail and later reported real-device/multi-platform acceptance of the parade.
+Superseded v1 artwork, the old landscape title composite/script, and the generated 256 preview were archived under Logs/parade-cleanup-20261015/ with original relative paths. They are no longer current delivery files or Git candidates.
+Retained: final 1024 PNG, unedited source capture, render-ce-thumbnail.ps1, verification JSON and this provenance record. The script can regenerate the preview when needed.

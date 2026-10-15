@@ -1,0 +1,134 @@
+{
+    "utc": "2026-10-14T12:53:37.1630729Z",
+    "directory": "Temp/halloween-parade/preview/20261014-125337",
+    "dirtyBefore": false,
+    "dirtyAfter": false,
+    "views": [
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/000.8-follow.png",
+            "view": "follow",
+            "seconds": 0.800000011920929
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/000.8-roadside.png",
+            "view": "roadside",
+            "seconds": 0.800000011920929
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/035.8-follow.png",
+            "view": "follow",
+            "seconds": 35.79999923706055
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/035.8-roadside.png",
+            "view": "roadside",
+            "seconds": 35.79999923706055
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/065.8-follow.png",
+            "view": "follow",
+            "seconds": 65.80000305175781
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/065.8-roadside.png",
+            "view": "roadside",
+            "seconds": 65.80000305175781
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/075.8-follow.png",
+            "view": "follow",
+            "seconds": 75.80000305175781
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/075.8-roadside.png",
+            "view": "roadside",
+            "seconds": 75.80000305175781
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/150.8-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 150.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/175.8-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 175.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/185.8-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 185.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/190.8-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 190.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/190.8-plaza-middle.png",
+            "view": "plaza-middle",
+            "seconds": 190.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/190.8-plaza-low.png",
+            "view": "plaza-low",
+            "seconds": 190.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/190.8-plaza-near.png",
+            "view": "plaza-near",
+            "seconds": 190.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/210.8-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 210.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/210.8-plaza-low.png",
+            "view": "plaza-low",
+            "seconds": 210.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/210.8-plaza-near.png",
+            "view": "plaza-near",
+            "seconds": 210.8000030517578
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-plaza-standing.png",
+            "view": "plaza-standing",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-0.png",
+            "view": "ribbon-0",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-1.png",
+            "view": "ribbon-1",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-2.png",
+            "view": "ribbon-2",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-3.png",
+            "view": "ribbon-3",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-4.png",
+            "view": "ribbon-4",
+            "seconds": 218.0
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-125337/218.0-ribbon-5.png",
+            "view": "ribbon-5",
+            "seconds": 218.0
+        }
+    ],
+    "limits": "Edit-mode mono daytime. Existing dog mesh poses placed at intended targets; no walking/Animator/network/device/audio acceptance. Dedicated show Timeline and particle age evaluated on disposable copies."
+}

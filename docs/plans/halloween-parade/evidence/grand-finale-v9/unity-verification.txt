@@ -1,0 +1,4 @@
+2026-10-15 audio-only change
+PARADE_RUNTIME_WIRING_OK / PARADE_SHOW_BACKING_OK subjects=16
+Imported AudioClip:220s/10560000samples/48000Hz/2ch/GUID60a9419c40900594ebe5c10f8e28317d
+Scene and .meta bytes unchanged from this turn baseline. Edit/dirty=false. No C#/Udon/Timeline/visual/runtime edits: no new Play/harness or duplicate visual captures.

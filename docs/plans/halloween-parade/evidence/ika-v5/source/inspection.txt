@@ -1,0 +1,28 @@
+2026-10-14T22:07:32.0333067Z
+Hat-shaped shelves size=(1.9805, 1.2246, 2.0000) center=(0.0000, 0.6123, 0.0000)
+  Hat-shaped shelves(Clone) mesh=Hat-shaped shelves tri=384 bounds=Center: (0.00, 0.61, 0.00), Extents: (0.99, 0.61, 1.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Witch size=(0.4004, 0.2695, 0.0039) center=(0.0000, -0.0176, -0.0020)
+  Witch(Clone) mesh=Witch tri=788 bounds=Center: (0.00, -0.02, 0.00), Extents: (0.20, 0.13, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Hat size=(0.2715, 0.2227, 0.0039) center=(-0.0029, 0.0586, 0.0020)
+  Hat(Clone) mesh=Hat tri=100 bounds=Center: (0.00, 0.06, 0.00), Extents: (0.14, 0.11, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Bat size=(0.3535, 0.1289, 0.0039) center=(0.0000, 0.0068, -0.0020)
+  Bat(Clone) mesh=Bat tri=388 bounds=Center: (0.00, 0.01, 0.00), Extents: (0.18, 0.06, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Ornamental Pumpkin_01 size=(0.7910, 0.6641, 0.7871) center=(0.0000, 0.3320, -0.0059)
+  Ornamental Pumpkin_01(Clone) mesh=Ornamental Pumpkin_01 tri=966 bounds=Center: (0.00, 0.33, -0.01), Extents: (0.40, 0.33, 0.39) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Ornamental Pumpkin_02 size=(0.7773, 0.6523, 0.7734) center=(0.0000, 0.3262, -0.0059)
+  Ornamental Pumpkin_02(Clone) mesh=Ornamental Pumpkin_02 tri=2184 bounds=Center: (0.00, 0.33, -0.01), Extents: (0.39, 0.33, 0.39) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+  Ornamental Pumpkin_Candles mesh=Ornamental Pumpkin_Candles tri=196 bounds=Center: (0.00, 0.05, 0.00), Extents: (0.09, 0.05, 0.09) scale=(1.00, 1.00, 1.00) mats=Emission_Halloween Decoration_2022/Standard
+Pumpkin_01 size=(0.2715, 0.2363, 0.0039) center=(0.0029, 0.0264, -0.0020)
+  Pumpkin_01(Clone) mesh=Pumpkin_01 tri=280 bounds=Center: (0.00, 0.03, 0.00), Extents: (0.14, 0.12, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Pumpkin_02 size=(0.2715, 0.2363, 0.0039) center=(0.0029, 0.0264, -0.0020)
+  Pumpkin_02(Clone) mesh=Pumpkin_02 tri=280 bounds=Center: (0.00, 0.03, 0.00), Extents: (0.14, 0.12, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Pumpkin_03 size=(0.2715, 0.2363, 0.0039) center=(0.0029, 0.0264, -0.0020)
+  Pumpkin_03(Clone) mesh=Pumpkin_03 tri=280 bounds=Center: (0.00, 0.03, 0.00), Extents: (0.14, 0.12, 0.00) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard
+Halloween Outside Lamp_01 size=(0.9277, 2.8496, 0.3477) center=(-0.0313, 1.4248, 0.0146)
+  Halloween Outside Lamp_01(Clone) mesh=Halloween Outside Lamp_01 tri=9706 bounds=Center: (-0.03, 1.42, 0.01), Extents: (0.46, 1.42, 0.17) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Halloween Outside Lamp_02 size=(1.2988, 2.8496, 0.3477) center=(0.0000, 1.4248, 0.0146)
+  Halloween Outside Lamp_02(Clone) mesh=Halloween Outside Lamp_02 tri=3646 bounds=Center: (0.00, 1.42, 0.01), Extents: (0.65, 1.42, 0.17) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Halloween Outside Lamp_03 size=(0.8652, 2.8496, 0.3477) center=(-0.0010, 1.4248, 0.0146)
+  Halloween Outside Lamp_03(Clone) mesh=Halloween Outside Lamp_03 tri=2452 bounds=Center: (0.00, 1.42, 0.01), Extents: (0.43, 1.42, 0.17) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Halloween Outside Lamp_04 size=(1.6680, 2.4180, 0.5859) center=(0.0000, 1.2090, -0.0039)
+  Halloween Outside Lamp_04(Clone) mesh=Halloween Outside Lamp_04 tri=16496 bounds=Center: (0.00, 1.21, 0.00), Extents: (0.83, 1.21, 0.29) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard

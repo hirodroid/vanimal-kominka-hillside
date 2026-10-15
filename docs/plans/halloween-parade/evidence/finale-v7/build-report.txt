@@ -1,0 +1,21 @@
+2026-10-15T00:27:24.4902704Z
+result=Succeeded errors=0 warnings=2 started=2026-10-15T00:23:20.6791082 ended=2026-10-15T00:24:24.7075350 output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/kd-buildsize/bundle-android-raw platform=Android
+STEP Build Asset Bundles 00:01:04.0284268
+STEP Calculate asset bundles to be built 00:00:00.0249252
+STEP Prebuild Cleanup and Recompile 00:00:00.8189125
+STEP Compile scripts 00:00:00.7556042
+STEP Generate and validate platform script types 00:00:00.0527479
+STEP Build Scene AssetBundle(s) 00:00:40.8644139
+STEP Build bundle: kdscene 00:00:39.2507892
+STEP Verify Build setup 00:00:00.0536217
+STEP Prepare assets for target platform 00:00:00.1172916
+STEP Prepare splash screen 00:00:00.2151725
+STEP Building scenes 00:00:28.7391665
+STEP Building scene Assets/Scenes/VRCDefaultWorldScene.unity 00:00:28.7391501
+STEP Writing asset files 00:00:06.9076347
+STEP Packaging assets - archive:/BuildPlayer-VRCDefaultWorldScene/BuildPlayer-VRCDefaultWorldScene.sharedAssets 00:00:06.7705400
+STEP Creating compressed player package 00:00:00.9161232
+STEP Postprocess built player 00:00:00.0305838
+scene=Assets/Scenes/VRCDefaultWorldScene.unity dirty=False play=False target=StandaloneWindows64 compileFailed=False
+leader mesh=particles_trail_khp_guide__guide-journey_0 material=LeaderPumpkin surface=0.6 triangles=3148
+leader count=1

@@ -1,0 +1,3 @@
+2026-10-15T00:27:06.388Z
+android target=Android download=84.44 MB uncompressed=254.66 MB headroom=15.56 MB left of the 100MB mobile limit secs=175
+NOTE: Editor.log inner scene-build lines said Failure; latest outer Android raw AssetBundle BuildReport is Succeeded, errors=0, warnings=2 (matching this run). Compressed/raw sizes are newly generated file measurements. See build-report.txt. This is a proxy build, not SDK/device acceptance.

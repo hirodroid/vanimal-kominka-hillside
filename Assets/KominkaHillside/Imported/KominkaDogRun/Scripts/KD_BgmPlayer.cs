@@ -38,6 +38,9 @@ namespace KominkaDogRun
         [Tooltip("ライブの台帳。null だとライブ中も下がらない (設定は効く)")]
         public KD_LiveSystem live;
 
+        // Hillside parade has its own consent clock. Personal settings remain independent.
+        public KominkaHillside.KH_HalloweenParadePlayback paradePlayback;
+
         [Tooltip("IMP-ENV-011: 外と寝室の独立した個人音量を現在位置で補間する")]
         public KD_SleepAudio sleepAudio;
 
@@ -103,7 +106,7 @@ namespace KominkaDogRun
         /// 「これから何かが始まる」が濁る)。</summary>
         private bool LiveSilences()
         {
-            return live != null && live.IsNightWanted;
+            return (live != null && live.IsNightWanted) || (paradePlayback != null && paradePlayback.IsAudible);
         }
 
         /// <summary>**出力を作り直す。** 差分ではなく毎回の掛け算。</summary>

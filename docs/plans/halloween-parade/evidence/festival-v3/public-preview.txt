@@ -1,0 +1,2 @@
+2026-10-14T12:54:27.5148572Z
+PASS: one Live-tab row; enabled for all users; close/open/start events; 13-language bindings; proxy/backing hosting=true. Edit-mode verification, not multiplayer runtime acceptance.

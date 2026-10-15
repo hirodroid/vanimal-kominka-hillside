@@ -88,6 +88,9 @@ namespace KominkaDogRun
 
             if (_localPetActive)
             {
+                KD_DogWanderController paradeWander = MyWander();
+                if (paradeWander != null && paradeWander.ParadeReserved
+                    && (paradeWander.paradeDog.Committed || paradeWander.paradeDog.Isolated || petState < 0 || attentionPlayerId != myId)) return;
                 // 先着優先: 他人が撫でている間は割り込まない (不変条件 4)。
                 // **自分のローカルな撫でリアクションは止めない** — 自分の画面では
                 // 自分の手へ返事が返る (これは IMP-PET-005 で確認済みの既存挙動)
@@ -168,6 +171,8 @@ namespace KominkaDogRun
         // net: callable-ok: Owner 権威への遷移要求 (DES-NET-002 不変条件 3)。Owner / dogState / 先着 / **手が犬に触れていること** を自分で検査する
         public void ReqPetBegin()
         {
+            KD_DogWanderController paradeWander = MyWander();
+            if (paradeWander != null && paradeWander.ParadeReserved && (paradeWander.paradeDog.Committed || paradeWander.paradeDog.Isolated || petState < 0)) return;
             if (!IsDogOwner()) return;
             if (dogState != StateIdle) return;   // Fetch 中の撫では無視 (設計書 §1)
             if (CandyBusy()) return;             // Candy 演目・着地・退場中も無視 (破壊的監査 v4 FUNC-02/BUG-01。通常ライブの観客は撫でられる)

@@ -1,0 +1,51 @@
+[KD_ShopSetup] Verify (裏山 段階 1)
+  ok   catalog program → KD_ShopCatalog.cs / SyncMode None
+  ok   shop item program SyncMode None (購入は完全にローカル)
+  ok   player fx tag program → KD_PlayerFxTag.cs / Manual
+  ok   KD_ProductDefinitions.All が Validate を通る (61 行)
+  ok   全行に文言キーの表がある (無い 0 行)
+  ok   KD_ProgressSystem の KD_ProgressLedger が 1 個 (actual 1)
+  ok   KD_ShopCatalog に KD_ShopCatalog が 1 個 (actual 1)
+  ok   置き場所が KH_Dogs/KD_ShopCatalog (actual KH_Dogs/KD_ShopCatalog)
+  ok   KD_ShopCatalog がシーンにちょうど 1 個 (actual 1) — 選択の正本は 1 つ
+  ok   KD_ShopCatalog の UdonBehaviour は 1 個で SyncMethod None
+  ok   catalog.ledger == KD_ProgressSystem
+  ok   catalog.items が商品表と同数 61 (actual 61)
+  ok   catalog.items が商品表と 1:1 (同じ並び・欠け/重複なし)
+  ok   ledger.products == catalog.items (台帳の _ConfigureCatalog が同じ登録簿を見る)
+  ok   catalog.categoryKeys == 表の区分
+  ok   catalog.defaultProducts == 表の既定
+  ok   catalog.consumers と consumerEvents が同数 (裏山段階 1 は 0 本、段階 2 は KD_PetFxBox の 1 本)
+  NOTE catalog.consumers の KD_PetFxBox._OnShopSelectionChanged は Menu/6h Verify Pet Fx が数える (ToyBox は裏山に無い)
+  ok   シーンの KD_ShopItem が商品表と同数 61 (actual 61) — 表に無い商品が残っていない
+  ok   全商品: 表どおり (区分・価格・パック・CE の Product/Listing) / カタログの子 / menuOnly・Collider なし / 台帳配線 / backing 反映 (不一致 0 件)
+  ok   category toy の初期品がちょうど 1 つ (actual 1) — 復元に失敗したときの倒れ先
+  ok   category petfx の初期品がちょうど 1 つ (actual 1) — 復元に失敗したときの倒れ先
+  ok   category treat の初期品がちょうど 1 つ (actual 1) — 復元に失敗したときの倒れ先
+  ok   category live に初期品が無い (actual 0)
+  ok   category accessory の初期品がちょうど 1 つ (actual 1) — 復元に失敗したときの倒れ先
+  ok   category experience に初期品が無い (actual 0)
+  ok   category action に初期品が無い (actual 0)
+  ok   category collar の初期品がちょうど 1 つ (actual 1) — 復元に失敗したときの倒れ先
+  ok   category wash に初期品が無い (actual 0)
+  ok   開発用の CE 解放が掛かっていない (actual 0) — Menu/4c CE Relock で戻す
+  ok   IMP-PRG-002: 公開しない CE は 6 アセット / 13 行 (actual 6 / 13: toy.paw_cushion, toy.taiyaki_plush, toy.ebiten_plush, live.kominka_pack, live.candy_step_set, live.pumpkin_parade_set, accessory.royal_set, accessory.summer_set, petfx.candy, petfx.pumpkin, petfx.lantern, petfx.meteor, petfx.confetti)
+  ok   IMP-PRG-002: シーンの KD_ShopItem が公開しない UdonProduct 6 つを参照しない (actual 0) — 台帳・カタログに登録されず、購入通知で所有が付かない
+  ok   IMP-PRG-002: 公開しない 13 行は Listing だけ (CeWithheld。IsCE のまま、無料・初期品に化けない) (行 13 / 不一致 0)
+  ok   IMP-PRG-002: 実行時の門 KD_ShopItem.CeWithheld (所有 = CeOwnedBy は Product が無いと偽 / _OpenStore は開かない) がある
+  ok   IMP-PRG-002: 公開しない行を指すのは台帳・カタログ・飾りの台帳だけ (手元メニュー・ライブ・おもちゃ・あそぶ・呼ぶに入口が無い。他の参照 0 件。Menu/6e・6g で外す)
+  ok   IMP-PRG-002: 行は台帳・カタログに残す (キーを再利用しない。選択の復元は所有が無いので既定へ倒れる)
+  NOTE IMP-PRG-002 の Play / 実機に残すこと: 古民家で買った人の入室・途中参加で所有が付かない (ClientSim は自分の購入しか模擬できない)、保存済みの撫でFX の選択が既定 ♡ に戻る、他人の札が公開しない FX を指しても既定で描く
+  ok   KH_Dogs/KD_PlayerFxTag が 1 個 (actual 1 at KH_Dogs/KD_PlayerFxTag)
+  ok   KD_PlayerFxTag に VRCPlayerObject (入室ごとに複製される札)
+  ok   KD_PlayerFxTag が 1 個で SyncMethod Manual
+  ok   KD_ShopShelf がシーンに無い (actual 0) — 裏山に棚は無い。購入は手元メニュー
+  SKIP 棚の面ラベル・確認パネル・効果音・陳列メッシュ・重なり・棚のグリフ — 裏山では対象外 (棚が無い)
+  SKIP KD_ToyBox の器 (ボールの柄、DES-DOG-002) — Course/125 Verify Ball Patterns が見る
+  SKIP おやつ陳列マテリアル — 裏山では対象外 (棚が無い。おやつの実体は IMP-DOG-014)
+  SKIP 手元メニューの行との対応 (KD_ProductsEditor.HasMenuEntry) — 段階 1 ではおやつ・かざり等は準備中。Menu/20 Verify Pouch が見る (公開しない CE 行がメニューの配線に居ないことは上の IMP-PRG-002 の節が見る)
+       PlayerData キー / プレフィックス 2 個を突き合わせた
+  ok   PlayerData キー名 (KD_/KH_ の const) が重複・前方一致していない
+  self-test (selection) 7/7 passed
+  self-test (stock) 20/20 passed
+VERIFY RESULT: PASS

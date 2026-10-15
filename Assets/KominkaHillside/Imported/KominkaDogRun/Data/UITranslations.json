@@ -2370,11 +2370,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "ハロウィンイベント・限定ライブ「パンプキン・パレード」期間限定発売中 (10/31 まで)"
+          "text": "ハロウィンパレード · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "ハロウィン限定ライブ「パンプキン・パレード」は所持済み (販売は 10/31 まで)"
+          "text": "ハロウィン限定ライブ「かぼちゃ灯りの坂道行進」は所持済み (販売は 10/31 まで)"
         },
         {
           "key": "live.saleClosed",
@@ -3831,6 +3831,38 @@
         {
           "key": "video.hide",
           "text": "モニターを隠す"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "かぼちゃ灯りの坂道行進"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "かぼちゃ灯りの坂道行進"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "ハロウィンパレード · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "6匹の犬と歩く、にぎやかなハロウィンパレード。"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "光るかぼちゃやろうそくと坂道を進み、広場で大きなフィナーレ！"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "販売準備中です。購入・ギフトの受付開始後、所持している方が開催できます。"
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "販売は10/31まで。購入後は11月以降も開催できます。"
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "進行を見る"
         }
       ]
     },
@@ -6201,11 +6233,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Halloween event: limited live \"Pumpkin Parade\" on sale until Oct 31"
+          "text": "Halloween Parade · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "You own the Halloween live \"Pumpkin Parade\" (on sale until Oct 31)"
+          "text": "You own the Halloween live \"Pumpkin Lights on the Hillside\" (on sale until Oct 31)"
         },
         {
           "key": "live.saleClosed",
@@ -7662,6 +7694,38 @@
         {
           "key": "video.hide",
           "text": "Hide monitor"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Pumpkin Lights on the Hillside"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Pumpkin Lights on the Hillside"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Halloween Parade · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "A lively Halloween parade with all six dogs."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "March with glowing pumpkins and candles to a grand finale in the plaza!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Sales are being prepared. Hosting unlocks after purchase or receiving a gift."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "On sale through Oct 31. Owners can keep hosting afterward."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "View progress"
         }
       ]
     },
@@ -10032,11 +10096,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Хэллоуин: ограниченное шоу «Pumpkin Parade» в продаже до 31 октября"
+          "text": "Парад на Хэллоуин · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "У вас есть хэллоуинское шоу «Pumpkin Parade» (в продаже до 31 октября)"
+          "text": "У вас есть хэллоуинское шоу «Тыквенные огни на склоне» (в продаже до 31 октября)"
         },
         {
           "key": "live.saleClosed",
@@ -11493,6 +11557,38 @@
         {
           "key": "video.hide",
           "text": "Скрыть экран"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Тыквенные огни на склоне"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Тыквенные огни на склоне"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Парад на Хэллоуин · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Весёлый парад на Хэллоуин с шестью собаками."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Светящиеся тыквы и свечи ведут к яркому финалу на площади!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Продажа готовится. Проведение доступно после покупки или получения подарка."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "В продаже до 31 октября. Купленное шоу остаётся доступным."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Ход парада"
         }
       ]
     },
@@ -13863,11 +13959,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Гелловін: обмежене шоу «Pumpkin Parade» у продажу до 31 жовтня"
+          "text": "Гелловінський парад · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "У вас є гелловінське шоу «Pumpkin Parade» (у продажу до 31 жовтня)"
+          "text": "У вас є гелловінське шоу «Гарбузові вогні на схилі» (у продажу до 31 жовтня)"
         },
         {
           "key": "live.saleClosed",
@@ -15324,6 +15420,38 @@
         {
           "key": "video.hide",
           "text": "Сховати екран"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Гарбузові вогні на схилі"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Гарбузові вогні на схилі"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Гелловінський парад · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Веселий парад на Гелловін із шістьма собаками."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Сяючі гарбузи та свічки ведуть до яскравого фіналу на площі!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Продаж готується. Проведення доступне після покупки або отримання подарунка."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "У продажу до 31 жовтня. Придбане шоу залишиться доступним."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Перебіг параду"
         }
       ]
     },
@@ -17694,11 +17822,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "할로윈 이벤트·한정 라이브 \"Pumpkin Parade\" 기간 한정 판매 중 (10/31까지)"
+          "text": "핼러윈 퍼레이드 · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "할로윈 한정 라이브 \"Pumpkin Parade\"를 보유 중입니다 (판매는 10/31까지)"
+          "text": "할로윈 한정 라이브 \"호박 불빛 언덕 행진\"를 보유 중입니다 (판매는 10/31까지)"
         },
         {
           "key": "live.saleClosed",
@@ -19155,6 +19283,38 @@
         {
           "key": "video.hide",
           "text": "모니터 숨기기"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "호박 불빛 언덕 행진"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "호박 불빛 언덕 행진"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "핼러윈 퍼레이드 · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "여섯 강아지와 함께하는 신나는 할로윈 퍼레이드."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "빛나는 호박과 촛불을 따라 걸으며 광장에서 화려한 피날레!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "판매 준비 중입니다. 구매하거나 선물 받으면 개최할 수 있습니다."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "10/31까지 판매. 구매 후에는 11월 이후에도 개최할 수 있습니다."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "진행 보기"
         }
       ]
     },
@@ -21525,11 +21685,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Halloween-Event: die limitierte Show „Pumpkin Parade“ ist bis 31.10. im Verkauf"
+          "text": "Halloween-Parade · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Die Halloween-Show „Pumpkin Parade“ gehört dir (im Verkauf bis 31.10.)"
+          "text": "Die Halloween-Show „Kürbislichter am Hang“ gehört dir (im Verkauf bis 31.10.)"
         },
         {
           "key": "live.saleClosed",
@@ -22986,6 +23146,38 @@
         {
           "key": "video.hide",
           "text": "Monitor ausblenden"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Kürbislichter am Hang"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Kürbislichter am Hang"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Halloween-Parade · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Eine fröhliche Halloween-Parade mit allen sechs Hunden."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Leuchtende Kürbisse und Kerzen begleiten den Weg zum großen Finale auf dem Platz!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Verkauf in Vorbereitung. Nach Kauf oder Erhalt als Geschenk kannst du die Parade starten."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "Im Verkauf bis 31.10. Danach bleibt die gekaufte Parade nutzbar."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Fortschritt"
         }
       ]
     },
@@ -25356,11 +25548,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "万圣节活动・限定灯光秀“Pumpkin Parade”限时发售中 (截至 10/31)"
+          "text": "万圣节巡游 · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "已拥有万圣节限定灯光秀“Pumpkin Parade”(销售到 10/31 为止)"
+          "text": "已拥有万圣节限定灯光秀“南瓜灯山坡巡游”(销售到 10/31 为止)"
         },
         {
           "key": "live.saleClosed",
@@ -26817,6 +27009,38 @@
         {
           "key": "video.hide",
           "text": "隐藏屏幕"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "南瓜灯山坡巡游"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "南瓜灯山坡巡游"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "万圣节巡游 · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "与六只狗狗一起参加热闹的万圣节巡游。"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "跟随发光的南瓜与蜡烛前进，在广场迎接华丽终章！"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "正在准备销售。购买或收到礼物后即可举办。"
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "销售至10/31。购买后11月起仍可举办。"
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "查看进度"
         }
       ]
     },
@@ -29187,11 +29411,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Evento de Halloween: el show limitado \"Pumpkin Parade\" está a la venta hasta el 31 de octubre"
+          "text": "Desfile de Halloween · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Ya tienes el show de Halloween \"Pumpkin Parade\" (a la venta hasta el 31 de octubre)"
+          "text": "Ya tienes el show de Halloween \"Luces de calabaza en la colina\" (a la venta hasta el 31 de octubre)"
         },
         {
           "key": "live.saleClosed",
@@ -30648,6 +30872,38 @@
         {
           "key": "video.hide",
           "text": "Ocultar monitor"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Luces de calabaza en la colina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Luces de calabaza en la colina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Desfile de Halloween · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Un animado desfile de Halloween con los seis perros."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "¡Calabazas y velas brillantes acompañan el camino hasta el gran final en la plaza!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Venta en preparación. Podrás organizarlo al comprarlo o recibirlo como regalo."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "A la venta hasta el 31 de octubre. Después podrás seguir organizándolo."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Ver progreso"
         }
       ]
     },
@@ -33018,11 +33274,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Événement Halloween : spectacle limité \"Pumpkin Parade\" en vente jusqu'au 31 octobre"
+          "text": "Parade d’Halloween · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Tu possèdes le spectacle d'Halloween \"Pumpkin Parade\" (en vente jusqu'au 31 octobre)"
+          "text": "Tu possèdes le spectacle d'Halloween \"Lumières de citrouille sur la colline\" (en vente jusqu'au 31 octobre)"
         },
         {
           "key": "live.saleClosed",
@@ -34479,6 +34735,38 @@
         {
           "key": "video.hide",
           "text": "Masquer écran"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Lumières de citrouille sur la colline"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Lumières de citrouille sur la colline"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Parade d’Halloween · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Un joyeux défilé Halloween avec les six chiens."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Citrouilles et bougies lumineuses guident la marche vers un grand final sur la place !"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Vente en préparation. Lance le défilé après achat ou réception en cadeau."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "En vente jusqu’au 31 octobre. Le défilé acheté restera utilisable ensuite."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Voir le déroulement"
         }
       ]
     },
@@ -36849,11 +37137,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Evento de Halloween: o show limitado \"Pumpkin Parade\" à venda até 31/10"
+          "text": "Desfile de Halloween · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Você já tem o show de Halloween \"Pumpkin Parade\" (à venda até 31/10)"
+          "text": "Você já tem o show de Halloween \"Luzes de abóbora na colina\" (à venda até 31/10)"
         },
         {
           "key": "live.saleClosed",
@@ -38310,6 +38598,38 @@
         {
           "key": "video.hide",
           "text": "Ocultar monitor"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Luzes de abóbora na colina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Luzes de abóbora na colina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Desfile de Halloween · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Um animado desfile de Halloween com os seis cães."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Abóboras e velas iluminam o caminho até o grande final na praça!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Venda em preparação. Organize após comprar ou receber de presente."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "À venda até 31/10. Quem comprar poderá continuar organizando depois."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Ver andamento"
         }
       ]
     },
@@ -40680,11 +41000,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Evento di Halloween: lo show limitato \"Pumpkin Parade\" in vendita fino al 31 ottobre"
+          "text": "Parata di Halloween · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Hai lo show di Halloween \"Pumpkin Parade\" (in vendita fino al 31 ottobre)"
+          "text": "Hai lo show di Halloween \"Luci di zucca sulla collina\" (in vendita fino al 31 ottobre)"
         },
         {
           "key": "live.saleClosed",
@@ -42141,6 +42461,38 @@
         {
           "key": "video.hide",
           "text": "Nascondi monitor"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Luci di zucca sulla collina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Luci di zucca sulla collina"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Parata di Halloween · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Una vivace parata di Halloween con tutti e sei i cani."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Zucche e candele luminose accompagnano il cammino fino al gran finale in piazza!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Vendita in preparazione. Avvia la parata dopo averla acquistata o ricevuta in regalo."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "In vendita fino al 31 ottobre. Dopo potrai continuare ad avviarla."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Vedi andamento"
         }
       ]
     },
@@ -44511,11 +44863,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "Wydarzenie halloweenowe: limitowany pokaz „Pumpkin Parade” w sprzedaży do 31 października"
+          "text": "Parada halloweenowa · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "Masz halloweenowy pokaz „Pumpkin Parade” (w sprzedaży do 31 października)"
+          "text": "Masz halloweenowy pokaz „Dyniowe światła na wzgórzu” (w sprzedaży do 31 października)"
         },
         {
           "key": "live.saleClosed",
@@ -45972,6 +46324,38 @@
         {
           "key": "video.hide",
           "text": "Ukryj ekran"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "Dyniowe światła na wzgórzu"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "Dyniowe światła na wzgórzu"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "Parada halloweenowa · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "Wesoła parada halloweenowa ze wszystkimi sześcioma psami."
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "Świecące dynie i świece prowadzą do wielkiego finału na placu!"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "Sprzedaż w przygotowaniu. Organizowanie dostępne po zakupie lub otrzymaniu prezentu."
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "W sprzedaży do 31 października. Kupioną paradę można organizować także później."
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "Zobacz przebieg"
         }
       ]
     },
@@ -48346,11 +48730,11 @@
         },
         {
           "key": "event.halloween.text",
-          "text": "萬聖節活動・限定燈光秀「Pumpkin Parade」限時發售中 (截至 10/31)"
+          "text": "萬聖節巡遊 · 300 C · 10/31"
         },
         {
           "key": "event.halloween.owned",
-          "text": "已擁有萬聖節限定燈光秀「Pumpkin Parade」(銷售到 10/31 為止)"
+          "text": "已擁有萬聖節限定燈光秀「南瓜燈山坡巡遊」(銷售到 10/31 為止)"
         },
         {
           "key": "live.saleClosed",
@@ -49807,6 +50191,38 @@
         {
           "key": "video.hide",
           "text": "隱藏螢幕"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0",
+          "text": "南瓜燈山坡巡遊"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.jp",
+          "text": "南瓜燈山坡巡遊"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.meta",
+          "text": "萬聖節巡遊 · 3:40"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.mood",
+          "text": "與六隻狗狗一起參加熱鬧的萬聖節巡遊。"
+        },
+        {
+          "key": "live.detail.hillside_halloween_parade.scene",
+          "text": "跟隨發光的南瓜與蠟燭前進，在廣場迎接華麗終章！"
+        },
+        {
+          "key": "live.parade.pending",
+          "text": "正在準備銷售。購買或收到禮物後即可舉辦。"
+        },
+        {
+          "key": "live.parade.limited",
+          "text": "銷售至10/31。購買後11月起仍可舉辦。"
+        },
+        {
+          "key": "live.parade.progress",
+          "text": "查看進度"
         }
       ]
     }

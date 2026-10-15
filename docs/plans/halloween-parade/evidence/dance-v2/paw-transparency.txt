@@ -1,0 +1,1 @@
+shader=Legacy Shaders/Particles/Alpha Blended borderDifference=0 pawDifference=0.9019608; Edit particle render, not runtime replay.

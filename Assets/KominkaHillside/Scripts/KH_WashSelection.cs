@@ -21,6 +21,8 @@ namespace KominkaHillside
     public class KH_WashSelection : UdonSharpBehaviour
     {
         public KH_WashTool[] slots;
+        // Local presentation only; selection, ownership and tool physics continue during the parade.
+        [System.NonSerialized] public bool localPresentationHidden;
         public VRC_Pickup[] pickups;
         public BoxCollider[] pickupColliders;
         public int[] slotCategories;          // by slot: its category, -1 = no offered item uses it
@@ -311,12 +313,19 @@ namespace KominkaHillside
             }
             _shownBath=bath;_seenRevision=revision;_initialized=true;
         }
+        public void _SetPresentationHidden(bool value)
+        {
+            localPresentationHidden=value;
+            if(!_initialized||_slotItem==null)return;
+            for(int i=0;pickups!=null&&i<pickups.Length&&i<_slotItem.Length;i++)
+                if(pickups[i]!=null)pickups[i].pickupable=_slotItem[i]>=0&&!value;
+        }
         void ConfigureSlot(int s,int item)
         {
             var t=slots[s];var p=pickups[s];var col=pickupColliders[s];
             if(t==null||p==null||col==null)return;
             bool active=item>=0;
-            t._SetSelected(active);p.pickupable=active;col.enabled=active;
+            t._SetSelected(active);p.pickupable=active&&!localPresentationHidden;col.enabled=active;
             if(!active){if(t.spray!=null)t.spray.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);t.spray=null;return;}
             t.nozzle=nozzleAnchors[item];t.spray=itemSprays[item];t.pulseSeconds=pulseDurations[item];t.sprayRange=sprayRanges[item];
             if(t.sprayAudio!=null)t.sprayAudio.clip=itemSounds[item];

@@ -1,0 +1,3 @@
+2026-10-15 final saved scene: PARADE_PUBLIC_PREVIEW_OK
+PARADE_PLAZA_VERIFY_OK renderers=63 pickups=11 UI=4
+Prior saved backing check: PARADE_SHOW_BACKING_OK subjects=16

@@ -1,0 +1,50 @@
+{
+  "asset": "KH_HalloweenRibbon",
+  "revision": "003",
+  "blender": "5.2.2 LTS",
+  "source": {
+    "vertices": 340,
+    "triangles": 668,
+    "materials": 1,
+    "dimensionsMetres": [
+      0.11999999731779099,
+      0.023749999701976776,
+      0.06599999964237213
+    ],
+    "zeroAreaTriangles": [],
+    "zeroAreaUvTriangles": [],
+    "nonManifoldEdges": 0
+  },
+  "fbxRoundtrip": {
+    "vertices": 340,
+    "triangles": 668,
+    "materials": 1,
+    "dimensionsMetres": [
+      0.11999999731779099,
+      0.06599999964237213,
+      0.023749999701976776
+    ],
+    "zeroAreaTriangles": [],
+    "zeroAreaUvTriangles": [],
+    "nonManifoldEdges": 0
+  },
+  "sixInstancesTriangles": 4008,
+  "materialSlots": 1,
+  "textures": [
+    {
+      "name": "KH_HalloweenRibbon_BaseColor.png",
+      "width": 1774,
+      "height": 887,
+      "alpha": "opaque",
+      "role": "sRGB BaseColor"
+    }
+  ],
+  "rig": "none; rigid neck-front accessory",
+  "unityAxes": "Y up, Z outward; validate with asymmetric short tails",
+  "sourceInputs": "Original mathematical folded cloth surfaces. Original texture generated with built-in Imagegen 2026-10-14, no reference image.",
+  "verification": "Blender geometry/UV and FBX roundtrip only. Dog fit/Unity rendering/target performance pending.",
+  "hashes": {
+    "KH_HalloweenRibbon.fbx": "3f2f0e542682fe60f9162f37beef13b1e733e463849ee74b3c4a1b568f5232ed",
+    "KH_HalloweenRibbon_BaseColor.png": "92ee1b5d4dd7f2a4d0ed24caab569112b16d8dd751e67b388fe3ea91de09a4a4"
+  }
+}

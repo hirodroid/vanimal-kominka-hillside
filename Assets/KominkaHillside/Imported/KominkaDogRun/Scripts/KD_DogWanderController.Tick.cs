@@ -390,6 +390,7 @@ namespace KominkaDogRun
         /// Own fields first; the cross-behaviour reads last.</summary>
         bool TickBusy()
         {
+            if (paradeActive) return true;
             // IMP-DOG-036: an ownership change decides now (a legs frame must never move a root this client no longer owns)
             if (_dogOwner != IsDogOwner()) return true;
             // (RC-14's "a leash vetoed in the water: every frame" is retired with the veto, IMP-DOG-053: a leash in the water is the

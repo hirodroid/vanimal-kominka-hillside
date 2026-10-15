@@ -1,0 +1,19 @@
+2026-10-15 / integration010
+Implementer: root. Independent read-only reviewer: parade_choreography_consult (D/M/X).
+Scope: dedicated CE menu, authenticated hosting gate, removal of public-preview/plaza entry, event band, setup/verification compatibility.
+
+P1: Closed progress UI could not be reopened while the parade was active.
+Fixed: owned product row/detail says View progress; opens the existing panel, without another start request.
+P2: General setup did not wire the dedicated panel, and its verifier assumed every product was a normal LiveShow.
+Fixed: dedicated panel wiring, dedicated product mapping, row counts use max(shows,products), menu-entry detection uses liveProducts.
+Follow-up independent review: no remaining required findings.
+
+No issues found in authenticated caller OwnedBy gate, removal of development bypass,
+dedicated pending CE row fail-closed behavior, empty-listing FX exclusion, consent UI preservation.
+Additional self-check: general Shop verification required an explicit localization-key map; new row added and Shop verification PASS.
+
+Initial automatic approval review rejected an implementation proposal retaining the developmentEnabled bypass.
+Resolved by removing that bypass completely. Serialized field remains only for compatibility.
+
+Not tested: real Store purchase/gift, owned hosting in Udon VM, multiplayer/late join, Quest/iOS.
+Dedicated Product ID and Listing ID are still missing. No purchase was initiated. No upload performed.

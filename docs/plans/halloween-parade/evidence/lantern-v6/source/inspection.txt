@@ -1,0 +1,15 @@
+2026-10-14T23:15:10.8983716Z
+Candles size=(0.1074, 0.4863, 0.1074) center=(0.0000, 0.2432, 0.0000)
+  Candles(Clone) mesh=Candles tri=2152 bounds=Center: (0.00, 0.24, 0.00), Extents: (0.05, 0.24, 0.05) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Candles_B size=(0.1074, 0.4863, 0.1074) center=(0.0000, 0.2432, 0.0000)
+  Candles_B(Clone) mesh=Candles_B tri=2930 bounds=Center: (0.00, 0.24, 0.00), Extents: (0.05, 0.24, 0.05) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Candles_O1 size=(0.1074, 0.4863, 0.1074) center=(0.0000, 0.2432, 0.0000)
+  Candles_O1(Clone) mesh=Candles_O1 tri=2636 bounds=Center: (0.00, 0.24, 0.00), Extents: (0.05, 0.24, 0.05) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Candles_O2 size=(0.1074, 0.4863, 0.1074) center=(0.0000, 0.2432, 0.0000)
+  Candles_O2(Clone) mesh=Candles_O2 tri=2636 bounds=Center: (0.00, 0.24, 0.00), Extents: (0.05, 0.24, 0.05) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Candle_Pumpkin size=(0.1836, 0.4531, 0.1836) center=(0.0000, 0.2266, -0.0010)
+  Candle_Pumpkin(Clone) mesh=Candle_Pumpkin tri=4202 bounds=Center: (0.00, 0.23, 0.00), Extents: (0.09, 0.23, 0.09) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Halloween Outside Lamp_01 size=(0.9277, 2.8496, 0.3477) center=(-0.0313, 1.4248, 0.0146)
+  Halloween Outside Lamp_01(Clone) mesh=Halloween Outside Lamp_01 tri=9706 bounds=Center: (-0.03, 1.42, 0.01), Extents: (0.46, 1.42, 0.17) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard
+Halloween Outside Lamp_04 size=(1.6680, 2.4180, 0.5859) center=(0.0000, 1.2090, -0.0039)
+  Halloween Outside Lamp_04(Clone) mesh=Halloween Outside Lamp_04 tri=16496 bounds=Center: (0.00, 1.21, 0.00), Extents: (0.83, 1.21, 0.29) scale=(1.00, 1.00, 1.00) mats=Halloween Decoration_2022/Standard,Emission_Halloween Decoration_2022/Standard

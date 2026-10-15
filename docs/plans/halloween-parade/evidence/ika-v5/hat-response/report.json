@@ -1,0 +1,69 @@
+{
+    "utc": "2026-10-14T22:26:53.3713309Z",
+    "directory": "Temp/halloween-parade/preview/20261014-222653",
+    "dirtyBefore": false,
+    "dirtyAfter": false,
+    "views": [
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/060.3-follow.png",
+            "view": "follow",
+            "seconds": 60.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/060.3-roadside.png",
+            "view": "roadside",
+            "seconds": 60.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/061.3-follow.png",
+            "view": "follow",
+            "seconds": 61.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/061.3-roadside.png",
+            "view": "roadside",
+            "seconds": 61.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/062.3-follow.png",
+            "view": "follow",
+            "seconds": 62.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/062.3-roadside.png",
+            "view": "roadside",
+            "seconds": 62.3125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/062.8-follow.png",
+            "view": "follow",
+            "seconds": 62.8125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/062.8-roadside.png",
+            "view": "roadside",
+            "seconds": 62.8125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/063.8-follow.png",
+            "view": "follow",
+            "seconds": 63.8125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/063.8-roadside.png",
+            "view": "roadside",
+            "seconds": 63.8125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/064.8-follow.png",
+            "view": "follow",
+            "seconds": 64.8125
+        },
+        {
+            "image": "Temp/halloween-parade/preview/20261014-222653/064.8-roadside.png",
+            "view": "roadside",
+            "seconds": 64.8125
+        }
+    ],
+    "limits": "Edit-mode mono daytime. Existing dog mesh poses placed at intended targets; no walking/Animator/network/device/audio acceptance. Dedicated show Timeline and particle age evaluated on disposable copies."
+}

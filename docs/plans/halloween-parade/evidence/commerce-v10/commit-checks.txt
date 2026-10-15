@@ -1,0 +1,8 @@
+2026-10-15 commit preparation
+User report: 実機確認、マルチプラットフォームでの確認もOKでした。
+Independent scope review: parade_commit_review; no edits or Unity operations by reviewer. Exclude unrelated DES-UI-006/mock HTML and 10 texture importer .meta changes. Include compiled Program assets reflecting already committed source fields.
+Checks: C# csErrors=0 (nochange), Udon errors=0; paid-menu verification PASS; Halloween contract 163 cases PASS; harness gate 11 tests PASS with Git Bash on PATH; documentation links and issue consistency PASS.
+First harness-gate run used the host's default bash (WSL) and failed to start as expected; rerun with the documented Git Bash path passed. No Play invocation.
+Cleanup: 620 files / 69.24 MiB archived at Logs/parade-cleanup-20261015; SHA256 manifest retained there. Includes rejected/generated and superseded thumbnails, 600 video-source PNG frames, 7 automatic showplan backups and metadata. Source photo, adopted 1024 CE PNG, rebuild script, comparison videos, review reports and current assets retained.
+Automatic approval review rejected permanent deletion due to potential loss of verification evidence. Safer archive operation succeeded; nothing was permanently deleted.
+Scene: includes previously committed IMP-UI-010 save reflection deferred by commit 18641ec. Runtime/show behavior was not changed during cleanup. Purchased pack and generated purchased mesh/material binaries remain excluded by .gitignore.

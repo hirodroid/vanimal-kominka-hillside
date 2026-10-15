@@ -816,6 +816,8 @@ namespace KominkaDogRun
         /// **`_lastReqResult` が嘘をつく**。増える入口も同じ戻り値で守られる。</summary>
         bool StartFetch(int playerId)
         {
+            KD_DogWanderController paradeWander = MyWander();
+            if (paradeWander != null && paradeWander.ParadeReserved) return false;
             if (WaterHoldsThrow(playerId)) return false;   // IMP-DOG-020: in the water, walk out first (HillsideWater.cs)
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) return false;
             if (frisbeeCatch != null && frisbeeCatch.IsEngaged) return false;

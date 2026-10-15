@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text;
 using UdonSharp;
 using UdonSharpEditor;
@@ -736,15 +737,15 @@ namespace KominkaDogRun.Editor
                     log.AppendLine("   WARN カタログに Live の商品が無い — 先に Tools/KominkaHillside/Menu/4 Setup Shop");
             }
             var liveShows = KD_DogDefs.LiveShows;
-            int liveN = liveShows.Length;
+            int liveN = Mathf.Max(liveShows.Length, KD_DogDefs.LiveProducts.Length);
             // 口は 9 つ (_Live0.._Live8。2026-09-16 パンプキン・パレードで 9 本目。RefreshLiveCatalog と同じ上限)
             if (liveN > 9)
             {
                 throw new System.InvalidOperationException("Live の作品が " + liveN
                     + " 本ある - 板の口 (_Live0.._Live8) は9つ。イベント口を増やしてから再実行すること");
             }
-            var liveItems = new KD_ShopItem[liveN];
-            var liveTitles = new string[liveN];
+            var liveItems = new KD_ShopItem[liveShows.Length];
+            var liveTitles = new string[liveShows.Length];
             var liveLabels = new TMPro.TextMeshProUGUI[liveN];
             var liveSubLabels = new TMPro.TextMeshProUGUI[liveN];
             var liveButtons = new GameObject[liveN];
@@ -755,12 +756,14 @@ namespace KominkaDogRun.Editor
             var liveGiftLabels = new TMPro.TextMeshProUGUI[liveN];
             for (int i = 0; i < liveN; i++)
             {
+                if (i < liveShows.Length) {
                 liveTitles[i] = liveShows[i].title;
                 foreach (var it in liveCatalog)
                     if (it.productKey == liveShows[i].productKey) { liveItems[i] = it; break; }
                 if (liveItems[i] == null)
                     log.AppendLine("   WARN [" + i + " " + liveShows[i].slug + "] 商品 (productKey "
                         + liveShows[i].productKey + ") がカタログに無い — この行は暗いまま。先に Shop/2 - Setup Shop");
+                }
 
                 float x = (i % 2 == 0) ? -180f : 180f;
                 float y = 78f - (i / 2) * 100f;
@@ -812,6 +815,8 @@ namespace KominkaDogRun.Editor
             if (liveProducts.Length > liveN)
                 throw new System.InvalidOperationException("Live の商品が " + liveProducts.Length + " 件 — 一覧の行 (作品数 " + liveN + ") より多い");
             pouch.liveProducts = liveProducts;
+            pouch.hillsideParadePanel = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_HalloweenParadePanel>(true)
+                .FirstOrDefault(p => p.gameObject.scene == pouch.gameObject.scene);
             EnsureLiveDetail(pages[KD_TreatPouch.TabLive], pouch, font, pouchUdon, round, log);
             // P10 (2026-09-16): ヘッダとタブの間のインフォメーション帯。位置は LayoutFrame が決める。既定は非アクティブ (販売中だけ実行時に出す)
             {

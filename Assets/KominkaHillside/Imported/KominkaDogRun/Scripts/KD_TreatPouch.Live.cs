@@ -10,6 +10,10 @@ namespace KominkaDogRun
     /// Start/Update/LateUpdate・同期変数・public フィールドは主ファイル。ここは主にメソッド (セクション固有の private フィールド・const は同居する)。分割はメンバー境界での機械的な移動で挙動不変。共有処理の所在はメソッド名で grep する (ファイル名は目安)。</summary>
     public partial class KD_TreatPouch
     {
+        public KominkaHillside.KH_HalloweenParadePanel hillsideParadePanel;
+        private bool IsHillsideParade(KD_ShopItem it) { return it != null && it.productKey == HalloweenProductKey; }
+        private bool ParadeInProgress() { return hillsideParadePanel != null && hillsideParadePanel.parade != null && hillsideParadePanel.parade.Phase != 0; }
+        private bool ParadeHostOn() { return hillsideParadePanel != null && hillsideParadePanel.parade != null && (ParadeInProgress() || hillsideParadePanel.parade._LocalCanStart()); }
         // ============================================================
         // ライブタブ — **商品の一覧 → (未所持) 詳細 → 買う / (所持) 開催**
         //
@@ -86,6 +90,11 @@ namespace KominkaDogRun
         {
             KD_ShopItem it = LiveProductAt(product);
             if (it == null) return;
+            if (IsHillsideParade(it))
+            {
+                if (!ParadeHostOn()) { Redraw(); return; }
+                _Close(); hillsideParadePanel._Open(); if (!ParadeInProgress()) hillsideParadePanel._Start(); return;
+            }
             int n = LiveShowCount(it);
             if (n > 1) { _liveProduct = product; _livePage = LivePageSongs; _liveConfirmRow = -1; _liveGiftRow = -1; Redraw(); return; }
             int liveId = LiveShowOf(it, 0);
@@ -104,7 +113,7 @@ namespace KominkaDogRun
         }
 
         // ---- P10: インフォメーション帯 (イベントがあるときだけ 1 件) ----
-        public const string HalloweenProductKey = "live.pumpkin_parade_set";
+        public const string HalloweenProductKey = KominkaHillside.KH_HalloweenParade.ProductKey;
 
         /// <summary>期間限定の販売が終わったか (パンプキン・パレード: 2026-10-31 23:59 JST = 14:59 UTC)。買った人は以後も使える。
         /// **同じ CE Listing の品 (かざりのセット行、パーティクルのかぼちゃ) も同じ判定** — 売り場が 3 つあるので 1 か所で持つ。</summary>
@@ -115,7 +124,7 @@ namespace KominkaDogRun
             if (!halloween && it.IsCE())
             {
                 KD_ShopItem hp = LiveProductAt(LiveProductIndexOf(HalloweenProductKey));
-                halloween = hp != null && it.ceListingId == hp.ceListingId;
+                halloween = hp != null && !string.IsNullOrEmpty(hp.ceListingId) && it.ceListingId == hp.ceListingId;
             }
             if (!halloween) return false;
             return HalloweenSaleClosedNow();
@@ -287,7 +296,7 @@ namespace KominkaDogRun
         private string LiveFxNames(KD_ShopItem it)
         {
             string s = "";
-            if (it == null || !it.IsCE() || fxItems == null) return s;
+            if (it == null || !it.IsCE() || string.IsNullOrEmpty(it.ceListingId) || fxItems == null) return s;
             for (int i = 0; i < fxItems.Length; i++)
             {
                 KD_ShopItem fx = fxItems[i];
@@ -395,7 +404,7 @@ namespace KominkaDogRun
                         rowOn = true;
                         title = L(it.displayNameKey);
                         sub = LiveJoin(LiveTagOf(it), LivePriceText(it));
-                        if (it.Owned()) { show = true; on = hostOn; gift = CanGift(it); }   // 所有済みの買い切り CE は [ギフト] も (IMP-PRG-012)
+                        if (it.Owned()) { show = true; on = IsHillsideParade(it) ? ParadeHostOn() : hostOn; gift = CanGift(it); if(IsHillsideParade(it)&&ParadeInProgress())buttonWord=L("live.parade.progress"); }
                         else if (LiveSaleClosed(it)) { show = false; sub = LiveJoin(LiveTagOf(it), L("live.saleClosed")); }
                         else { show = true; on = true; buttonWord = L("KD_TreatPouch.WordLiveMore"); }
                     }
@@ -439,7 +448,7 @@ namespace KominkaDogRun
                     liveGiftLabels[i].text = L("product.gift");
             }
 
-            RedrawLiveDetail(current, hostOn);
+            RedrawLiveDetail(current, IsHillsideParade(current) ? ParadeHostOn() : hostOn);
 
             // ---- 状態の 1 行 (DES-PRG-002 §1.1「待機中は残り秒を表示」) ----
             if (liveStatusLabel != null)
@@ -519,14 +528,15 @@ namespace KominkaDogRun
             if (liveDetailNote != null)
             {
                 bool closed = LiveSaleClosed(it);
-                string note = it.productKey == HalloweenProductKey ? L(closed && !owned ? "live.detail.limitedClosed" : "live.detail.limited")
+                string note = it.productKey == HalloweenProductKey ? L(closed && !owned ? "live.detail.limitedClosed" : "live.parade.limited")
                     : owned ? "" : it.IsCE() ? L("live.detail.buyNoteCe") : L("live.detail.buyNotePt");
                 // 開催すると全員が見られる (particle-live-vessel §1 の商品価値) は所持の有無に関わらず必ず出す (2026-09-17 ユーザー指摘: どこにも書いていなかった)
                 string shared = L("live.detail.shared");
                 liveDetailNote.text = note.Length == 0 ? shared : shared + "\n" + note;
+                if (IsHillsideParade(it) && it.CeWithheld()) liveDetailNote.text = L("live.parade.pending");
                 if (liveDetailAction != null && closed && !owned) liveDetailAction.SetActive(false);
             }
-            if (liveDetailActionLabel != null) liveDetailActionLabel.text = owned ? L("KD_TreatPouch.WordLiveHost") : L("KD_TreatPouch.WordBuyHere");
+            if (liveDetailActionLabel != null) liveDetailActionLabel.text = owned ? L(IsHillsideParade(it)&&ParadeInProgress()?"live.parade.progress":"KD_TreatPouch.WordLiveHost") : L("KD_TreatPouch.WordBuyHere");
             bool on = owned ? hostOn : (it.IsCE() ? it.CePurchasesLoaded() : it.CanBuy());
             if (liveDetailActionButton != null) liveDetailActionButton.interactable = on;
             if (liveDetailActionImage != null) liveDetailActionImage.color = on ? recallOnColor : recallOffColor;

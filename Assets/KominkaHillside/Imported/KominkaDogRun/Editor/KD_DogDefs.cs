@@ -518,6 +518,7 @@ namespace KominkaDogRun.Editor
         {
             // 裏山改変: 裏山専用ライブの 1 商品だけ (Point 30pt)
             new KD_LiveProduct("live.hillside_dusk", "紅葉が星になる"),
+            new KD_LiveProduct(KominkaHillside.KH_HalloweenParade.ProductKey, "かぼちゃ灯りの坂道行進"),
         };
 
         /// <summary>ステージの置き場所 (`KD_Places` 直下の local)。**全曲同じ** —

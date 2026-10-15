@@ -1,0 +1,109 @@
+{
+  "utc": "2026-10-14T23:21:06.6713835Z",
+  "directory": "docs/plans/halloween-parade/evidence/lantern-v6/details",
+  "dirtyBefore": false,
+  "dirtyAfter": false,
+  "views": [
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/050.0-follow.png",
+      "view": "follow",
+      "seconds": 50
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/050.0-roadside.png",
+      "view": "roadside",
+      "seconds": 50
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/051.3-follow.png",
+      "view": "follow",
+      "seconds": 51.25
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/051.3-roadside.png",
+      "view": "roadside",
+      "seconds": 51.25
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/055.8-follow.png",
+      "view": "follow",
+      "seconds": 55.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/055.8-roadside.png",
+      "view": "roadside",
+      "seconds": 55.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/063.8-pumpkin-lamp--1.png",
+      "view": "pumpkin-lamp--1",
+      "seconds": 63.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/063.8-pumpkin-lamp-1.png",
+      "view": "pumpkin-lamp-1",
+      "seconds": 63.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/063.8-follow.png",
+      "view": "follow",
+      "seconds": 63.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/063.8-roadside.png",
+      "view": "roadside",
+      "seconds": 63.79999923706055
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-plaza-standing.png",
+      "view": "plaza-standing",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-plaza-middle.png",
+      "view": "plaza-middle",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-plaza-low.png",
+      "view": "plaza-low",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-plaza-near.png",
+      "view": "plaza-near",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-0.png",
+      "view": "ribbon-0",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-1.png",
+      "view": "ribbon-1",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-2.png",
+      "view": "ribbon-2",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-3.png",
+      "view": "ribbon-3",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-4.png",
+      "view": "ribbon-4",
+      "seconds": 190.8000030517578
+    },
+    {
+      "image": "docs/plans/halloween-parade/evidence/lantern-v6/details/190.8-ribbon-5.png",
+      "view": "ribbon-5",
+      "seconds": 190.8000030517578
+    }
+  ],
+  "limits": "Edit mono parade twilight at authored shared-clock envelope. Dog meshes are static snapshots; no runtime/dog-dance/audio-sync/VR/network acceptance."
+}

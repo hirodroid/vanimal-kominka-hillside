@@ -235,6 +235,7 @@ namespace KominkaHillside
         public void ReqAttach(int dog, int hand, int destination)
         {
             if (!Networking.IsOwner(gameObject) || dog < 0 || dog >= dogRoots.Length || hand < 0 || hand > 1) return;
+            if (parade != null && parade._BlocksDog(dog)) return;
             VRCPlayerApi caller = NetworkCalling.CallingPlayer;
             if (!Utilities.IsValid(caller) || dogRoots[dog] == null || _IsLeashed(dog)) return;
             if (Vector3.Distance(caller.GetPosition(), dogRoots[dog].position) > attachReach) return;

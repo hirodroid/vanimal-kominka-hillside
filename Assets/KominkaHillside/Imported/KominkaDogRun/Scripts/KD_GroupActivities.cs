@@ -16,6 +16,7 @@ namespace KominkaDogRun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KD_GroupActivities : UdonSharpBehaviour
     {
+        public KominkaHillside.KH_HalloweenParade parade;
         public KD_LiveSystem live;
         public KD_DogPack pack;
         public KD_ShopItem formationItem, playItem;
@@ -99,7 +100,7 @@ namespace KominkaDogRun
         {
             if (!Networking.IsOwner(gameObject) || !Utilities.IsValid(caller)) return;
             int result = 3;
-            if (expected == revision)
+            if (expected == revision && (parade == null || !parade.BlocksNewUses || op == 0 || op == 6))
             {
                 // 「開催をおわる」: 開催者本人、または部屋の管理者 (オーナー優先、不在時だけ Master。IMP-NET-007)。
                 // 管理者は受理直前に在席を測り直す — 代行 Master の要求がオーナー復帰の直後に届いても通さない
@@ -141,6 +142,13 @@ namespace KominkaDogRun
                 _requestState = result;
         }
         // Owner only. The manager (same Owner) turns each participant's current spot into its new roaming home.
+        public void _EndForParade()
+        {
+            if (parade == null || !parade.Committed || !Networking.IsOwner(gameObject)) return;
+            if (mode == 0 && raceBall < 0) return;
+            EndGathering(); raceBall = -1; raceWinner = -1; raceThrower = -1; revision++; RequestSerialization();
+        }
+
         private void EndGathering()
         {
             bool wasGather = mode == 1;
@@ -159,7 +167,7 @@ namespace KominkaDogRun
             if (Mode == 1 && !_IsParticipant(i)) return false;
             return f != null && w != null && f.gameObject.activeInHierarchy && f.IsIdle && !f.PetActive
                 && f.WaterPose == 0   // IMP-DOG-020: a wading dog does not join (it walks out instead, DES-DOG-004 B-1)
-                && !w.CandyReserved
+                && !w.CandyReserved && !w.ParadeReserved
                 && (w.petController == null || !w.petController.IsPetting)
                 && (w.sleepBoard == null || !w.sleepBoard.IsSleeping(i)) && !w.IsAsleep && !w.IsResting;
         }

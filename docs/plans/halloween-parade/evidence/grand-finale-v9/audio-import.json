@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-15T03:05:10.245Z",
+  "musicRevision": "005",
+  "source": "C:/work/unity/vrc-music-agent/songs/KH_HalloweenParade/versions/005/output/master.wav",
+  "destination": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav",
+  "sha256": "fd51f28b321c4add1f66c1b6c358608e61171f878053d5040f4c28eb4d8ff0df",
+  "guid": "60a9419c40900594ebe5c10f8e28317d",
+  "meta": "fileFormatVersion: 2\nguid: 60a9419c40900594ebe5c10f8e28317d\nAudioImporter:\n  externalObjects: {}\n  serializedVersion: 7\n  defaultSettings:\n    serializedVersion: 2\n    loadType: 2\n    sampleRateSetting: 0\n    sampleRateOverride: 44100\n    compressionFormat: 1\n    quality: 0.65\n    conversionMode: 0\n    preloadAudioData: 0\n  platformSettingOverrides: {}\n  forceToMono: 0\n  normalize: 1\n  loadInBackground: 0\n  ambisonic: 0\n  3D: 1\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n",
+  "durationSeconds": 220,
+  "samples": 10560000,
+  "sampleRate": 48000,
+  "channels": 2,
+  "sceneFileUnchanged": true,
+  "metaUnchanged": true,
+  "sceneDirty": false,
+  "play": false,
+  "audioListening": "not-performed"
+}

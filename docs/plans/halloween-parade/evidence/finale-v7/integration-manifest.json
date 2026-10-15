@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-15T00:27:06.389Z",
+  "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+  "sceneSha256": "7fe788ca0a7966a6120de875d780b38c92c322f4ac8921acaf28b417a7fa49e3",
+  "timelineRevision": "004",
+  "visualRevision": "007",
+  "musicRevision": "003",
+  "files": [
+    {
+      "path": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav",
+      "sha256": "d9672b7a741e5d46a86a2b882a21e69a8e8aef9564191ada077d118806007b15"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/HalloweenParade/Companions/KH_StoryCast.anim",
+      "sha256": "f836fe031bdb38da973551cb0b3fdaffb3f5bc21bbc7d1f7f1e352acb286353e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/HalloweenParade/IKA2022/LeaderPumpkin.asset",
+      "sha256": "d7355ad4f26bc85dfa964c6acd1de9eb1bc624862fabac071a7b52fee3abf67f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/HalloweenParade/IKA2022/LeaderPumpkin.mat",
+      "sha256": "442fc5bab170d93ec623b9575928b5bf343cd6b2ba8c9e309ca1c41dfdc2d4a7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/HalloweenParade/Finale007.json",
+      "sha256": "dce38c7cfeb4f2e121b0c29b73213ea78eef5371a03ee4bfa2cc7f450649db75"
+    }
+  ],
+  "bundles": [
+    {
+      "path": "Temp/kd-buildsize/bundle-android/kdscene",
+      "bytes": 88539026,
+      "mtime": "2026-10-15T00:23:10.586Z"
+    },
+    {
+      "path": "Temp/kd-buildsize/bundle-android-raw/kdscene",
+      "bytes": 267035040,
+      "mtime": "2026-10-15T00:24:14.529Z"
+    }
+  ]
+}

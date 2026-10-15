@@ -1334,6 +1334,7 @@ namespace KominkaDogRun
             // IMP-DOG-053 (2026-10-11 の決定 DES-DOG-010 で上書き): a leash first seen while the dog is in the water is taken up (the
             // RC-14 veto is retired); the leash branch follows the holder into / out of the river (HillsideLeashRiver.cs)
             _dbgTickExit = 0;   // 裏山改変 (2026-10-02 wash keep-out round 5): どこで return したか (ハーネスの読み出し。int の書き込みだけ)
+            if (UpdateParade()) { _dbgTickExit = 13; _behaviorSelectionValid = false; NotifyPlay(); return; }
             if (UpdateHillsideLeash()) { _dbgTickExit = 1; _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             _candyTicked = UpdateCandyPerformance();   // IMP-DOG-034: remembered for TickBusy (Tick.cs)
@@ -1879,9 +1880,11 @@ namespace KominkaDogRun
                 // 洗われていない犬は WashPawPose が false (_washActive が立たない) なので、下の 2 式は従来と同じ値になる
                 // _wasMoving: the Walk / Run this frame's ApplyMoveAnim wrote (incl. its stop hold) - no static pose while the legs move
                 bool washPaw = WashPawPose && !_wasMoving && !_wantSit && !_wantLieDown && !_groupSit && !IsCompanionReady;
-                ApplyCompanionAnimation(_wantSleep && pose == 0 && !stretch,
-                    washPaw || _groupSit || (IsCompanionReady && (pose != 0 || stretch)),
-                    washPaw ? 3 : (_groupSit ? 2 : animation), stretch ? slot.TrickTime : 0f);   // 裏山改変: IMP-DOG-054 TrickTime
+                bool paradeDance = paradeActive && paradeDancePose >= 10;
+                ApplyCompanionAnimation(!paradeDance && _wantSleep && pose == 0 && !stretch,
+                    paradeDance || washPaw || _groupSit || (IsCompanionReady && (pose != 0 || stretch)),
+                    paradeDance ? paradeDancePose : (washPaw ? 3 : (_groupSit ? 2 : animation)),
+                    paradeDance ? paradeDanceTime : (stretch ? slot.TrickTime : 0f));
             }
 
             if (breathSource == null) return;

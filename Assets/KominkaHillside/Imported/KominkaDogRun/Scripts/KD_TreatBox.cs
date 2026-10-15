@@ -468,6 +468,10 @@ namespace KominkaDogRun
             // じゃれの 2 匹 / Candy 演目とその着地・退場。徘徊層の優先順ではどれも おやつ (1.4) より上なので、
             // 配っても一歩も来ず、枠は放置 60 秒で回収され在庫だけ減っていた。**`f.IsIdle` では弾けない** (dogState は Idle のまま)。
             // 拘束されていない犬 (撫でられて観客から外れた犬、かけっこの勝者決定後の犬) は従来どおり候補に残す
+            if (_packWander[d] != null && _packWander[d].ParadeReserved)
+            {
+                if (_packWander[d].paradeDog.parade.Phase != KominkaHillside.KH_HalloweenParade.Reserve || ClaimedSlotOf(d) < 0) return false;
+            }
             if (_packWander[d] != null && _packWander[d].ShowEngaged) return false;
             // 裏山改変 (IMP-DOG-014): 集合中・フリスビー中の犬には配らない (HillsideDogBusy)。
             // どれも徘徊層がおやつより優先するので、配っても来ずに枠が放置 60 秒で回収され在庫だけ減る (上の ShowEngaged と同じ理由)。

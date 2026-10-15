@@ -1,0 +1,4 @@
+2026-10-15T03:08:58.046Z
+Library/LastBuild.buildreport read via InternalEditorUtility.LoadSerializedFileAndForget; BuildReport among8 objects.
+Succeeded errors=0 warnings=2 output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/kd-buildsize/bundle-android-raw
+Edit play=False dirty=False. Compressed individual report not retained; fresh compressed output bytes recorded separately. Not SDK upload or device certification.

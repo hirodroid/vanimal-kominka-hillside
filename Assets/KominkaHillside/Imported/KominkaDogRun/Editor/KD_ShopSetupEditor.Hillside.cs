@@ -104,6 +104,7 @@ namespace KominkaDogRun.Editor
             { "wash.water_set", "KD_ShopItem_Wash_Water.displayNameKey.0" },
             { "wash.finish_set", "KD_ShopItem_Wash_Finish.displayNameKey.0" },
             { "wash.station_set", "KD_ShopItem_Wash_Station.displayNameKey.0" },
+            { KominkaHillside.KH_HalloweenParade.ProductKey, "KD_ShopItem_Live_HillsideHalloweenParade.displayNameKey.0" },
         };
 
         /// <summary>表に無い行 (後から商品を足したとき) の文言キー。ライブの行と同じ `<シーン名>.displayNameKey.0` 型。</summary>
@@ -417,7 +418,7 @@ namespace KominkaDogRun.Editor
                 if (ub == null || ub.SyncMethod != VRC.SDKBase.Networking.SyncType.None) probs.Add("backing が無いか SyncMethod != None");
                 else if (!ub.publicVariables.TryGetVariableValue("productKey", out key) || key != s.productKey) probs.Add("backing heap の productKey が違う (CopyProxyToUdon 未了)");
                 // 裏山改変 IMP-PRG-002 (2026-10-14): 公開しない CE 行は UdonProduct を持たない (proxy も backing も)。ほかの CE 行は従来どおり
-                bool withheldRow = row != null && KD_ProductDefinitions.IsWithheld(row);
+                bool withheldRow = row != null && (KD_ProductDefinitions.IsWithheld(row) || KD_ProductDefinitions.PendingParade(row));
                 if (s.IsCE() && withheldRow)
                 {
                     VRC.Economy.UdonProduct backingProduct;

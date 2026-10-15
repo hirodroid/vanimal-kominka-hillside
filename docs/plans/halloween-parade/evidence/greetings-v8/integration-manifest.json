@@ -1,0 +1,35 @@
+{
+  "utc": "2026-10-15T01:01:33.751Z",
+  "presentation": "008",
+  "song": "004",
+  "timeline": "004",
+  "model": "007",
+  "sceneClean": true,
+  "play": false,
+  "files": [
+    {
+      "file": "Assets/Scenes/VRCDefaultWorldScene.unity",
+      "sha256": "3e9825ffd117dfde992958792d7ba998d5756dd5461dc94820b5780f25540ce9"
+    },
+    {
+      "file": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav",
+      "sha256": "1acc41b47c9d38723bdbc10be99f6090abdc6b76f46516883eca8ad526971741"
+    },
+    {
+      "file": "Assets/VirtualCampers.LiveGenerator/Shows/kh-halloween-parade/master.wav.meta",
+      "sha256": "efa47ea69e7c512ad71b177767be4401b8960f183f7d71e04e57bcf21599e793"
+    },
+    {
+      "file": "Assets/KominkaHillside/Scripts/KH_HalloweenParadePlayback.cs",
+      "sha256": "2c3499411ce87513bb7435bd848af77f7322d2a4cfb297b768fa14e951f14b54"
+    },
+    {
+      "file": "Assets/KominkaHillside/Scripts/KH_HalloweenParadePlayback.Plaza.cs",
+      "sha256": "7ce1a9659de72b85df64cce1ab9a57dd5c78f9c7b5de550a224c750f2c692938"
+    },
+    {
+      "file": "Assets/KominkaHillside/Scripts/KH_WashSelection.cs",
+      "sha256": "e19ade1937dea58c37d197da41707d2242dcdbc480d9943e63d205d483623ff6"
+    }
+  ]
+}

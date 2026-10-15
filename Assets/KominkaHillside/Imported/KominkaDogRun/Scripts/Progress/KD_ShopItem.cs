@@ -375,7 +375,8 @@ namespace KominkaDogRun
         public bool IsStarter() { return IsFree() || (initialStock > 0 && !IsCE()); }
 
         // net: callable-ok: 読み取りのみ
-        public bool IsCE() { return ceListingId != null && ceListingId.Length > 0; }
+        // This dedicated product remains paid while its IDs await issuance.
+        public bool IsCE() { return productKey == KominkaHillside.KH_HalloweenParade.ProductKey || (ceListingId != null && ceListingId.Length > 0); }
 
         // net: callable-ok: 読み取りのみ
         public bool IsStocked() { return packCount > 0; }
@@ -384,7 +385,7 @@ namespace KominkaDogRun
         /// UdonProduct を刺さなかった CE 行 = Listing はあるが Product が無い。所有は付かず (CeOwnedBy)、購入画面も開かない (_OpenStore)。
         /// フラグは持たず、既にある 2 つの値から導く (IMP-PRG-002 の「入手方法を導く」と同じ規律)。</summary>
         // net: callable-ok: 読み取りのみ
-        public bool CeWithheld() { return IsCE() && ceProduct == null; }
+        public bool CeWithheld() { return IsCE() && (ceProduct == null || string.IsNullOrEmpty(ceListingId)); }
 
         // net: callable-ok: 読み取りのみ — 遠隔から呼ばれても状態が動かない
         public bool Owned()

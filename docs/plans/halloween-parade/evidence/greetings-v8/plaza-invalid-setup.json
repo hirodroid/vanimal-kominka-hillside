@@ -1,0 +1,56 @@
+{
+    "runId": "20261015-005500-750-48c2e5",
+    "status": "INVALID_SETUP",
+    "reason": "System.InvalidOperationException: Expected other three stations\r\n  at KominkaHillside.Editor.KH_HalloweenParadeHarnessEditor.SnapshotPlaza () [0x00326] in C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Scripts\\Editor\\Testing\\KH_HalloweenParadeHarnessEditor.Plaza.cs:22 \r\n  at KominkaHillside.Editor.KH_HalloweenParadeHarnessEditor.AdvanceNight () [0x000d4] in C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Scripts\\Editor\\Testing\\KH_HalloweenParadeHarnessEditor.Night.cs:19 \r\n  at KominkaHillside.Editor.KH_HalloweenParadeHarnessEditor.Advance () [0x0000c] in C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Scripts\\Editor\\Testing\\KH_HalloweenParadeHarnessEditor.Cases.cs:72 \r\n  at KominkaHillside.Editor.KH_HalloweenParadeHarnessEditor.Tick () [0x000b4] in C:\\work\\unity\\vcc\\VAnimal_KominkaHillside\\Assets\\KominkaHillside\\Scripts\\Editor\\Testing\\KH_HalloweenParadeHarnessEditor.cs:117 ",
+    "utc": "2026-10-15T00:55:00.7509897Z",
+    "endedUtc": "2026-10-15T00:55:27.1500574Z",
+    "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+    "hashBefore": "3E9825FFD117DFDE992958792D7BA998D5756DD5461DC94820B5780F25540CE9",
+    "hashAfter": "3E9825FFD117DFDE992958792D7BA998D5756DD5461DC94820B5780F25540CE9",
+    "sourceHashBefore": "7BEC14493BDA2C8200131AD5F28664A36076A2761CE9B0F81890A42D3F29D4E6",
+    "sourceHashAfter": "7BEC14493BDA2C8200131AD5F28664A36076A2761CE9B0F81890A42D3F29D4E6",
+    "assembly": "923f2f9e-e7be-487b-a525-32f85a2c614c",
+    "playerDataBackup": "Logs/kh-halloween-parade-harness/20261015-005500-750-48c2e5/playerdata",
+    "originalBackground": true,
+    "sceneFileUnchanged": true,
+    "sourceUnchanged": true,
+    "sceneCleanAfter": true,
+    "playerDataRestored": true,
+    "settingsRestored": true,
+    "runtimeOverridesRestored": true,
+    "normalPassed": false,
+    "failurePassed": false,
+    "faultWindowCaptured": false,
+    "petBeforePoseRecovered": false,
+    "danceCapture": false,
+    "originalDevelopment": true,
+    "nightCheck": true,
+    "nightPassed": false,
+    "captureEye": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "captureTarget": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "captureFollowEye": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "capturedFrames": 0,
+    "normalRequest": 0,
+    "failureRequest": 0,
+    "faultDog": 5,
+    "failedMask": 0,
+    "externalClientErrors": 0,
+    "deadline": 11211.8903865,
+    "observations": [
+        "t=3.006 frame=221 Resolved one manager and six dogs; real getter/return VM symbols and private pet heap are readable. No ownership changed."
+    ],
+    "errors": [],
+    "limitations": "Bounded local Udon VM: actual start 0-6s, playback disable/reenable and cancel. No full 220s endpoint, real late join, device/visual/audio acceptance. Night Auto/manual preferences checked unchanged."
+}

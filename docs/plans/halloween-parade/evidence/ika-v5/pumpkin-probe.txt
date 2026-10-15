@@ -1,0 +1,7 @@
+mode=1 streams=Position,Normal,Color,UV GPU=True sheet=False mesh=Pumpkin mat=Pumpkin
+particle color=RGBA(255, 255, 255, 255)
+mode=2 streams=Position,Normal,Color,UV GPU=True sheet=False mesh=Pumpkin mat=Pumpkin
+particle color=RGBA(255, 255, 255, 255)
+mode=3 streams=Position,Normal,Color,UV GPU=True sheet=False mesh=Pumpkin mat=Pumpkin
+particle color=RGBA(255, 255, 255, 255)
+uv=2478 vertex=2478 UV min=(0.49, 0.69) max=(1.00, 0.86)

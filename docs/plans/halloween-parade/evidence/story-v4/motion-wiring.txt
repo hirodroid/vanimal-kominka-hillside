@@ -1,0 +1,5 @@
+2026-10-14T22:21:48.5350604Z
+PASS: activation boundary and first Evaluate root poses=240 maxPositionError=1.481268E-05
+Sampled minimum foot vertex / terrain gap across both feet: min=-0.06068993 max=0.05050087 metres. Off-path slope/foot articulation visual acceptance remains separate.
+Limits: Edit cloned Timeline; not runtime Animator/dog/VR/network acceptance.
+sceneDirty=False

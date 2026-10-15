@@ -291,6 +291,25 @@ namespace KominkaDogRun
             if (petController != null) petController._SuppressPetting();
         }
 
+        public void _EndForParade()
+        {
+            KD_DogWanderController w = MyWander();
+            if (!IsDogOwner() || w == null || w.paradeDog == null || !w.paradeDog.Committed) return;
+            _fetchReqPending = false; GiveUp();
+            w._SuppressPettingForParade();
+        }
+        public static bool CanResumeAfterParade(bool idle, bool candy, bool discAllows, bool isolated)
+        { return idle && !candy && discAllows && !isolated; }
+        public void _RefreshPettingAfterParade()
+        {
+            if (petController == null) return;
+            KD_DogWanderController w = MyWander();
+            if (CanResumeAfterParade(IsIdle, CandyBusy(), frisbeeCatch == null || frisbeeCatch.PetAllowed,
+                w != null && w.paradeDog != null && w.paradeDog.Isolated)) petController._ResumePetting();
+            else if (CandyBusy()) w._SuppressPettingForCandy();
+            else petController._SuppressPetting();
+        }
+
         void ReleaseBall()
         {
             // 物理状態を書けるのはボールの Owner だけ。通常は 犬の Owner = 投げた本人 =
@@ -394,6 +413,9 @@ namespace KominkaDogRun
             {
                 if (dogState != StateIdle) petController._SuppressPetting();
                 else if (CandyBusy()) MyWander()._SuppressPettingForCandy();
+                else if (MyWander() != null && MyWander().paradeDog != null
+                    && (MyWander().paradeDog.Isolated || (MyWander().paradeDog.Committed
+                    && MyWander().paradeDog.parade.Phase != KominkaHillside.KH_HalloweenParade.Restore))) MyWander()._SuppressPettingForParade();
                 // IMP-DOG-005: the disc chase owns the head. IMP-DOG-013: read the frisbee's own rule instead of
                 // IsEngaged - Drop (brought the disc back, standing in front of the thrower) is engaged for every
                 // other system and yet is exactly where 撫で belongs, so both controllers resume on one predicate.

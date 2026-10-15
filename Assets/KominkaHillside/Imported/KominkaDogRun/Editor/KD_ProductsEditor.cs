@@ -54,7 +54,7 @@ namespace KominkaDogRun.Editor
                 return SceneComponents<KD_CallPose>().Any(m => m.actionProducts != null && m.actionProducts.Contains(item));
             return SceneComponents<KD_TreatPouch>().Any(p =>
                 (item.categoryKey == "petfx" && p.fxItems != null && p.fxItems.Contains(item))
-                || (item.categoryKey == "live" && p.liveItems != null && p.liveItems.Contains(item)));
+                || (item.categoryKey == "live" && p.liveProducts != null && p.liveProducts.Contains(item)));
         }
         public static void BindCatalog(KD_ShopCatalog catalog, KD_ProgressLedger ledger)
         {

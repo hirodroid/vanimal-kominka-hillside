@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-15",
+  "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+  "revision": "show004 / asset005 / music002",
+  "csharpCompileErrors": 0,
+  "udonCompile": "passed after resume UI runtime change; subsequent changes Editor only",
+  "sceneDirty": false,
+  "playing": false,
+  "activeBuildTarget": "StandaloneWindows64",
+  "cast": {
+    "hats": 2,
+    "skins": 14,
+    "pumpkinParticleSystems": 7
+  },
+  "backingSubjects": 16,
+  "publicLiveEntry": "PASS",
+  "motionRootPoseSamples": 240,
+  "staticViews": 39,
+  "motionFrames": 603,
+  "hatResponseViews": 12,
+  "sourceFiles": 223,
+  "sourceFilesChanged": 0,
+  "upload": false,
+  "limits": "Edit mono daytime rendering; baked dog snapshots, soundtrack added later to preview. Not runtime/dog dance/audio-sync/VR/network/device acceptance."
+}

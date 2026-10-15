@@ -1,0 +1,4 @@
+2026-10-15T01:01:33.716Z
+Latest outer raw BuildReport via read-only GetLatestReport reflection: Succeeded errors=0 warnings=2 output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/kd-buildsize/bundle-android-raw
+Edit play=False dirty=False target=StandaloneWindows64
+Compressed individual report is not retained; both output files newly generated after old files removed by existing measurement tool. Not SDK upload/device verification.

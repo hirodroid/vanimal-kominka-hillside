@@ -18,6 +18,7 @@
 #   bash scripts/kh-harness-run.sh night --confirmed "<ユーザーの指示>" [--only wash,toy] [--skip lap] [--max-hours 8]   # 夜のまとめ回帰 (kh-harness-night.cjs)。--list で一覧
 #   bash scripts/kh-harness-run.sh photo [--cases=H1,H6w] --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1〜2 分。Photo/1・4 の後。--cases で一部だけ)
 #   bash scripts/kh-harness-run.sh video [--cases=V1,V3] --reason ".." --consult ".."   # IMP-WLD-008 Video/3 (動画カメラ W1、約 1 分。Video/1 の後。V0 は必ず回る)
+#   bash scripts/kh-harness-run.sh parade --reason ".." --consult ".." # IMP-LIV-001: normal/cancel + missing-ACK only, about 70s, real local VM
 #
 # 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
 #            3 = 実行前の照合失敗 (接続先違い、Play 中、コンパイル中。何もしない) / 64 = 使い方の誤り
@@ -67,7 +68,7 @@ log_size() { [ -f "$EDITOR_LOG" ] && wc -c < "$EDITOR_LOG" | tr -d ' ' || echo 0
 cmd=${1:-}; shift || true
 # Play を起動する入口は、目的と相談の結論が無ければ Unity に触れる前に止める (kh-harness-gate.cjs、2026-10-03)。
 # 通ったら --reason / --consult / --confirmed を引数から外し、開始と終了 (終了コード・秒) を Logs/kh-harness-run/ledger.jsonl へ残す
-case "$cmd" in proto|walk|segment|lap|photo|video|measure)
+case "$cmd" in proto|walk|segment|lap|photo|video|parade|measure)
   gate_out=$(node scripts/kh-harness-gate.cjs begin "$cmd" "$@") || exit 64
   mapfile -t gate_lines <<<"$gate_out"
   gate_id=${gate_lines[0]}
@@ -107,9 +108,10 @@ case "$cmd" in
       walk) ok=$(run_menu "Course/41 - Stop Walk Harness");;
       photo) ok=$(run_menu "Photo/3b - Stop Harness");;
       video) ok=$(run_menu "Video/3b - Stop Harness");;
+      parade) ok=$(run_menu "Parade/10b - Stop Harness");;
       measure) ok=$(run_menu "Course/2 - Stop Measurement");;
       proto) node scripts/kh-frisbee-harness.cjs stop >/dev/null 2>&1 && ok=True || ok=False;;
-      *) echo "usage: stop <walk|proto|photo|video|measure>"; exit 64;;
+      *) echo "usage: stop <walk|proto|photo|video|parade|measure>"; exit 64;;
     esac
     echo "stop $1 requested=$ok playing=$(is_playing)"
     [ "$ok" = "True" ] || exit 2;;
@@ -198,6 +200,33 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "photo TIMEOUT: no finished run after 400 s (latest: $s)"; exit 2; }
     node -e 'const j=require("./Logs/kh-photo-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("photo",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"playerDataRestored",j.playerDataRestored,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged&&j.playerDataRestored?0:1)';;
+  parade)
+    # Two fixed local-VM cases only. No time acceleration, user fabrication, or broad regression.
+    dance=0; night=0
+    if [ "${1:-}" = "--dance" ]; then dance=1; shift; fi
+    if [ "${1:-}" = "--night" ]; then night=1; shift; fi
+    [ "$#" = 0 ] || { echo "parade: only --dance or --night is supported"; exit 64; }
+    guard
+    prev=$(node -e 'try{console.log(require("./Logs/kh-halloween-parade-harness/latest.json").runId)}catch(e){console.log("")}')
+    if [ "$night" = 1 ]; then ok=$(run_menu "Parade/49 - Night Lifecycle Harness"); elif [ "$dance" = 1 ]; then ok=$(run_menu "Parade/25 - Dance Capture Harness"); else ok=$(run_menu "Parade/10 - Bounded Harness"); fi
+    [ "$ok" = "True" ] || { echo "parade NOT_EXECUTED: ExecuteMenuItem=$ok"; exit 2; }
+    done_=0; t=0
+    while [ $t -lt 180 ]; do
+      sleep 5; t=$((t+5))
+      s=$(node -e 'try{const j=require("./Logs/kh-halloween-parade-harness/latest.json");console.log(j.runId+" "+j.status+" "+(j.endedUtc?"ended":"open"))}catch(e){console.log("none")}')
+      case "$s" in none|"$prev "*)
+        [ $t -ge 30 ] && { echo "parade NO_NEW_RUN after 30s (menu precondition rejected; latest: $s)"; exit 2; }
+        continue;; esac
+      case "$s" in *" RUNNING "*|*" open") continue;; esac
+      [ "$(is_playing)" = "False" ] || continue
+      done_=1; break
+    done
+    if [ "$done_" != 1 ]; then
+      run_menu "Parade/10b - Stop Harness" >/dev/null
+      for i in $(seq 1 10); do [ "$(is_playing)" = "False" ] && break; sleep 2; done
+      echo "parade TIMEOUT: stop requested, latest: $s"; exit 2
+    fi
+    node -e 'const j=require("./Logs/kh-halloween-parade-harness/latest.json");const fresh=j.runId!==process.argv[1];console.log("parade",j.runId,j.status,"fresh",fresh,"normal",j.normalPassed,"failure",j.failurePassed,"dance",j.danceCapture,"frames",j.capturedFrames,"sceneUnchanged",j.sceneFileUnchanged,"sourceUnchanged",j.sourceUnchanged,"restored",j.runtimeOverridesRestored&&j.playerDataRestored&&j.settingsRestored,j.reason||"");process.exit(fresh&&j.endedUtc&&j.status==="PASS"&&j.normalPassed&&(j.failurePassed||(j.nightCheck&&j.nightPassed)||(j.danceCapture&&j.capturedFrames>100))&&j.sceneFileUnchanged&&j.sourceUnchanged&&j.sceneCleanAfter&&j.runtimeOverridesRestored&&j.playerDataRestored&&j.settingsRestored?0:1)' "$prev";;
   video)
     # IMP-WLD-008 Video/3 - Harness (動画カメラ W1、約 1 分)。結果は Logs/kh-video-harness/latest.json。--cases=V1,V3 で一部だけ (V0 は必ず回る)
     cases=""

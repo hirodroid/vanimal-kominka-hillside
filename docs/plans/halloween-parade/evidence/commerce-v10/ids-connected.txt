@@ -1,0 +1,9 @@
+2026-10-15T08:45:40.3976707Z
+PASS: paid menu wiring; no preview bypass; plaza board removed; authenticated owner gate; consent UI preserved.
+IDs configured; real purchase/gift/network acceptance NOT_TESTED.C# compile: csErrors=0, runtime code unchanged; Udon compilation not rerun.
+Save Verified Scene: PARADE_RUNTIME_WIRING_OK / PARADE_SCENE_SAVED.
+After scene reopen, direct Udon backing read:
+ceListingId = prod_a628b66e-0526-4cb7-b720-a559bdb40465
+ceProduct.ID = prod_1f3a7a1e-3fc0-45b3-b868-c2cf00839a83
+Product asset GUID = 4d8387e931c8ed3418335c81f0abd123
+No Play, purchase, gift transaction, Storefront change or upload performed.
