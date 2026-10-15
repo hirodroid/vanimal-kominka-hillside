@@ -17,31 +17,49 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  // (0,-.012,-.035); the handle spans model Y -.072..+.048 and Z -.059..-.012 (front face), the trigger is above at Y +.033.
  public static readonly Vector3 FoamHoldLocalPosition=new Vector3(0f,-.012f,-.035f);
  public static Quaternion FoamHoldLocalRotation{get{return Quaternion.LookRotation(Vector3.up,Vector3.right);}}
- static Transform FoamCannonHold(KH_WashSelection sel)
+ static Transform FoamCannonHold(KH_WashSelection sel){return CodeGunHold(sel,0,FoamHoldName,FoamHoldLocalPosition,FoamHoldLocalRotation);}
+ // BUG-DOG-015 (2026-10-15): the dryer, the same cause as the foam cannon. FBX measured with the lab's check_fbx_axes.cjs (Unity axes):
+ // Dryer_GripAnchor at the model origin with identity rotation (+Z = airflow, +Y = up, +X = right), Dryer_NozzleAnchor (0,.082,.122) with
+ // +Z = airflow; the handle (models_v02.py grip('Dryer ivory handle',(0,.025,-.013),0) loft) spans model x -.02..+.02, y -.07..+.045,
+ // z -.049..-.002 (below the housing, slightly behind), centre (0,-.013,-.025). As Grip (VR: Exact Grip +X forward, +Z up, pitched 30 deg)
+ // the airflow pointed up and the hand sat at the handle's front face (the origin). Slot 4 (Slots[7]) carries the dryer only, so it is
+ // Gun at rest like slot 0. Owned by this code: adjust the two constants below after a PCVR check, then 48 (or 47) and 44.
+ public const int DryerId=7;   // as WateringCanId / WaterPistolId / HoseId (KH_WashSelectionEditor.cs)
+ public const string DryerHoldName="KH_DryerGunHold";
+ public static readonly Vector3 DryerHoldLocalPosition=new Vector3(0f,-.013f,-.025f);
+ // the same frame as KH_FoamCannonGunHold: +X = airflow (model +Z), +Z = up (model +Y), +Y = model +X
+ public static Quaternion DryerHoldLocalRotation{get{return Quaternion.LookRotation(Vector3.up,Vector3.right);}}
+ static Transform DryerHold(KH_WashSelection sel){return CodeGunHold(sel,DryerId,DryerHoldName,DryerHoldLocalPosition,DryerHoldLocalRotation);}
+ /// <summary>Items whose Exact Gun is a child made by this code (not an FBX *_GunHold) and whose slot carries only them (rests as Gun).</summary>
+ static bool CodeGunItem(int id){return id==0||id==DryerId;}
+ static bool DedicatedGunSlot(int s){return s==Slots[0]||s==Slots[DryerId];}
+ /// <summary>Creates / updates the child holdName directly under item id's model (local position / rotation, scale 1) and writes that item's
+ /// slot pickup to orientation Gun with Exact Gun = the child, and gunHolds[id] = the child. Idempotent. Only for CodeGunItem items.</summary>
+ static Transform CodeGunHold(KH_WashSelection sel,int id,string holdName,Vector3 localPosition,Quaternion localRotation)
  {
-  var model=sel.models[0].transform;if(model.name!=Names[0])throw new Exception("models[0] is "+model.name+", expected "+Names[0]);
-  var hold=model.Find(FoamHoldName);
-  if(hold==null){var g=new GameObject(FoamHoldName);Undo.RegisterCreatedObjectUndo(g,"Foam cannon hold");hold=g.transform;hold.SetParent(model,false);}
-  Undo.RecordObject(hold,"Foam cannon hold");hold.localPosition=FoamHoldLocalPosition;hold.localRotation=FoamHoldLocalRotation;hold.localScale=Vector3.one;
-  var pu=sel.pickups[Slots[0]];Undo.RecordObject(pu,"Foam cannon hold");pu.orientation=VRC_Pickup.PickupOrientation.Gun;pu.ExactGun=hold;
+  var m=At(sel.models,id);if(m==null||m.name!=Names[id])throw new Exception(sel.transform.parent.name+": models["+id+"] is "+(m==null?"null":m.name)+", expected "+Names[id]);var model=m.transform;
+  var hold=model.Find(holdName);
+  if(hold==null){var g=new GameObject(holdName);Undo.RegisterCreatedObjectUndo(g,Names[id]+" gun hold");hold=g.transform;hold.SetParent(model,false);}
+  Undo.RecordObject(hold,Names[id]+" gun hold");hold.localPosition=localPosition;hold.localRotation=localRotation;hold.localScale=Vector3.one;
+  var pu=sel.pickups[Slots[id]];Undo.RecordObject(pu,Names[id]+" gun hold");pu.orientation=VRC_Pickup.PickupOrientation.Gun;pu.ExactGun=hold;
   // IMP-DOG-046 (2026-10-11): the hold is per item at runtime (KH_WashSelection.gunHolds; _Apply sets Gun + Exact Gun for it, Grip otherwise).
-  if(sel.gunHolds!=null&&sel.gunHolds.Length>0){sel.gunHolds[0]=hold;EditorUtility.SetDirty(sel);}
+  if(sel.gunHolds!=null&&sel.gunHolds.Length>id){sel.gunHolds[id]=hold;EditorUtility.SetDirty(sel);}
   EditorUtility.SetDirty(hold);EditorUtility.SetDirty(pu);return hold;
  }
  // IMP-DOG-049 (2026-10-11): every Gun item. FoamCannon keeps its own child (above, slot 0 only carries it, so the pickup is written here
- // too); WaterPistol and Hose share the water slot with the watering can (Grip), so only gunHolds[item] is written and _Apply sets
+ // too; BUG-DOG-015 2026-10-15: the Dryer the same on slot 4); WaterPistol and Hose share the water slot with the watering can (Grip), so only gunHolds[item] is written and _Apply sets
  // Gun + Exact Gun when it configures the slot for them. Their Exact Gun is the FBX child *_GunHold as it is (lab handoff 0.4.0: +X =
  // spray, +Z = up, the same frame as KH_FoamCannonGunHold; WashPremium/12 measured it within 1 deg in the prefab, 44 per station).
  // If a PCVR check asks for a different hand pose, add a child under the model as FoamCannonHold does and point gunHolds at it.
- public static readonly int[] GunItems={0,WaterPistolId,HoseId};
- static string GunHoldName(int id){return id==0?FoamHoldName:Names[id]+"_GunHold";}
+ public static readonly int[] GunItems={0,WaterPistolId,HoseId,DryerId};
+ static string GunHoldName(int id){return id==0?FoamHoldName:id==DryerId?DryerHoldName:Names[id]+"_GunHold";}
  static Transform FbxGunHold(KH_WashSelection sel,int id){var m=At(sel.models,id);return m==null?null:m.GetComponentsInChildren<Transform>(true).FirstOrDefault(t=>t.name==GunHoldName(id));}
  static void GunHolds(KH_WashSelection sel,StringBuilder log)
  {
-  FoamCannonHold(sel);
+  FoamCannonHold(sel);DryerHold(sel);   // code-made children (the Dryer FBX has no Dryer_GunHold)
   foreach(int id in GunItems)
   {
-   if(id==0)continue;
+   if(CodeGunItem(id))continue;
    if(At(sel.models,id)==null){if(log!=null)log.AppendLine("  gun hold "+Names[id]+" "+sel.transform.parent.name+": no model yet (run 49)");continue;}
    var h=FbxGunHold(sel,id);if(h==null)throw new Exception(sel.transform.parent.name+": "+Names[id]+" has no "+GunHoldName(id)+" (re-import with 12)");
    if(sel.gunHolds==null||sel.gunHolds.Length<=id)throw new Exception(sel.transform.parent.name+": gunHolds shorter than item "+id+" (run 49)");
@@ -58,13 +76,14 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   var log=new StringBuilder();int created=0;
   foreach(var sel in sels)
   {
-   var pu=sel.pickups[Slots[0]];bool existed=sel.models[0].transform.Find(FoamHoldName)!=null;if(!existed)created++;
+   var pu=sel.pickups[Slots[0]];bool existed=sel.models[0].transform.Find(FoamHoldName)!=null;if(!existed)created++;bool dryerExisted=sel.models[DryerId].transform.Find(DryerHoldName)!=null;
    string before="orientation="+pu.orientation+" exactGun="+(pu.ExactGun==null?"null":pu.ExactGun.name)+" exactGrip="+(pu.ExactGrip==null?"null":pu.ExactGrip.name);
    GunHolds(sel,log);var h=sel.models[0].transform.Find(FoamHoldName);if(sel.gunHolds!=null)Copy(sel);
    log.AppendLine(sel.transform.parent.name+" "+pu.name+" before "+before+" after orientation="+pu.orientation+" exactGun="+h.name+" local="+h.localPosition.ToString("F3")+" rot="+h.localEulerAngles.ToString("F1")+(existed?" (updated)":" (created)"));
+   var dp=sel.pickups[Slots[DryerId]];var dh=sel.models[DryerId].transform.Find(DryerHoldName);log.AppendLine("  "+dp.name+" Dryer orientation="+dp.orientation+" exactGun="+(dp.ExactGun==null?"null":dp.ExactGun.name)+" local="+dh.localPosition.ToString("F3")+" rot="+dh.localEulerAngles.ToString("F1")+(dryerExisted?" (updated)":" (created)"));
    foreach(int id in GunItems)if(id!=0)log.AppendLine("  gunHolds["+id+"] "+Names[id]+" = "+(sel.gunHolds==null||sel.gunHolds.Length<=id||sel.gunHolds[id]==null?"null":sel.gunHolds[id].name));
   }
   EditorSceneManager.MarkSceneDirty(scene);
-  Log("foam-hold","selectors="+sels.Length+" created="+created+" updated="+(sels.Length-created)+"\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene (KH_WashSelection.gunHolds copied to Udon when the category arrays exist). 48 / 49 run the same holds");
+  Log("foam-hold","selectors="+sels.Length+" foam hold created="+created+" updated="+(sels.Length-created)+" (dryer hold per line)\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene (KH_WashSelection.gunHolds copied to Udon when the category arrays exist). 48 / 49 run the same holds");
  }
 }}

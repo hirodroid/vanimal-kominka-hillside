@@ -64,3 +64,5 @@ updated: 2026-10-11
 2026-10-11 (統括): シーンへ適用した。コンパイル 0 → `WashPremium/47` (4 洗い場で Slot0 を Gun、`KH_FoamCannonGunHold` を新規 4) → `44 - Verify Selection` 431 PASS / FAIL 0 (4 か所とも `aimErr=0.00deg upErr=0.00deg`、ノズルは手の 0.182 m 先) → 保存。保存後の差分は Slot0 の VRCPickup 4、持つ点 4、泡銃のプレハブインスタンス 4、中央支柱の位置の 2µm の再計算 1 だけ。Codex 独立レビュー (`c0ca3e5`) は軸の対応を問題なしとした。残り: ユーザーの PCVR (右手・左手でノズルが肘→手の向きか、握りの位置)、Desktop。水鉄砲 (アヒル・魚・竹) とドライヤーは同じ原因の見込みで未対応 (水の枠は道具ごとに持ち方を切り替える必要がある)。
 
 2026-10-15: ドライヤーの持ち手 (位置) と風のパーティクルの撤去は [BUG-DOG-015](BUG-DOG-015-dryer-grip-and-particles.md) で扱う (ユーザー報告・決定 2026-10-15)。水鉄砲 3 種は 9 品構成で提供から外れた。
+
+2026-10-15: ドライヤーも泡銃と同じ Gun の持ち方にした (コードの子 `KH_DryerGunHold`、取っ手の中心 (0,-0.013,-0.025)、枠 4 は休止時も Gun。同日に 4 洗い場へ適用済み (48 → 44 1148 PASS)、PCVR / Desktop の確認待ち。記録は [BUG-DOG-015](BUG-DOG-015-dryer-grip-and-particles.md))。

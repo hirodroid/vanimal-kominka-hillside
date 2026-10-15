@@ -46,8 +46,6 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  static string PathOf(Transform t){return t.parent==null?t.name:PathOf(t.parent)+"/"+t.name;}
  /// <summary>Index of the dropped item whose prefab this scene object instantiates (-1 = none).</summary>
  static int DroppedSource(GameObject go){if(go==null||!PrefabUtility.IsAnyPrefabInstanceRoot(go))return -1;string p=PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go);for(int d=0;d<Names.Length;d++)if(!Offered(d)&&p==Prefabs+Names[d]+".prefab")return d;return -1;}
- // Q6 (wind streaks): thin stretched particles that fly forward fast instead of a slow mist puff. Values are provisional (Play).
- public const float DryerSpeed=2.4f,DryerLifetime=.22f,DryerSizeMin=.004f,DryerSizeMax=.008f,DryerRate=16f,DryerAlpha=.16f,DryerLengthScale=2f,DryerVelocityScale=.035f;
  /// <summary>The model's box in the slot's space from each mesh's own bounds (8 local corners), not from Renderer.bounds: the world AABB of a
  /// model on a yawed station, turned back, grows by width + depth * sin(2 * yaw) (KH_WashSelectionEditor.Build LocalBounds).</summary>
  static Bounds TightBounds(GameObject go,Transform space)
@@ -62,13 +60,6 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   if(first)throw new Exception(go.name+" has no mesh to size its pickup collider");
   return b;
  }
- static void DryerStreaks(ParticleSystem ps)
- {
-  var main=ps.main;main.startSpeed=DryerSpeed;main.startLifetime=DryerLifetime;main.startSize=new ParticleSystem.MinMaxCurve(DryerSizeMin,DryerSizeMax);main.startColor=new Color(.95f,.97f,1f,DryerAlpha);main.gravityModifier=0f;main.maxParticles=32;
-  var em=ps.emission;em.rateOverTime=DryerRate;var sh=ps.shape;sh.angle=5f;sh.radius=.012f;
-  var r=ps.GetComponent<ParticleSystemRenderer>();r.renderMode=ParticleSystemRenderMode.Stretch;r.lengthScale=DryerLengthScale;r.velocityScale=DryerVelocityScale;
-  EditorUtility.SetDirty(ps);EditorUtility.SetDirty(r);
- }
  // The private apply state of a proxy, cleared so the next Edit-mode _Apply configures every slot again (not a runtime path).
  static void ResetApplyState(KH_WashSelection sel)
  {
@@ -77,7 +68,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   ty.GetField("_shownBath",f).SetValue(sel,-2);ty.GetField("_seenRevision",f).SetValue(sel,-1);
  }
  /// <summary>Converts one station in place (idempotent): removes the dropped items' visuals, writes every per-item / per-slot array,
- /// the three homes and the tray, the spray masks and the dryer streaks, the free platform renderers (slats stay hidden as Wash/32 left
+ /// the three homes and the tray, the spray masks, removes the dryer's particles (BUG-DOG-015), the free platform renderers (slats stay hidden as Wash/32 left
  /// them), clears the selection, then applies and copies proxy -> Udon. Returns the number of scene objects removed.</summary>
  static int ConfigureStation(KH_WashSelection sel,StringBuilder log)
  {
@@ -97,11 +88,16 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    if(!tool)continue;
    noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}{float op=At(sel.pulseDurations,i);pulses[i]=PulseSeconds(i);if(op!=pulses[i])log.AppendLine("  pulse "+label+" "+Names[i]+" "+op+" -> "+pulses[i]);}ranges[i]=SprayRange(i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
    if(noz[i]==null||grip[i]==null||!noz[i].IsChildOf(models[i].transform)||sizes[i].x<=.02f)throw new Exception(label+": "+Names[i]+" anchors / collider not built (run 42's data first)");
-   // a Gun hold written for a kept item (GunHolds below: FoamCannon, WaterPistol, Hose) survives a re-run
+   // a Gun hold written for a kept item (GunHolds below: FoamCannon, Dryer, WaterPistol, Hose) survives a re-run
    if(gun[i]!=null&&!gun[i].IsChildOf(models[i].transform)){log.AppendLine("  dropped gunHolds["+i+"] "+gun[i].name+" (not under "+Names[i]+")");gun[i]=null;}
-   if(sprays[i]!=null){var c=sprays[i].collision;c.collidesWith=SprayMask;EditorUtility.SetDirty(sprays[i]);}
+   if(sprays[i]!=null&&i!=DryerId){var c=sprays[i].collision;c.collidesWith=SprayMask;EditorUtility.SetDirty(sprays[i]);}
   }
-  if(sprays[7]==null)throw new Exception(label+": the dryer has no UseMist");DryerStreaks(sprays[7]);
+  // BUG-DOG-015 (2026-10-15, user): no dryer particles (the Q6 wind streaks go). 42 no longer makes its UseMist; on an existing scene the
+  // UseMist 42 added under the dryer's nozzle (an added object on the prefab instance) and any other ParticleSystem under the dryer go here.
+  // Idempotent. The Air loop stays: itemSounds[7] on the slot's sprayAudio, which KH_WashTool plays without a spray (ApplySpray null-guards).
+  if(sprays[DryerId]!=null){log.AppendLine("  removed "+PathOf(sprays[DryerId].transform)+" (Dryer itemSprays, BUG-DOG-015)");UnityEngine.Object.DestroyImmediate(sprays[DryerId].gameObject);}
+  sprays[DryerId]=null;
+  foreach(var ps in models[DryerId].GetComponentsInChildren<ParticleSystem>(true)){if(ps==null)continue;log.AppendLine("  removed "+PathOf(ps.transform)+" (ParticleSystem under the Dryer, BUG-DOG-015)");UnityEngine.Object.DestroyImmediate(ps.gameObject);}
   if(sel.appearFx!=null){var c=sel.appearFx.collision;c.collidesWith=SprayMask;EditorUtility.SetDirty(sel.appearFx);}
   // 3. the three homes and the tray
   var homes=new Transform[KH_WashSelection.Categories];
@@ -117,8 +113,9 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    int first=Order.FirstOrDefault(i=>slotOf[i]==s&&cats[i]>=0&&cats[i]<KH_WashSelection.Categories);bool has=Order.Any(i=>slotOf[i]==s);
    t.nozzle=has?noz[first]:t.transform;t.spray=null;EditorUtility.SetDirty(t.transform);
    // no reference to a removed item's anchor stays on the pickup ("Missing"); the apply of an active slot writes its own hold again
-   // a shared slot (water: can Grip / pistol, hose Gun) rests as Grip; _Apply sets the hold of the item it configures (IMP-DOG-049)
-   var pu=sel.pickups[s];pu.ExactGrip=null;if(s!=Slots[0]){pu.ExactGun=null;pu.orientation=VRC_Pickup.PickupOrientation.Grip;}EditorUtility.SetDirty(pu);
+   // a shared slot (water: can Grip / pistol, hose Gun) rests as Grip; _Apply sets the hold of the item it configures (IMP-DOG-049).
+   // Slot 0 (FoamCannon) and slot 4 (Dryer, BUG-DOG-015) carry one Gun item each and rest as Gun (GunHolds below writes it).
+   var pu=sel.pickups[s];pu.ExactGrip=null;if(!DedicatedGunSlot(s)){pu.ExactGun=null;pu.orientation=VRC_Pickup.PickupOrientation.Grip;}EditorUtility.SetDirty(pu);
   }
   // 5. the free platform: its renderers except the old slats (hidden by Wash/32 under the imported platform) and the premium models
   var platform=table.Find("ImportedPlatform");var premium=models.Where(m=>m!=null).Select(m=>m.transform).ToArray();int slatsHidden=0;
@@ -128,7 +125,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   sel.models=models;sel.itemCategories=cats;sel.itemSlots=slotOf;sel.slotCategories=(int[])SlotCategories.Clone();sel.categoryHomes=homes;
   sel.nozzleAnchors=noz;sel.gripAnchors=grip;sel.gunHolds=gun;sel.colliderCenters=centers;sel.colliderSizes=sizes;sel.pulseDurations=pulses;sel.sprayRanges=ranges;sel.itemSprays=sprays;sel.itemSounds=sounds;sel.bathDepths=depths;sel.freeTableRenderers=free;
   sel.selectedFoam=-1;sel.selectedWater=-1;sel.selectedFinish=-1;sel.selectedBath=-1;
-  GunHolds(sel,log);     // FoamCannon: slot 0 Gun + its Exact Gun (BUG-DOG-010); WaterPistol / Hose: gunHolds = the FBX *_GunHold (IMP-DOG-049)
+  GunHolds(sel,log);     // FoamCannon / Dryer: slot 0 / 4 Gun + their own Exact Gun (BUG-DOG-010 / 015); WaterPistol / Hose: gunHolds = the FBX *_GunHold (IMP-DOG-049)
   ResetApplyState(sel);sel._Apply(false);
   foreach(var p in sel.pickups)EditorUtility.SetDirty(p);foreach(var c in sel.pickupColliders)EditorUtility.SetDirty(c);
   foreach(var t in sel.slots)Copy(t);Copy(sel);
@@ -218,7 +215,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   check(back.publicVariables.TryGetVariableValue("itemCategories",out v)&&v is int[] bc&&bc.SequenceEqual(sel.itemCategories),"saved backing itemCategories "+st);
   check(back.publicVariables.TryGetVariableValue("slotCategories",out v)&&v is int[] bs&&bs.SequenceEqual(SlotCategories),"saved backing slotCategories "+st);
   check(back.publicVariables.TryGetVariableValue("categoryHomes",out v)&&v is Transform[] bh&&bh.SequenceEqual(sel.categoryHomes),"saved backing categoryHomes "+st);
-  // IMP-DOG-049: non-null exactly for the Gun items (FoamCannon its own child, WaterPistol / Hose their FBX *_GunHold), the same as the proxy
+  // IMP-DOG-049: non-null exactly for the Gun items (FoamCannon / Dryer their own child, WaterPistol / Hose their FBX *_GunHold), the same as the proxy
   check(back.publicVariables.TryGetVariableValue("gunHolds",out v)&&v is Transform[] bg&&bg.Length==n&&Enumerable.Range(0,n).All(i=>GunItems.Contains(i)&&Offered(i)?bg[i]!=null&&bg[i]==sel.gunHolds[i]&&bg[i].name==GunHoldName(i):bg[i]==null),"saved backing gunHolds: "+string.Join(", ",GunItems.Select(i=>Names[i]+" "+GunHoldName(i)))+", others Grip "+st);
   check(back.publicVariables.TryGetVariableValue("sprayRanges",out v)&&v is float[] br&&sel.sprayRanges!=null&&br.SequenceEqual(sel.sprayRanges),"saved backing sprayRanges "+st);
   // IMP-DOG-049 (2026-10-11): the can was the toggle (0) until the tilt-to-pour input; it is KH_WashTool.PulseTilt now (the only change). Every
@@ -230,9 +227,13 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   var table=sel.transform.parent.Find("Lift/WashTable");var platform=table.Find("ImportedPlatform");var slats=table.Cast<Transform>().Where(t=>t.name.StartsWith("Slat_")).Select(t=>t.GetComponent<MeshRenderer>()).Where(r=>r!=null).ToArray();
   check(sel.freeTableRenderers!=null&&sel.freeTableRenderers.All(r=>r!=null&&!r.name.StartsWith("Slat_")&&!sel.models.Where(m=>m!=null).Any(m=>r.transform.IsChildOf(m.transform)))&&sel.freeTableRenderers.Length>0,"freeTableRenderers "+st+" = ["+(sel.freeTableRenderers==null?"null":string.Join(", ",sel.freeTableRenderers.Select(r=>r==null?"null":r.name)))+"] (no slat, no premium model)");
   if(platform!=null)check(slats.All(r=>!r.enabled),"old slats hidden under ImportedPlatform "+st+" ("+slats.Count(r=>r.enabled)+" / "+slats.Length+" enabled)");
-  var dryer=At(sel.itemSprays,7);var dr=dryer!=null?dryer.GetComponent<ParticleSystemRenderer>():null;
   VerifyStoreWiring(sel,check,log);   // IMP-DOG-056 (Store.cs): setItems / reset / the board's complete-set Listing and purchase button (54)
-  check(dr!=null&&dr.renderMode==ParticleSystemRenderMode.Stretch&&Mathf.Abs(dryer.main.startSpeed.constant-DryerSpeed)<1e-4f,"dryer wind streaks "+st+" (mode "+(dr==null?"-":dr.renderMode.ToString())+", speed "+(dryer==null?"-":dryer.main.startSpeed.constant.ToString("F2"))+")");
+  // BUG-DOG-015 (2026-10-15): no dryer particles (was the Q6 "dryer wind streaks" check); the Air loop is the slot's sprayAudio, unchanged
+  var dryerSpray=At(sel.itemSprays,DryerId);var dryerPs=sel.models[DryerId]==null?new ParticleSystem[0]:sel.models[DryerId].GetComponentsInChildren<ParticleSystem>(true);var dryerSlotSpray=sel.slots[Slots[DryerId]].spray;
+  check(dryerSpray==null,"dryer itemSprays[7] null "+st+" (actual "+(dryerSpray==null?"null":PathOf(dryerSpray.transform))+")");
+  check(dryerPs.Length==0,"no ParticleSystem under the Dryer model "+st+" ("+dryerPs.Length+(dryerPs.Length>0?": "+string.Join(", ",dryerPs.Select(p=>PathOf(p.transform))):"")+")");
+  check(dryerSlotSpray==null,"dryer slot"+Slots[DryerId]+" spray null after the apply "+st+" (actual "+(dryerSlotSpray==null?"null":dryerSlotSpray.name)+")");
+  check(back.publicVariables.TryGetVariableValue("itemSprays",out v)&&v is Array bsa&&bsa.Length==n&&(bsa.GetValue(DryerId) as UnityEngine.Object)==null,"saved backing itemSprays[7] (Dryer) null "+st);
   foreach(var ps in sel.itemSprays.Where(x=>x!=null))check((ps.collision.collidesWith.value&(1<<22))==0,"spray "+ps.transform.parent.name+"/"+ps.name+" collidesWith leaves out floor 22 "+st+" (mask "+ps.collision.collidesWith.value+")");
  }
  /// <summary>Edit-mode logic on one station's proxy (the shared runtime bodies _Decide / _Apply): Q1 three out at once, Q3 platform and
@@ -251,7 +252,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    var on=Enumerable.Range(0,sel.pickups.Length).Where(s=>sel.pickups[s].pickupable).ToArray();
    check(on.SequenceEqual(new[]{0,2,4})&&sel.models[0].activeSelf&&sel.models[6].activeSelf&&sel.models[7].activeSelf,"Q1 foam + water + finish out at once: pickups ["+string.Join(",",on)+"] (want 0,2,4)");
    check(sel.slots[0].nozzle==sel.nozzleAnchors[0]&&sel.slots[2].nozzle==sel.nozzleAnchors[6]&&sel.slots[4].nozzle==sel.nozzleAnchors[7]&&sel.slots[4].spray==sel.itemSprays[7],"each out slot carries its item's nozzle / spray");
-   check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun==sel.gunHolds[0]&&sel.pickups[2].orientation==VRC_Pickup.PickupOrientation.Grip&&sel.pickups[2].ExactGrip==sel.gripAnchors[6],"hold per item: FoamCannon Gun / WateringCan Grip (actual "+sel.pickups[0].orientation+" / "+sel.pickups[2].orientation+")");
+   check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun==sel.gunHolds[0]&&sel.pickups[2].orientation==VRC_Pickup.PickupOrientation.Grip&&sel.pickups[2].ExactGrip==sel.gripAnchors[6]&&sel.pickups[Slots[DryerId]].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[Slots[DryerId]].ExactGun==sel.gunHolds[DryerId],"hold per item: FoamCannon Gun / WateringCan Grip / Dryer Gun (actual "+sel.pickups[0].orientation+" / "+sel.pickups[2].orientation+" / "+sel.pickups[Slots[DryerId]].orientation+")");
    // IMP-DOG-049: the water slot takes each water item's hold, nozzle, spray, input and reach (pistol / hose Gun, back to the can Grip)
    foreach(int item in new[]{WaterPistolId,HoseId,6}){int code=sel._Decide(item,sel.revision,Own);sel.revision++;sel._Apply(false);var pu=sel.pickups[Slots[item]];var t=sel.slots[Slots[item]];bool gun=sel.gunHolds[item]!=null;
     check(code==0&&sel.selectedWater==item&&sel.models[item].activeSelf&&pu.pickupable&&t.nozzle==sel.nozzleAnchors[item]&&t.spray==sel.itemSprays[item]&&t.pulseSeconds==sel.pulseDurations[item]&&Mathf.Abs(t.sprayRange-sel.sprayRanges[item])<1e-6f&&pu.orientation==(gun?VRC_Pickup.PickupOrientation.Gun:VRC_Pickup.PickupOrientation.Grip)&&(gun?pu.ExactGun==sel.gunHolds[item]:pu.ExactGrip==sel.gripAnchors[item])&&sel.selectedFoam==0&&sel.selectedFinish==7,
@@ -278,7 +279,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    check(sel.models[0].activeSelf&&!sel.models[9].activeSelf&&sel.models[13].activeSelf,"held FoamCannon kept while foam -> PawMitt waits; platform applied meanwhile");
    sel.slots[0].debugHeldOverride=0;sel._Apply(false);check(!sel.models[0].activeSelf&&sel.models[9].activeSelf&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable,"put down -> PawMitt replaces it");
    int all=sel._Decide(-1,sel.revision,Own);check(all==0,"reset with nothing held -> 0 (actual "+all+")");
-   check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun!=null&&sel.pickups[0].ExactGun.name==FoamHoldName,"FoamCannon Gun hold survives the category cycle");
+   check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun!=null&&sel.pickups[0].ExactGun.name==FoamHoldName&&sel.pickups[Slots[DryerId]].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[Slots[DryerId]].ExactGun!=null&&sel.pickups[Slots[DryerId]].ExactGun.name==DryerHoldName,"FoamCannon / Dryer Gun hold survives the category cycle");
    VerifyStoreLogic(sel,check,log);   // IMP-DOG-056 (Store.cs): _Decide x 3 set states, _StationIdle branches, the board's store lines
    log.AppendLine("logic "+st+" (Edit mode, proxy, _Decide/_Apply shared with runtime): "+state());
   }
