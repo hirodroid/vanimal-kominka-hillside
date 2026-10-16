@@ -18,13 +18,11 @@ namespace KominkaHillside.Editor
     ///   Trainer/Canvas  = the read-only face: HeaderPlate (Header + the catch copy Subtitle), Paper (Cove right of the photo, Support and Price
     ///                     under both, full width), Photo (RawImage KH_CoveBeach.png, 14:11) over the paper's top-left;
     ///   Trainer/Actions = an operation canvas (GraphicRaycaster + VRCUiShape + trigger BoxCollider, Default layer) along the bottom, two rows:
-    ///                     row 1 Status / GiftNote, StoreButton, DetailsButton; row 2 UrlCaption + UrlField (KD_MenuFinishEditor.CopyField,
+    ///                     row 1 Status / GiftNote, StoreButton (the one button); row 2 UrlCaption + UrlField (KD_MenuFinishEditor.CopyField,
     ///                     read-only, the cove's URL, 0.8 mm per unit like the wall poster's). KH_TrainerBoard (U#, local) sits on it;
-    ///   Trainer/Details = the popup (an operation canvas over the paper, inactive in the saved scene): Paper, Perks (upper half), Body (lower
-    ///                     half), CloseButton. It covers the face's paper only (never the Actions strip).
-    /// 2026-10-16 copy revision: the perks moved from the face into the popup; the face has the cove lead, the support line and the price line.
-    /// All three canvases lie in the tray's front plane (BUG-ENV-005: every drawn graphic inside a hole); Details draws over the face by its
-    /// canvas sortingOrder.
+    /// 2026-10-16 user decisions: the face has the cove lead, the support line and the price line; one button 「トレーナーになる」 (the gift
+    /// label when owned); no details popup (Trainer/Details and Actions/DetailsButton of the earlier builds are stale: Guide/1 removes them).
+    /// Both canvases lie in the tray's front plane (BUG-ENV-005: every drawn graphic inside a hole).
     /// 2026-10-16 user decision: no portal to the cove. It is a Private world and a VRCPortalMarker only opens a public instance, which a
     /// private world cannot have; the URL field replaces it. The cove portal of the first build (scene-root KH_CovePortal and its marker with
     /// the cove's world id) and Actions/PortalButton are stale: Guide/1 removes them, Guide/2 fails while they exist.
@@ -40,9 +38,10 @@ namespace KominkaHillside.Editor
         public const string CoveRoomId = "wrld_266a7eef-4edd-479f-a76b-dd64e09b41af";
         public const string CoveUrl = "https://vrchat.com/home/world/" + CoveRoomId + "/info";
         public const string CovePhotoPath = "Assets/KominkaHillside/Textures/Guide/KH_CoveBeach.png";
-        const string ActionsName = "Actions", DetailsName = "Details", UrlFieldName = "UrlField", UrlCaptionName = "UrlCaption";
-        const string StoreButtonName = "StoreButton", DetailsButtonName = "DetailsButton", CloseButtonName = "CloseButton", StalePortalButtonName = "PortalButton";
-        const string StoreEvent = "_OpenStore", DetailsOpenEvent = "_OpenDetails", DetailsCloseEvent = "_CloseDetails";
+        const string ActionsName = "Actions", UrlFieldName = "UrlField", UrlCaptionName = "UrlCaption", StoreButtonName = "StoreButton";
+        /// <summary>Earlier builds' nodes that are stale now (Guide/1 removes them, Guide/2 fails while one is left).</summary>
+        const string StaleDetailsName = "Details", StaleDetailsButtonName = "DetailsButton", StalePortalButtonName = "PortalButton";
+        const string StoreEvent = "_OpenStore";
 
         /// <summary>The dynamic words KH_TrainerBoard writes (UITranslations.json; Guide/1 requires them in every language and adds their ja / en glyphs).</summary>
         static readonly string[] TrainerWordKeys =
@@ -76,12 +75,10 @@ namespace KominkaHillside.Editor
         const float TrActionsY = -535f;
         static readonly Vector2 TrActionsSize = new Vector2(1240f, 210f);
         // row 1 (y -25 .. 95)
-        // 2026-10-16 capture: 「料金・購入はこちら」 wrapped mid-word in a 340 mm button. The two buttons' labels are one line (no wrap) and the
-        // buttons wide enough for the ja / en labels at full size; Status / GiftNote give up the room (they wrap and shrink).
+        // 2026-10-16: one button, its label one line (no wrap: ja has no word boundaries), centred in the width right of Status / GiftNote
         static readonly Vector2 TrStatusPos = new Vector2(-420f, 63f), TrStatusSize = new Vector2(360f, 56f);        // x -600 .. -240
         static readonly Vector2 TrGiftNotePos = new Vector2(-420f, 7f), TrGiftNoteSize = new Vector2(360f, 48f);
-        static readonly Vector2 TrStorePos = new Vector2(-20f, 35f), TrStoreSize = new Vector2(420f, 120f);           // x -230 .. 190 (label 400 mm)
-        static readonly Vector2 TrDetailsBtnPos = new Vector2(402.5f, 35f), TrDetailsBtnSize = new Vector2(395f, 120f); // x 205 .. 600 (label 375 mm)
+        static readonly Vector2 TrStorePos = new Vector2(185f, 35f), TrStoreSize = new Vector2(520f, 120f);          // x -75 .. 445 (label 500 x 110)
         // row 2 (y -93 .. -37): the caption, then the URL field (its own units: 1 unit = 0.8 mm, the wall poster's URL field)
         static readonly Vector2 TrUrlCaptionPos = new Vector2(-480f, -65f), TrUrlCaptionSize = new Vector2(240f, 56f);
         static readonly Vector2 TrUrlPos = new Vector2(130f, -65f);
@@ -92,14 +89,9 @@ namespace KominkaHillside.Editor
         /// <summary>The URL's point size (field units): the poster's 28 when the whole URL fits the field's text area, else the largest that fits.</summary>
         static readonly float[] TrUrlPointChoices = { 28f, 26f, 24f, 22f };
         const float TrStatusMax = 34f, TrStatusMin = 18f, TrGiftNoteMax = 26f, TrGiftNoteMin = 16f;
-        const float TrStoreMax = 40f, TrStoreMin = 20f, TrButtonMax = 32f, TrButtonMin = 18f, TrUrlCaptionMax = 26f, TrUrlCaptionMin = 14f;
+        const float TrStoreMax = 44f, TrStoreMin = 20f, TrUrlCaptionMax = 26f, TrUrlCaptionMin = 14f;
 
-        // ---------------------------------------------------------------- Details popup (its own canvas over the face's paper, 1240 x 830 mm)
-        static readonly Vector2 TrDetailsPerksPos = new Vector2(0f, 215f), TrDetailsPerksSize = new Vector2(1160f, 380f);   // upper half (y 25 .. 405)
-        static readonly Vector2 TrBodyPos = new Vector2(0f, -120f), TrBodySize = new Vector2(1160f, 260f);                  // lower half (y -250 .. 10)
-        static readonly Vector2 TrClosePos = new Vector2(0f, -350f), TrCloseSize = new Vector2(300f, 90f);
-        const float TrPerksMax = 34f, TrPerksMin = 20f, TrBodyMax = 34f, TrBodyMin = 20f, TrCloseMax = 36f, TrCloseMin = 20f;
-        const int TrActionsSorting = 1, TrDetailsSorting = 2;
+        const int TrActionsSorting = 1;
         const float ButtonCornerMultiplier = 2f;   // KD_UiRound's corners on the mm canvas (the cut callouts use 4 for ~7 mm)
 
         // ---------------------------------------------------------------- placement
@@ -381,8 +373,8 @@ namespace KominkaHillside.Editor
 
         // ================================================================ build (called from Build for b == Trainer)
 
-        /// <summary>The face, the Actions strip (with the URL field), the Details popup, KH_TrainerBoard and its wiring; removes the stale cove
-        /// portal. Returns the extra canvases (Actions, Details) for the tray's holes.</summary>
+        /// <summary>The face, the Actions strip (the button and the URL field), KH_TrainerBoard and its wiring; removes the stale cove portal and
+        /// the stale popup. Returns the extra canvas (Actions) for the tray's holes.</summary>
         static List<RectTransform> BuildTrainer(Transform board, RectTransform canvas, Ctx c, HashSet<Transform> keep, BuildReport r)
         {
             RemoveStaleCovePortal(c, r);
@@ -415,9 +407,9 @@ namespace KominkaHillside.Editor
             Img(actions, "Plate", Vector2.zero, TrActionsSize, HeaderPlateColor, null, keep);
             var status = Txt(actions, "Status", TrStatusPos, TrStatusSize, TrStatusMax, TrStatusMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
             var giftNote = Txt(actions, "GiftNote", TrGiftNotePos, TrGiftNoteSize, TrGiftNoteMax, TrGiftNoteMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
-            TextMeshProUGUI storeLabel, detailsLabel, closeLabel;
+            TextMeshProUGUI storeLabel;
             var storeBtn = TrainerButton(actions, StoreButtonName, TrStorePos, TrStoreSize, Vermilion, Washi, TrStoreMax, TrStoreMin, false, c, keep, out storeLabel);
-            TrainerButton(actions, DetailsButtonName, TrDetailsBtnPos, TrDetailsBtnSize, StripWashi, Sumi, TrButtonMax, TrButtonMin, false, c, keep, out detailsLabel);
+            // the earlier builds' Actions/DetailsButton and Actions/PortalButton are not in keep: RemoveStale takes them out
             // the saved scene shows the "checking" state; KH_TrainerBoard re-renders on Start
             status.text = KH_TrainerBoard.JaLoading; storeLabel.text = KH_TrainerBoard.JaJoin; giftNote.text = KH_TrainerBoard.JaGiftNote;
             EditorUtility.SetDirty(status); EditorUtility.SetDirty(storeLabel); EditorUtility.SetDirty(giftNote);
@@ -431,17 +423,9 @@ namespace KominkaHillside.Editor
             EditorUtility.SetDirty(field);
             foreach (var t in field.GetComponentsInChildren<Transform>(true)) { keep.Add(t); t.gameObject.layer = 0; }
 
-            // ---- the Details popup (an operation canvas over the face's paper) ----
-            var details = PosterCanvas(board, DetailsName, TrPaperSize, Mm, new Vector3(0f, CanvasCenterY(Trainer) + TrPaperPos.y * Mm, TrayFront), true, keep);
-            SetSorting(details, TrDetailsSorting);
-            Img(details, "Paper", Vector2.zero, TrPaperSize, Washi, null, keep);
-            var dperks = Txt(details, "Perks", TrDetailsPerksPos, TrDetailsPerksSize, TrPerksMax, TrPerksMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
-            dperks.lineSpacing = TrLineSpacing; EditorUtility.SetDirty(dperks);
-            var body = Txt(details, "Body", TrBodyPos, TrBodySize, TrBodyMax, TrBodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
-            body.lineSpacing = TrLineSpacing; EditorUtility.SetDirty(body);
-            TrainerButton(details, CloseButtonName, TrClosePos, TrCloseSize, HeaderPlateColor, SignInk, TrCloseMax, TrCloseMin, true, c, keep, out closeLabel);
-            if (details.gameObject.activeSelf) details.gameObject.SetActive(false);   // KH_TrainerBoard opens it per player
-            // the first build's PortalButton (Actions) and URL nodes (Details) are not in keep: RemoveStale takes them out
+            // ---- the earlier builds' popup (Trainer/Details, a separate canvas: not under any top RemoveStale cleans) ----
+            var oldDetails = board.Find(StaleDetailsName);
+            if (oldDetails != null) { r.log.Add("removed stale " + KD_SceneObjects.PathOf(oldDetails.gameObject) + " (no details popup since 2026-10-16)"); UnityEngine.Object.DestroyImmediate(oldDetails.gameObject); }
 
             // ---- the runtime and its wiring ----
             var tb = actions.GetComponent<KH_TrainerBoard>();
@@ -449,13 +433,11 @@ namespace KominkaHillside.Editor
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(tb);
             if (backing == null) throw new InvalidOperationException("KH_TrainerBoard backing missing (compile U# after Guide/0, then Guide/1 again; reopen the scene without saving)");
             if (backing.SyncMethod != VRC.SDKBase.Networking.SyncType.None) { backing.SyncMethod = VRC.SDKBase.Networking.SyncType.None; EditorUtility.SetDirty(backing); }
-            tb.pass = c.trainerPass; tb.language = c.language; tb.details = details.gameObject;
+            tb.pass = c.trainerPass; tb.language = c.language;
             tb.status = status; tb.storeLabel = storeLabel; tb.giftNote = giftNote; tb.storeButton = storeBtn;
             UdonSharpEditorUtility.CopyProxyToUdon(tb); EditorUtility.SetDirty(tb);
             WireClick(storeBtn, backing, StoreEvent, r.log);
-            WireClick(actions.Find(DetailsButtonName).GetComponent<Button>(), backing, DetailsOpenEvent, r.log);
-            WireClick(details.Find(CloseButtonName).GetComponent<Button>(), backing, DetailsCloseEvent, r.log);
-            return new List<RectTransform> { actions, details };
+            return new List<RectTransform> { actions };
         }
 
         /// <summary>2026-10-16: the cove portal of the first build is stale (a portal cannot open a private world): its scene-root anchor
@@ -626,23 +608,22 @@ namespace KominkaHillside.Editor
 
         // ================================================================ helpers shared with Guide/2
 
-        /// <summary>The board's canvases in the tray's front plane (the face; for Trainer also Actions and Details).</summary>
+        /// <summary>The board's canvases in the tray's front plane (the face; for Trainer also Actions).</summary>
         static List<RectTransform> BoardCanvases(Transform board, Board b)
         {
             var list = new List<RectTransform>();
             var cv = board.Find(CanvasName) as RectTransform; if (cv != null) list.Add(cv);
-            if (b == Trainer)
-                foreach (var n in new[] { ActionsName, DetailsName }) { var x = board.Find(n) as RectTransform; if (x != null) list.Add(x); }
+            if (b == Trainer) { var x = board.Find(ActionsName) as RectTransform; if (x != null) list.Add(x); }
             return list;
         }
 
-        /// <summary>The Trainer's operation canvases present in the scene (they alone may carry GraphicRaycaster / VRCUiShape / a trigger).</summary>
+        /// <summary>The Trainer's operation canvas (Actions) if present: it alone may carry GraphicRaycaster / VRCUiShape / a trigger.</summary>
         static HashSet<Transform> TrainerOperationCanvases(Ctx c)
         {
             var set = new HashSet<Transform>();
             var t = c.root != null ? c.root.Find(Trainer.name) : null;
             if (t == null) return set;
-            foreach (var n in new[] { ActionsName, DetailsName }) { var x = t.Find(n); if (x != null) set.Add(x); }
+            var a = t.Find(ActionsName); if (a != null) set.Add(a);
             return set;
         }
     }

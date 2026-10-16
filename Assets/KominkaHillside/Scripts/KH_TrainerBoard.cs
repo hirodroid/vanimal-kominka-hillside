@@ -11,7 +11,6 @@ namespace KominkaHillside
     //   - the membership line (Status), the store button's label (join / gift) and the gift note, from KH_TrainerPass as the hand menu's
     //     「あそぶ」 judges it (_Configured / _Loaded / _OwnedBy(LocalPlayer)) and from KD_Language.CurrentLanguage;
     //   - [join] / [gift] opens the trainer Listing (KH_TrainerPass._OpenStore; a gift is chosen on VRChat's page, as KominkaDogRun IMP-PRG-012);
-    //   - the details popup (Trainer/Details: the cove's text), opened and closed by its buttons.
     // The cove's URL is a read-only copy field on the strip (no portal: the cove is a Private world, 2026-10-16 user decision); no code here.
     // Local only: no synced variables, no ownership, no network events (the `_` prefix keeps every public event off the network).
     // One _Tick chain: Start arms it once and every _Tick re-arms it exactly once (never two outstanding, never none). Near the board the
@@ -27,13 +26,11 @@ namespace KominkaHillside
             KeyUnconfigured = "guide.trainer.state.unconfigured", KeyJoin = "guide.trainer.join", KeyGift = "guide.trainer.gift",
             KeyGiftNote = "guide.trainer.giftNote";
         public const string JaLoading = "確認中…", JaOff = "未加入", JaOn = "加入中 (ここでも入り江でも使えます)", JaUnconfigured = "準備中",
-            JaJoin = "料金・購入はこちら", JaGift = "ギフト", JaGiftNote = "購入画面でギフトを選べます";
+            JaJoin = "トレーナーになる", JaGift = "ギフト", JaGiftNote = "購入画面でギフトを選べます";
 
         [Tooltip("KH_Dogs/KH_TrainerPass (the same Product / Listing as the hand menu)")]
         public KH_TrainerPass pass;
         public KominkaDogRun.KD_Language language;
-        [Tooltip("KH_GuideBoards/Trainer/Details (the popup). Inactive in the saved scene.")]
-        public GameObject details;
         public TextMeshProUGUI status, storeLabel, giftNote;
         public Button storeButton;
 
@@ -44,8 +41,6 @@ namespace KominkaHillside
 
         private void Start()
         {
-            // the saved scene already has it hidden; this keeps a mis-saved scene hidden too
-            if (details != null && details.activeSelf) details.SetActive(false);
             Poll();
             SendCustomEventDelayedSeconds(nameof(_Tick), NearTickSeconds);
         }
@@ -121,7 +116,7 @@ namespace KominkaHillside
             return s == null || s.Length == 0 || s == key ? ja : s;
         }
 
-        // ---------------------------------------------------------------- buttons (Trainer/Actions, Trainer/Details)
+        // ---------------------------------------------------------------- the button (Trainer/Actions/StoreButton)
 
         /// <summary>[join] / [gift]: the trainer Listing. Opening it is never taken as a purchase (the Store events bring ownership back).</summary>
         public void _OpenStore()
@@ -129,18 +124,6 @@ namespace KominkaHillside
             Poke();
             if (pass == null || !pass._Configured()) return;
             pass._OpenStore();
-        }
-
-        public void _OpenDetails()
-        {
-            Poke();
-            if (details != null && !details.activeSelf) details.SetActive(true);
-        }
-
-        public void _CloseDetails()
-        {
-            Poke();
-            if (details != null && details.activeSelf) details.SetActive(false);
         }
     }
 }

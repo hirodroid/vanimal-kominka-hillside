@@ -1042,28 +1042,8 @@
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Trainer/Actions/DetailsButton/Label",
-      "key": "guide.trainer.details.open"
-    },
-    {
-      "root": "KH_GuideBoards",
       "path": "Trainer/Actions/UrlCaption",
       "key": "guide.trainer.url.caption"
-    },
-    {
-      "root": "KH_GuideBoards",
-      "path": "Trainer/Details/Perks",
-      "key": "guide.trainer.perks"
-    },
-    {
-      "root": "KH_GuideBoards",
-      "path": "Trainer/Details/Body",
-      "key": "guide.trainer.cove.body"
-    },
-    {
-      "root": "KH_GuideBoards",
-      "path": "Trainer/Details/CloseButton/Label",
-      "key": "guide.trainer.details.close"
     },
     {
       "root": "KH_LeashRack",

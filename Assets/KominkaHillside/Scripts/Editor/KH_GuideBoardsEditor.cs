@@ -167,11 +167,7 @@ namespace KominkaHillside.Editor
             new LabelSpec("Trainer/Canvas/Paper/Cove", "guide.trainer.cove.lead"),
             new LabelSpec("Trainer/Canvas/Paper/Support", "guide.trainer.support"),
             new LabelSpec("Trainer/Canvas/Paper/Price", "guide.trainer.price"),
-            new LabelSpec("Trainer/Actions/DetailsButton/Label", "guide.trainer.details.open"),
             new LabelSpec("Trainer/Actions/UrlCaption", "guide.trainer.url.caption"),
-            new LabelSpec("Trainer/Details/Perks", "guide.trainer.perks"),
-            new LabelSpec("Trainer/Details/Body", "guide.trainer.cove.body"),
-            new LabelSpec("Trainer/Details/CloseButton/Label", "guide.trainer.details.close"),
         };
         const string InteractPath = "Kominka/Interact", InteractKey = "guide.kominka.interact";
 
@@ -1111,8 +1107,8 @@ namespace KominkaHillside.Editor
             bool trainer = board.name == Trainer.name;
             foreach (Transform t in board)
                 if (t.name != StructureName && t.name != CanvasName && !(board.name == Kominka.name && (t.name == InteractName || t.name == PortalAnchorName))
-                    && !(trainer && (t.name == ActionsName || t.name == DetailsName))) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
-            foreach (var name in trainer ? new[] { StructureName, CanvasName, ActionsName, DetailsName } : new[] { StructureName, CanvasName })
+                    && !(trainer && t.name == ActionsName)) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
+            foreach (var name in trainer ? new[] { StructureName, CanvasName, ActionsName } : new[] { StructureName, CanvasName })
             {
                 var top = board.Find(name);
                 if (top == null) continue;

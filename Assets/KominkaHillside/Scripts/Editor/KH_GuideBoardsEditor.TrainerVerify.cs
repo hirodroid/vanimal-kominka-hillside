@@ -18,12 +18,11 @@ namespace KominkaHillside.Editor
         {
             "Canvas/HeaderPlate", "Canvas/Header", "Canvas/Subtitle", "Canvas/Paper", "Canvas/Paper/Cove", "Canvas/Paper/Support", "Canvas/Paper/Price", "Canvas/Photo",
             "Actions/Plate", "Actions/Status", "Actions/GiftNote", "Actions/StoreButton", "Actions/StoreButton/Label",
-            "Actions/DetailsButton", "Actions/DetailsButton/Label", "Actions/UrlCaption", "Actions/UrlField",
-            "Details/Paper", "Details/Perks", "Details/Body", "Details/CloseButton", "Details/CloseButton/Label",
+            "Actions/UrlCaption", "Actions/UrlField",
         };
 
-        /// <summary>Nodes of the first build that must be gone (2026-10-16: the portal button, the URL in the popup, the perks on the face).</summary>
-        static readonly string[] TrainerGone = { "Actions/" + StalePortalButtonName, "Details/" + UrlCaptionName, "Details/" + UrlFieldName, "Canvas/Paper/Perks" };
+        /// <summary>Earlier builds' nodes that must be gone (2026-10-16: the portal button, the perks on the face, the details popup and its button).</summary>
+        static readonly string[] TrainerGone = { "Actions/" + StalePortalButtonName, "Actions/" + StaleDetailsButtonName, StaleDetailsName, "Canvas/Paper/Perks" };
 
         static void CheckTrainer(Ctx c, Anch a, Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
         {
@@ -50,16 +49,9 @@ namespace KominkaHillside.Editor
 
             // ---- the tree ----
             foreach (var p in TrainerTree) req(t.Find(p) != null, tag + p);
-            foreach (var p in TrainerGone) req(t.Find(p) == null, tag + "no " + p + " (removed 2026-10-16: no portal to the private cove, the URL is on the strip, the perks are in the popup; Guide/1 removes it)");
+            foreach (var p in TrainerGone) req(t.Find(p) == null, tag + "no " + p + " (removed 2026-10-16: no portal to the private cove, no details popup, one button; Guide/1 removes it)");
             var sub = Tmp(t, "Canvas/Subtitle");
             req(sub != null && (sub.fontStyle & FontStyles.Bold) != 0 && !sub.enableWordWrapping, tag + "the catch copy (Canvas/Subtitle) is bold and one line");
-            // the popup: the perks above the cove's text, both inside the paper, above the close button
-            var dpk = Tmp(t, "Details/Perks"); var dbd = Tmp(t, "Details/Body"); var dcl = t.Find("Details/" + CloseButtonName) as RectTransform;
-            if (dpk != null && dbd != null && dcl != null)
-            {
-                Rect rp = FrameRect(t, dpk.rectTransform), rb = FrameRect(t, dbd.rectTransform), rc = FrameRect(t, dcl);
-                req(rp.yMin >= rb.yMax && rb.yMin >= rc.yMax, tag + "Details: Perks above Body above CloseButton, no overlap");
-            }
             // the face: Support and Price under the photo and the cove lead, full width
             var ph = t.Find("Canvas/Photo") as RectTransform; var cv2 = Tmp(t, "Canvas/Paper/Cove"); var sp = Tmp(t, "Canvas/Paper/Support"); var pr = Tmp(t, "Canvas/Paper/Price");
             if (ph != null && cv2 != null && sp != null && pr != null)
@@ -70,7 +62,6 @@ namespace KominkaHillside.Editor
             }
             var face = t.Find(CanvasName);
             var actions = t.Find(ActionsName) as RectTransform;
-            var details = t.Find(DetailsName) as RectTransform;
             if (face != null)
                 req(face.GetComponent<GraphicRaycaster>() == null && face.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null && face.GetComponent<Collider>() == null,
                     tag + "the face canvas is read-only (no raycaster / VRCUiShape / collider)");
@@ -91,7 +82,7 @@ namespace KominkaHillside.Editor
             if (c.covePhoto != null) v.notes.Add(tag + "photo texture " + c.covePhoto.width + " x " + c.covePhoto.height + " " + c.covePhoto.format + (c.covePhoto.mipmapCount > 1 ? " mip" : " nomip"));
 
             // ---- the operation canvases ----
-            foreach (var op in new[] { actions, details })
+            foreach (var op in new[] { actions })
             {
                 if (op == null) continue;
                 string n = tag + op.name;
@@ -105,20 +96,8 @@ namespace KominkaHillside.Editor
                 var ui = op.GetComponents<Component>().Where(x => x is CanvasScaler).ToArray();
                 req(ui.Length == 0, n + " has no CanvasScaler");
             }
-            if (details != null && face != null && actions != null)
-            {
-                req(!details.gameObject.activeSelf, tag + "Details inactive in the saved scene (KH_TrainerBoard opens it per player)");
-                var dc = details.GetComponent<Canvas>(); var ac = actions.GetComponent<Canvas>(); var fc = face.GetComponent<Canvas>();
-                req(dc != null && fc != null && ac != null && dc.sortingOrder > fc.sortingOrder && dc.sortingOrder > ac.sortingOrder, tag + "Details draws over the face (sortingOrder " + (dc != null ? dc.sortingOrder : 0) + " > " + (fc != null ? fc.sortingOrder : 0) + ")");
-                var fp = face.Find("Paper") as RectTransform; var dp = details.Find("Paper") as RectTransform;
-                if (fp != null && dp != null)
-                {
-                    Rect fr = FrameRect(t, fp), dr = FrameRect(t, dp), ar = FrameRect(t, actions);
-                    req(Mathf.Abs(fr.xMin - dr.xMin) < 1e-3f && Mathf.Abs(fr.xMax - dr.xMax) < 1e-3f && Mathf.Abs(fr.yMin - dr.yMin) < 1e-3f && Mathf.Abs(fr.yMax - dr.yMax) < 1e-3f,
-                        tag + "Details covers exactly the face's paper (its pocket is the paper's)");
-                    req(dr.yMin >= ar.yMax, tag + "Details leaves the Actions strip free (" + ((dr.yMin - ar.yMax) * 1000f).ToString("F0") + " mm between)");
-                }
-            }
+            if (actions != null && face != null && t.Find("Canvas/Paper") is RectTransform fpp)
+                req(FrameRect(t, fpp).yMin >= FrameRect(t, actions).yMax, tag + "the paper ends above the Actions strip");
 
             // ---- no cove portal (2026-10-16: a VRCPortalMarker only opens a public instance; the cove is a Private world) ----
             int anchorsLeft; KD_SceneObjects.Find(CovePortalName, out anchorsLeft);
@@ -133,8 +112,7 @@ namespace KominkaHillside.Editor
             req(bk != null && bk.SyncMethod == VRC.SDKBase.Networking.SyncType.None, tag + "KH_TrainerBoard sync None (local only, no network objects)");
             var statusT = Tmp(actions, "Status"); var giftT = Tmp(actions, "GiftNote"); var storeL = Tmp(actions, "StoreButton/Label");
             var storeB = actions.Find(StoreButtonName) != null ? actions.Find(StoreButtonName).GetComponent<Button>() : null;
-            var detailsGo = details != null ? details.gameObject : null;
-            req(tb.pass == c.trainerPass && tb.language == c.language && tb.details == detailsGo && detailsGo != null, tag + "KH_TrainerBoard.pass / language / details (proxy)");
+            req(tb.pass == c.trainerPass && tb.language == c.language, tag + "KH_TrainerBoard.pass / language (proxy)");
             req(tb.status == statusT && statusT != null && tb.storeLabel == storeL && storeL != null && tb.giftNote == giftT && giftT != null && tb.storeButton == storeB && storeB != null,
                 tag + "KH_TrainerBoard.status / storeLabel / giftNote / storeButton (proxy)");
             if (bk != null)
@@ -143,11 +121,10 @@ namespace KominkaHillside.Editor
                 var passBk = c.trainerPass != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.trainerPass) : null;
                 var langBk = c.language != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.language) : null;
                 req(same("pass", passBk) && same("language", langBk), tag + "KH_TrainerBoard.pass / language (backing = their backing UdonBehaviours)");
-                req(same("details", detailsGo) && same("status", statusT) && same("storeLabel", storeL) && same("giftNote", giftT) && same("storeButton", storeB),
-                    tag + "KH_TrainerBoard.details / status / storeLabel / giftNote / storeButton (backing)");
+                req(same("status", statusT) && same("storeLabel", storeL) && same("giftNote", giftT) && same("storeButton", storeB),
+                    tag + "KH_TrainerBoard.status / storeLabel / giftNote / storeButton (backing)");
             }
-            foreach (var w in new[] { new[] { "Actions/" + StoreButtonName, StoreEvent },
-                new[] { "Actions/" + DetailsButtonName, DetailsOpenEvent }, new[] { "Details/" + CloseButtonName, DetailsCloseEvent } })
+            foreach (var w in new[] { new[] { "Actions/" + StoreButtonName, StoreEvent } })
             {
                 var bt = t.Find(w[0]);
                 var btn = bt != null ? bt.GetComponent<Button>() : null;
@@ -157,11 +134,11 @@ namespace KominkaHillside.Editor
                 req(btn != null && img != null && btn.targetGraphic == img && img.raycastTarget && btn.interactable && img.type == Image.Type.Sliced, tag + w[0] + " is a rounded (Sliced) raycast target, interactable in the saved scene");
             }
             var graphicsOff = new List<string>();
-            foreach (var op in new[] { actions, details })
+            foreach (var op in new[] { actions })
                 if (op != null)
                     foreach (var g in op.GetComponentsInChildren<Graphic>(true))
                         if (g.raycastTarget && g.GetComponent<Button>() == null && g.GetComponent<TMP_InputField>() == null) graphicsOff.Add(KD_SceneObjects.PathOf(g.gameObject));
-            req(graphicsOff.Count == 0, tag + "only the buttons and the URL field take the pointer" + (graphicsOff.Count > 0 ? " (" + string.Join(", ", graphicsOff.Take(5)) + ")" : ""));
+            req(graphicsOff.Count == 0, tag + "only the button and the URL field take the pointer" + (graphicsOff.Count > 0 ? " (" + string.Join(", ", graphicsOff.Take(5)) + ")" : ""));
 
             // ---- the URL field ----
             var uf = actions != null ? actions.Find(UrlFieldName) : null;
@@ -187,10 +164,8 @@ namespace KominkaHillside.Editor
 
             // ---- the dynamic words (Edit mode through _Render; the scene values come back afterwards) ----
             if (statusT != null && storeL != null && giftT != null && storeB != null) CheckTrainerStates(c, tb, statusT, storeL, giftT, storeB, req, warn, v);
-            // 2026-10-16 capture: the two buttons' labels on one line in every state (ja / en FAIL, the others WARN)
+            // 2026-10-16: the button's label on one line in both states (ja / en FAIL, the others WARN)
             if (storeL != null) { CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyJoin, req, warn); CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyGift, req, warn); }
-            var detailsL = Tmp(actions, DetailsButtonName + "/Label");
-            if (detailsL != null) CheckOneLine(c, detailsL, "Actions/DetailsButton/Label", "guide.trainer.details.open", req, warn);
         }
 
         static TextMeshProUGUI Tmp(Transform parent, string path)
