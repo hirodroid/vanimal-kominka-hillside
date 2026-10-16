@@ -6,7 +6,7 @@ status: todo
 priority: High
 summary: 13言語の枠だけでなく、散歩・追加画面を含む全UIの翻訳を揃える
 next: 実装着手時に現行コードと仕様の差を整理する。今回はIssueと資料の更新のみ
-updated: 2026-10-08
+updated: 2026-10-16
 ---
 
 # IMP-UI-005 — 13言語の未訳と翻訳表外のUIを解消する
@@ -38,3 +38,7 @@ updated: 2026-10-08
 - [UI仕様](../../world-ui-spec.md)
 - [共有の継承契約](C:/work/unity/vrc-world-agent/docs/development/issues/IMP-SK-002-animal-menu-localization-contract.md)
 - [比較HTML（採取時点の証拠）](C:/work/unity/vcc/A_Cove_to_Unwind/SourceArt/Cove/review/menu-comparison-20261008/index.html)
+
+## 記録
+
+- 2026-10-16: 具体の 1 回目を [IMP-UI-014](IMP-UI-014-translate-english-fallback-keys.md) で実施 (英語のまま残る 142 キー × 11 言語。正当な同文 85 キーの除外理由は同票 §2)。本票には完了条件 2 の後半 (未訳を検知する検査の常設) と 3・4 (端末別・運用) が残る。
