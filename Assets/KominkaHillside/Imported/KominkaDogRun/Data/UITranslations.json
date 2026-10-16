@@ -3022,7 +3022,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "さんぽ・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n門のそばのおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを並ばせて集合写真。フリスビーの取り方も変えられる。古民家ドッグランでトレーナーになった人も、ここで使える。\n加入: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］"
+          "text": "さんぽ・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n門のそばのおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを並ばせて集合写真。フリスビーの取り方も変えられる。古民家ドッグラン・ひとやすみの入り江と共通。入り江は、トレーナーがいると扉が開く。\n加入: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］"
         },
         {
           "key": "guide.map.title",
@@ -3054,7 +3054,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "門の向こうに見える古民家が「古民家ドッグラン」です。\n同じ6匹の犬たちが暮らす、このワールドの前作です。\n<color=#B5432A>この看板を押すと、となりにポータルが出ます。</color>\nもう一度押すか、1分たつと消えます。\nポイントと持ち物は、ワールドごとに別です。\nばにまるトレーナーは、どちらで加入しても両方で使えます。"
+          "text": "門の向こうに見える古民家が「古民家ドッグラン」です。\n同じ6匹の犬たちが暮らす、このワールドの前作です。\n<color=#B5432A>この看板を押すと、となりにポータルが出ます。</color>\nもう一度押すか、1分たつと消えます。\nポイントと持ち物は、ワールドごとに別です。\nばにまるトレーナーは、どちらで加入しても両方で使えます。ひとやすみの入り江とも共通です。"
         },
         {
           "key": "guide.kominka.interact",
@@ -6961,7 +6961,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa by the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nLine the dogs up for a group photo, and switch the Frisbee catch style. A Trainer from Kominka Dog Run works here too.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]"
+          "text": "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa by the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nLine the dogs up for a group photo, and switch the Frisbee catch style. Shared with Kominka Dog Run and A Cove to Unwind, where a Trainer opens the cove for everyone.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]"
         },
         {
           "key": "guide.map.title",
@@ -6993,7 +6993,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "The farmhouse beyond the gate is Kominka Dog Run, the earlier world where the same six dogs live.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nPress again, or wait 1 minute, and it goes away.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined."
+          "text": "The farmhouse beyond the gate is Kominka Dog Run, the earlier world where the same six dogs live.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nPress again, or wait 1 minute, and it goes away.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined, and in A Cove to Unwind too."
         },
         {
           "key": "guide.kominka.interact",
@@ -10900,7 +10900,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Прогулка, поглаживание, мячи, фрисби и мытьё — бесплатно для всех.\n<color=#B5432A>Очки</color>\nПоговори с дедушкой у ворот — 200 pt (один раз). Здесь 1 pt в минуту.\nОбменивай во вкладках «Наряды», «Позвать», «Лакомства» на украшения, эффекты, позы и лакомства.\n<color=#B5432A>VAnimal Trainer</color> (на срок, Credits)\nВыстрой собак для общего фото и меняй стиль ловли фрисби. Оформил в Kominka Dog Run? Работает и здесь.\nОформить: меню «Игры» → [Открыть магазин]\nПользоваться: в «Игры» выбери построение → [Собрать здесь]"
+          "text": "Прогулка, поглаживание, мячи, фрисби и мытьё — бесплатно для всех.\n<color=#B5432A>Очки</color>\nПоговори с дедушкой у ворот — 200 pt (один раз). Здесь 1 pt в минуту.\nОбменивай во вкладках «Наряды», «Позвать», «Лакомства» на украшения, эффекты, позы и лакомства.\n<color=#B5432A>VAnimal Trainer</color> (на срок, Credits)\nВыстрой собак для общего фото и меняй стиль ловли фрисби. Общий с Kominka Dog Run и «Бухтой отдыха» — там Trainer открывает бухту для всех.\nОформить: меню «Игры» → [Открыть магазин]\nПользоваться: в «Игры» выбери построение → [Собрать здесь]"
         },
         {
           "key": "guide.map.title",
@@ -10932,7 +10932,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Фермерский дом за воротами — это Kominka Dog Run, предыдущий мир, где живут те же шесть собак.\n<color=#B5432A>Нажми на эту доску — рядом появится портал.</color>\nНажми ещё раз или подожди 1 минуту — и он исчезнет.\nОчки и предметы в каждом мире свои.\nVAnimal Trainer работает в обоих мирах, где бы ты его ни оформил."
+          "text": "Фермерский дом за воротами — это Kominka Dog Run, предыдущий мир, где живут те же шесть собак.\n<color=#B5432A>Нажми на эту доску — рядом появится портал.</color>\nНажми ещё раз или подожди 1 минуту — и он исчезнет.\nОчки и предметы в каждом мире свои.\nVAnimal Trainer работает в обоих мирах, где бы ты его ни оформил. И в «Бухте отдыха» тоже."
         },
         {
           "key": "guide.kominka.interact",
@@ -14839,7 +14839,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Прогулянка, погладжування, м'ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nВишикуй собак для спільного фото й змінюй стиль ловлі фризбі. Оформив у Kominka Dog Run? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]"
+          "text": "Прогулянка, погладжування, м'ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nВишикуй собак для спільного фото й змінюй стиль ловлі фризбі. Спільний з Kominka Dog Run і «Бухтою відпочинку» — там Trainer відчиняє бухту для всіх.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]"
         },
         {
           "key": "guide.map.title",
@@ -14871,7 +14871,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Фермерський дім за воротами — це Kominka Dog Run, попередній світ, де живуть ті ж шість собак.\n<color=#B5432A>Натисни на цю дошку — поруч з'явиться портал.</color>\nНатисни ще раз або зачекай 1 хвилину — і він зникне.\nБали й предмети в кожному світі свої.\nVAnimal Trainer діє в обох світах, де б ти його не оформив."
+          "text": "Фермерський дім за воротами — це Kominka Dog Run, попередній світ, де живуть ті ж шість собак.\n<color=#B5432A>Натисни на цю дошку — поруч з'явиться портал.</color>\nНатисни ще раз або зачекай 1 хвилину — і він зникне.\nБали й предмети в кожному світі свої.\nVAnimal Trainer діє в обох світах, де б ти його не оформив. І в «Бухті відпочинку» теж."
         },
         {
           "key": "guide.kominka.interact",
@@ -18778,7 +18778,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "산책·쓰다듬기·공·프리스비·씻기기는 누구나 무료.\n<color=#B5432A>포인트</color>\n문 옆의 할아버지와 이야기하면 200pt (한 번만). 여기 있으면 1분마다 1pt.\n꾸미기·부르기·간식 탭에서 장식·쓰다듬을 때의 빛·포즈·간식과 교환.\n<color=#B5432A>VAnimal Trainer</color> (기간제·Credits)\n강아지들을 줄 세워 단체 사진. 프리스비 받는 방식도 바꿀 수 있어요. Kominka Dog Run에서 가입했다면 여기서도 그대로.\n가입: 손 메뉴 놀기 → [구매 화면 열기]\n사용: 놀기에서 대형을 고르고 → [여기에 모이기]"
+          "text": "산책·쓰다듬기·공·프리스비·씻기기는 누구나 무료.\n<color=#B5432A>포인트</color>\n문 옆의 할아버지와 이야기하면 200pt (한 번만). 여기 있으면 1분마다 1pt.\n꾸미기·부르기·간식 탭에서 장식·쓰다듬을 때의 빛·포즈·간식과 교환.\n<color=#B5432A>VAnimal Trainer</color> (기간제·Credits)\n강아지들을 줄 세워 단체 사진. 프리스비 받는 방식도 바꿀 수 있어요. Kominka Dog Run·휴식의 작은 만과 공통. 작은 만은 Trainer가 있으면 모두에게 열려요.\n가입: 손 메뉴 놀기 → [구매 화면 열기]\n사용: 놀기에서 대형을 고르고 → [여기에 모이기]"
         },
         {
           "key": "guide.map.title",
@@ -18810,7 +18810,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "문 너머로 보이는 고민가가 Kominka Dog Run. 같은 6마리 강아지가 사는 이 월드의 전작이에요.\n<color=#B5432A>이 판을 누르면 옆에 포털이 나와요.</color>\n한 번 더 누르거나 1분이 지나면 사라져요.\n포인트와 소지품은 월드마다 따로예요.\nVAnimal Trainer는 어느 쪽에서 가입해도 양쪽에서 쓸 수 있어요."
+          "text": "문 너머로 보이는 고민가가 Kominka Dog Run. 같은 6마리 강아지가 사는 이 월드의 전작이에요.\n<color=#B5432A>이 판을 누르면 옆에 포털이 나와요.</color>\n한 번 더 누르거나 1분이 지나면 사라져요.\n포인트와 소지품은 월드마다 따로예요.\nVAnimal Trainer는 어느 쪽에서 가입해도 양쪽에서 쓸 수 있어요. 휴식의 작은 만에서도 마찬가지예요."
         },
         {
           "key": "guide.kominka.interact",
@@ -22717,7 +22717,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Spazieren, Streicheln, Bälle, Frisbee und Waschen sind für alle gratis.\n<color=#B5432A>Punkte</color>\nSprich mit Opa am Tor: 200 pt (einmal). Hier gibt es 1 pt pro Minute.\nTausche sie unter Outfits, Rufen und Leckerlis gegen Schmuck, Streichel-Effekte, Posen und Leckerlis.\n<color=#B5432A>VAnimal Trainer</color> (auf Zeit, Credits)\nStell die Hunde zum Gruppenfoto auf und wechsle den Frisbee-Fangstil. Im Kominka Dog Run gebucht? Gilt auch hier.\nBuchen: Handmenü Spielen → [Store öffnen]\nNutzen: unter Spielen Formation wählen → [Hier sammeln]"
+          "text": "Spazieren, Streicheln, Bälle, Frisbee und Waschen sind für alle gratis.\n<color=#B5432A>Punkte</color>\nSprich mit Opa am Tor: 200 pt (einmal). Hier gibt es 1 pt pro Minute.\nTausche sie unter Outfits, Rufen und Leckerlis gegen Schmuck, Streichel-Effekte, Posen und Leckerlis.\n<color=#B5432A>VAnimal Trainer</color> (auf Zeit, Credits)\nStell die Hunde zum Gruppenfoto auf und wechsle den Frisbee-Fangstil. Gilt auch im Kominka Dog Run und in A Cove to Unwind, wo ein Trainer die Bucht für alle öffnet.\nBuchen: Handmenü Spielen → [Store öffnen]\nNutzen: unter Spielen Formation wählen → [Hier sammeln]"
         },
         {
           "key": "guide.map.title",
@@ -22749,7 +22749,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Das Bauernhaus hinter dem Tor ist Kominka Dog Run, die frühere Welt, in der dieselben sechs Hunde leben.\n<color=#B5432A>Drück diese Tafel, dann erscheint daneben ein Portal.</color>\nNochmal drücken oder 1 Minute warten, dann verschwindet es.\nPunkte und Sachen gelten je Welt getrennt.\nDer VAnimal Trainer gilt in beiden Welten, egal wo du gebucht hast."
+          "text": "Das Bauernhaus hinter dem Tor ist Kominka Dog Run, die frühere Welt, in der dieselben sechs Hunde leben.\n<color=#B5432A>Drück diese Tafel, dann erscheint daneben ein Portal.</color>\nNochmal drücken oder 1 Minute warten, dann verschwindet es.\nPunkte und Sachen gelten je Welt getrennt.\nDer VAnimal Trainer gilt in beiden Welten, egal wo du gebucht hast. Auch in A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -26656,7 +26656,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "散步・抚摸・球・飞盘・洗澡，所有人都免费。\n<color=#B5432A>积分</color>\n和门边的爷爷说话可得 200pt (仅一次)。待在这里每分钟 1pt。\n在「装饰」「呼唤」「零食」里换取饰品・抚摸光效・姿势・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n让狗狗们排好队拍合照，还能更换接飞盘的方式。在 Kominka Dog Run 成为 Trainer 的话，这里也能直接用。\n加入: 手边菜单「玩耍」→ [打开购买界面]\n使用: 在「玩耍」选队形 → [在这里集合]"
+          "text": "散步・抚摸・球・飞盘・洗澡，所有人都免费。\n<color=#B5432A>积分</color>\n和门边的爷爷说话可得 200pt (仅一次)。待在这里每分钟 1pt。\n在「装饰」「呼唤」「零食」里换取饰品・抚摸光效・姿势・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n让狗狗们排好队拍合照，还能更换接飞盘的方式。与 Kominka Dog Run・小憩的海湾通用。海湾里只要有 Trainer，门就会为所有人打开。\n加入: 手边菜单「玩耍」→ [打开购买界面]\n使用: 在「玩耍」选队形 → [在这里集合]"
         },
         {
           "key": "guide.map.title",
@@ -26688,7 +26688,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "门那边看到的古民家就是 Kominka Dog Run，同样 6 只狗狗生活的前作世界。\n<color=#B5432A>按一下这块牌子，旁边会出现传送门。</color>\n再按一次，或等 1 分钟，就会消失。\n积分和物品在每个世界是分开的。\nVAnimal Trainer 不论在哪边购买，两边都能用。"
+          "text": "门那边看到的古民家就是 Kominka Dog Run，同样 6 只狗狗生活的前作世界。\n<color=#B5432A>按一下这块牌子，旁边会出现传送门。</color>\n再按一次，或等 1 分钟，就会消失。\n积分和物品在每个世界是分开的。\nVAnimal Trainer 不论在哪边购买，两边都能用。小憩的海湾也通用。"
         },
         {
           "key": "guide.kominka.interact",
@@ -30595,7 +30595,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Pasear, acariciar, pelotas, frisbee y bañar son gratis para todos.\n<color=#B5432A>Puntos</color>\nHabla con el abuelo de la puerta: 200 pt (una vez). Aquí ganas 1 pt por minuto.\nCámbialos en Adornos, Llamar y Premios por adornos, efectos de caricia, poses y premios.\n<color=#B5432A>VAnimal Trainer</color> (por tiempo limitado, Credits)\nPon a los perros en fila para una foto de grupo y cambia cómo atrapan el frisbee. ¿Ya eres Trainer en Kominka Dog Run? También sirve aquí.\nUnirse: menú Jugar → [Abrir la tienda]\nUsar: en Jugar elige una formación → [Reunirlos aquí]"
+          "text": "Pasear, acariciar, pelotas, frisbee y bañar son gratis para todos.\n<color=#B5432A>Puntos</color>\nHabla con el abuelo de la puerta: 200 pt (una vez). Aquí ganas 1 pt por minuto.\nCámbialos en Adornos, Llamar y Premios por adornos, efectos de caricia, poses y premios.\n<color=#B5432A>VAnimal Trainer</color> (por tiempo limitado, Credits)\nPon a los perros en fila para una foto de grupo y cambia cómo atrapan el frisbee. Compartido con Kominka Dog Run y A Cove to Unwind, donde un Trainer abre la cala para todos.\nUnirse: menú Jugar → [Abrir la tienda]\nUsar: en Jugar elige una formación → [Reunirlos aquí]"
         },
         {
           "key": "guide.map.title",
@@ -30627,7 +30627,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La casa de campo tras la puerta es Kominka Dog Run, el mundo anterior donde viven los mismos seis perros.\n<color=#B5432A>Pulsa este tablero y aparecerá un portal a su lado.</color>\nPulsa otra vez o espera 1 minuto y desaparecerá.\nLos puntos y objetos son distintos en cada mundo.\nEl VAnimal Trainer sirve en ambos mundos, sin importar dónde te hiciste Trainer."
+          "text": "La casa de campo tras la puerta es Kominka Dog Run, el mundo anterior donde viven los mismos seis perros.\n<color=#B5432A>Pulsa este tablero y aparecerá un portal a su lado.</color>\nPulsa otra vez o espera 1 minuto y desaparecerá.\nLos puntos y objetos son distintos en cada mundo.\nEl VAnimal Trainer sirve en ambos mundos, sin importar dónde te hiciste Trainer. También en A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -34534,7 +34534,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Promenade, caresses, balles, frisbee et bain sont gratuits pour tous.\n<color=#B5432A>Points</color>\nParle au grand-père du portail : 200 pt (une fois). Ici, 1 pt par minute.\nÉchange-les dans Accessoires, Appeler et Friandises contre des accessoires, effets de caresse, poses et friandises.\n<color=#B5432A>VAnimal Trainer</color> (durée limitée, Credits)\nAligne les chiens pour une photo de groupe et change leur façon d'attraper le frisbee. Inscrit à Kominka Dog Run ? Ça marche ici aussi.\nS'inscrire : menu Jouer → [Ouvrir la boutique]\nUtiliser : dans Jouer, choisis une formation → [Les rassembler ici]"
+          "text": "Promenade, caresses, balles, frisbee et bain sont gratuits pour tous.\n<color=#B5432A>Points</color>\nParle au grand-père du portail : 200 pt (une fois). Ici, 1 pt par minute.\nÉchange-les dans Accessoires, Appeler et Friandises contre des accessoires, effets de caresse, poses et friandises.\n<color=#B5432A>VAnimal Trainer</color> (durée limitée, Credits)\nAligne les chiens pour une photo de groupe et change leur façon d'attraper le frisbee. Commun avec Kominka Dog Run et A Cove to Unwind, où un Trainer ouvre la crique pour tous.\nS'inscrire : menu Jouer → [Ouvrir la boutique]\nUtiliser : dans Jouer, choisis une formation → [Les rassembler ici]"
         },
         {
           "key": "guide.map.title",
@@ -34566,7 +34566,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La ferme derrière le portail, c'est Kominka Dog Run, le monde précédent où vivent les mêmes six chiens.\n<color=#B5432A>Appuie sur ce panneau et un portail apparaît à côté.</color>\nAppuie encore, ou attends 1 minute, et il disparaît.\nLes points et objets sont séparés dans chaque monde.\nLe VAnimal Trainer marche dans les deux, où que tu te sois inscrit."
+          "text": "La ferme derrière le portail, c'est Kominka Dog Run, le monde précédent où vivent les mêmes six chiens.\n<color=#B5432A>Appuie sur ce panneau et un portail apparaît à côté.</color>\nAppuie encore, ou attends 1 minute, et il disparaît.\nLes points et objets sont séparés dans chaque monde.\nLe VAnimal Trainer marche dans les deux, où que tu te sois inscrit. Et aussi dans A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -38473,7 +38473,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Passear, fazer carinho, bolas, frisbee e dar banho são grátis para todos.\n<color=#B5432A>Pontos</color>\nFale com o vovô no portão: 200 pt (uma vez). Aqui você ganha 1 pt por minuto.\nTroque em Enfeites, Chamar e Petiscos por enfeites, efeitos de carinho, poses e petiscos.\n<color=#B5432A>VAnimal Trainer</color> (por tempo limitado, Credits)\nAlinhe os cachorros para uma foto em grupo e mude o jeito de pegar o frisbee. Quem já é Trainer no Kominka Dog Run também pode usar aqui.\nEntrar: menu Brincar → [Abrir a loja]\nUsar: em Brincar escolha uma formação → [Reunir todos aqui]"
+          "text": "Passear, fazer carinho, bolas, frisbee e dar banho são grátis para todos.\n<color=#B5432A>Pontos</color>\nFale com o vovô no portão: 200 pt (uma vez). Aqui você ganha 1 pt por minuto.\nTroque em Enfeites, Chamar e Petiscos por enfeites, efeitos de carinho, poses e petiscos.\n<color=#B5432A>VAnimal Trainer</color> (por tempo limitado, Credits)\nAlinhe os cachorros para uma foto em grupo e mude o jeito de pegar o frisbee. Compartilhado com o Kominka Dog Run e A Cove to Unwind, onde um Trainer abre a enseada para todos.\nEntrar: menu Brincar → [Abrir a loja]\nUsar: em Brincar escolha uma formação → [Reunir todos aqui]"
         },
         {
           "key": "guide.map.title",
@@ -38505,7 +38505,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "A casa de fazenda além do portão é o Kominka Dog Run, o mundo anterior onde vivem os mesmos seis cachorros.\n<color=#B5432A>Aperte esta placa e um portal aparece ao lado.</color>\nAperte de novo ou espere 1 minuto, e ele some.\nPontos e itens são separados em cada mundo.\nO VAnimal Trainer vale nos dois mundos, não importa onde você virou Trainer."
+          "text": "A casa de fazenda além do portão é o Kominka Dog Run, o mundo anterior onde vivem os mesmos seis cachorros.\n<color=#B5432A>Aperte esta placa e um portal aparece ao lado.</color>\nAperte de novo ou espere 1 minuto, e ele some.\nPontos e itens são separados em cada mundo.\nO VAnimal Trainer vale nos dois mundos, não importa onde você virou Trainer. Também vale em A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -42412,7 +42412,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Passeggiare, accarezzare, palline, frisbee e bagno sono gratis per tutti.\n<color=#B5432A>Punti</color>\nParla con il nonno al cancello: 200 pt (una volta). Qui guadagni 1 pt al minuto.\nScambiali in Accessori, Chiama e Snack con accessori, effetti carezza, pose e snack.\n<color=#B5432A>VAnimal Trainer</color> (a tempo, Credits)\nMetti in fila i cani per una foto di gruppo e cambia il modo di prendere il frisbee. Iscritto a Kominka Dog Run? Vale anche qui.\nIscriviti: menu Attività → [Apri il negozio]\nUsa: in Attività scegli una formazione → [Radunali qui]"
+          "text": "Passeggiare, accarezzare, palline, frisbee e bagno sono gratis per tutti.\n<color=#B5432A>Punti</color>\nParla con il nonno al cancello: 200 pt (una volta). Qui guadagni 1 pt al minuto.\nScambiali in Accessori, Chiama e Snack con accessori, effetti carezza, pose e snack.\n<color=#B5432A>VAnimal Trainer</color> (a tempo, Credits)\nMetti in fila i cani per una foto di gruppo e cambia il modo di prendere il frisbee. Condiviso con Kominka Dog Run e A Cove to Unwind, dove un Trainer apre la baia a tutti.\nIscriviti: menu Attività → [Apri il negozio]\nUsa: in Attività scegli una formazione → [Radunali qui]"
         },
         {
           "key": "guide.map.title",
@@ -42444,7 +42444,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "La casa di campagna oltre il cancello è Kominka Dog Run, il mondo precedente dove vivono gli stessi sei cani.\n<color=#B5432A>Premi questo pannello e accanto appare un portale.</color>\nPremi di nuovo, o aspetta 1 minuto, e sparisce.\nPunti e oggetti sono separati in ogni mondo.\nIl VAnimal Trainer vale in entrambi, ovunque ti sia iscritto."
+          "text": "La casa di campagna oltre il cancello è Kominka Dog Run, il mondo precedente dove vivono gli stessi sei cani.\n<color=#B5432A>Premi questo pannello e accanto appare un portale.</color>\nPremi di nuovo, o aspetta 1 minuto, e sparisce.\nPunti e oggetti sono separati in ogni mondo.\nIl VAnimal Trainer vale in entrambi, ovunque ti sia iscritto. Anche in A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -46351,7 +46351,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Spacer, głaskanie, piłki, frisbee i kąpiel są darmowe dla wszystkich.\n<color=#B5432A>Punkty</color>\nPorozmawiaj z dziadkiem przy bramie: 200 pt (raz). Tu dostajesz 1 pt na minutę.\nWymieniaj je w Ozdoby, Zawołaj i Smakołyki na ozdoby, efekty głaskania, pozy i smakołyki.\n<color=#B5432A>VAnimal Trainer</color> (czasowy, Credits)\nUstaw psy do wspólnego zdjęcia i zmieniaj styl łapania frisbee. Trainer z Kominka Dog Run działa też tutaj.\nDołącz: menu Zabawa → [Otwórz sklep]\nUżywaj: w Zabawa wybierz szyk → [Zbiórka tutaj]"
+          "text": "Spacer, głaskanie, piłki, frisbee i kąpiel są darmowe dla wszystkich.\n<color=#B5432A>Punkty</color>\nPorozmawiaj z dziadkiem przy bramie: 200 pt (raz). Tu dostajesz 1 pt na minutę.\nWymieniaj je w Ozdoby, Zawołaj i Smakołyki na ozdoby, efekty głaskania, pozy i smakołyki.\n<color=#B5432A>VAnimal Trainer</color> (czasowy, Credits)\nUstaw psy do wspólnego zdjęcia i zmieniaj styl łapania frisbee. Wspólny z Kominka Dog Run i A Cove to Unwind, gdzie Trainer otwiera zatoczkę dla wszystkich.\nDołącz: menu Zabawa → [Otwórz sklep]\nUżywaj: w Zabawa wybierz szyk → [Zbiórka tutaj]"
         },
         {
           "key": "guide.map.title",
@@ -46383,7 +46383,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "Wiejski dom za bramą to Kominka Dog Run, poprzedni świat, w którym mieszka tych samych sześć psów.\n<color=#B5432A>Naciśnij tę tablicę, a obok pojawi się portal.</color>\nNaciśnij ponownie albo odczekaj 1 minutę, a zniknie.\nPunkty i przedmioty są osobne w każdym świecie.\nVAnimal Trainer działa w obu światach, niezależnie od tego, gdzie go kupiłeś."
+          "text": "Wiejski dom za bramą to Kominka Dog Run, poprzedni świat, w którym mieszka tych samych sześć psów.\n<color=#B5432A>Naciśnij tę tablicę, a obok pojawi się portal.</color>\nNaciśnij ponownie albo odczekaj 1 minutę, a zniknie.\nPunkty i przedmioty są osobne w każdym świecie.\nVAnimal Trainer działa w obu światach, niezależnie od tego, gdzie go kupiłeś. Także w A Cove to Unwind."
         },
         {
           "key": "guide.kominka.interact",
@@ -50294,7 +50294,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "散步・撫摸・球・飛盤・洗澡，所有人都免費。\n<color=#B5432A>積分</color>\n和門邊的爺爺說話可得 200pt (僅一次)。待在這裡每分鐘 1pt。\n在「裝飾」「呼喚」「零食」裡換取飾品・撫摸光效・姿勢・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n讓狗狗們排好隊拍合照，還能更換接飛盤的方式。在 Kominka Dog Run 成為 Trainer 的話，這裡也能直接用。\n加入: 手邊選單「玩耍」→ [打開購買介面]\n使用: 在「玩耍」選隊形 → [在這裡集合]"
+          "text": "散步・撫摸・球・飛盤・洗澡，所有人都免費。\n<color=#B5432A>積分</color>\n和門邊的爺爺說話可得 200pt (僅一次)。待在這裡每分鐘 1pt。\n在「裝飾」「呼喚」「零食」裡換取飾品・撫摸光效・姿勢・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n讓狗狗們排好隊拍合照，還能更換接飛盤的方式。與 Kominka Dog Run・小憩的海灣通用。海灣裡只要有 Trainer，門就會為所有人打開。\n加入: 手邊選單「玩耍」→ [打開購買介面]\n使用: 在「玩耍」選隊形 → [在這裡集合]"
         },
         {
           "key": "guide.map.title",
@@ -50326,7 +50326,7 @@
         },
         {
           "key": "guide.kominka.body",
-          "text": "門那邊看到的古民家就是 Kominka Dog Run，同樣 6 隻狗狗生活的前作世界。\n<color=#B5432A>按一下這塊牌子，旁邊會出現傳送門。</color>\n再按一次，或等 1 分鐘，就會消失。\n積分和物品在每個世界是分開的。\nVAnimal Trainer 不論在哪邊購買，兩邊都能用。"
+          "text": "門那邊看到的古民家就是 Kominka Dog Run，同樣 6 隻狗狗生活的前作世界。\n<color=#B5432A>按一下這塊牌子，旁邊會出現傳送門。</color>\n再按一次，或等 1 分鐘，就會消失。\n積分和物品在每個世界是分開的。\nVAnimal Trainer 不論在哪邊購買，兩邊都能用。小憩的海灣也通用。"
         },
         {
           "key": "guide.kominka.interact",

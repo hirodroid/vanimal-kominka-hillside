@@ -185,7 +185,7 @@
 
 **共通購入権の対象はトレーナーだけ** (2026-10-12 ユーザー訂正)。ライブを含むその他すべての課金商品はワールド別購入。古民家で購入済みでも裏山では別途購入する。以下の同一 Product/Listing と双方向利用の検証はトレーナーに限る。課金ライブの対応は [DES-LIV-001](development/issues/DES-LIV-001-hillside-live.md) へ記録し、実装時に各売り場の所有判定・購入先が裏山用の商品を参照することを確認する。
 
-両ワールドで同じProduct/Listingを使い、どちらでも購入して両方で利用することを合意。利用権を確認するProductと、購入画面を開くListingは役割が異なり、互いに同じIDという意味ではない。
+両ワールドで同じProduct/Listingを使い、どちらでも購入して両方で利用することを合意。**2026-10-16 追記 (ユーザー回答、[IMP-UI-012](development/issues/IMP-UI-012-wash-store-board-game-wording.md) §6): 「ひとやすみの入り江」(`C:/work/unity/vcc/A_Cove_to_Unwind`) も同じ Product / Listing を使う 3 つ目のワールド** (入り江の world-ui-spec 2026-10-07: Listing `prod_81a5ac65-…` を `Store.OpenListing`、所有判定は Product `prod_8c044b21-…`)。入り江での特典は「トレーナーがインスタンスにいると入口の岩扉が開き、全員が入れる」(入り江の r14 / r22、`AC_TrainerGate`)。裏山の看板 A 4 枚目と古民家ドッグランの案内板に入り江を追記した。利用権を確認するProductと、購入画面を開くListingは役割が異なり、互いに同じIDという意味ではない。
 
 | 対象 | 古民家の現行値・出典 |
 |---|---|
