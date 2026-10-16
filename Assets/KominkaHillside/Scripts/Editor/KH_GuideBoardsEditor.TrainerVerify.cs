@@ -187,12 +187,43 @@ namespace KominkaHillside.Editor
 
             // ---- the dynamic words (Edit mode through _Render; the scene values come back afterwards) ----
             if (statusT != null && storeL != null && giftT != null && storeB != null) CheckTrainerStates(c, tb, statusT, storeL, giftT, storeB, req, warn, v);
+            // 2026-10-16 capture: the two buttons' labels on one line in every state (ja / en FAIL, the others WARN)
+            if (storeL != null) { CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyJoin, req, warn); CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyGift, req, warn); }
+            var detailsL = Tmp(actions, DetailsButtonName + "/Label");
+            if (detailsL != null) CheckOneLine(c, detailsL, "Actions/DetailsButton/Label", "guide.trainer.details.open", req, warn);
         }
 
         static TextMeshProUGUI Tmp(Transform parent, string path)
         {
             var x = parent != null ? parent.Find(path) : null;
             return x != null ? x.GetComponent<TextMeshProUGUI>() : null;
+        }
+
+        /// <summary>The label drawn with each language's text of <paramref name="key"/>: one line (textInfo.lineCount after ForceMeshUpdate), no
+        /// wrapping, within the box's width. ja / en FAIL, the client-glyph languages WARN (their glyphs are VRChat's). The text comes back after.</summary>
+        static void CheckOneLine(Ctx c, TextMeshProUGUI label, string path, string key, Action<bool, string> req, Action<bool, string> warn)
+        {
+            string t0 = label.text;
+            var off = new List<string>();
+            try
+            {
+                req(!label.enableWordWrapping, path + " does not wrap (one line, auto-size shrinks it)");
+                foreach (var lang in c.catalog.languages)
+                {
+                    string text = KD_LocalizationEditor.Text(c.catalog, lang.code, key);
+                    label.text = text;
+                    label.ForceMeshUpdate(true, true);
+                    int lines = label.textInfo.lineCount;
+                    float w = label.textBounds.size.x, room = label.rectTransform.rect.width;
+                    bool ok = lines == 1 && w <= room + 2f;
+                    string what = path + " " + lang.code + " 「" + text + "」 " + lines + " line(s), " + w.ToString("F0") + " / " + room.ToString("F0") + " mm at " + label.fontSize.ToString("F1") + " mm";
+                    if (KD_LocalizationEditor.Bundled(lang)) req(ok, what + " (one line, inside the button)");
+                    else if (!ok) off.Add(lang.code);
+                }
+                warn(off.Count == 0, path + " " + key + " one line in the client-glyph languages (estimate)" + (off.Count > 0 ? ": not in " + string.Join(", ", off) : ""));
+            }
+            catch (Exception e) { req(false, path + " one-line check failed: " + e.Message); }
+            finally { label.text = t0; label.ForceMeshUpdate(true, true); }
         }
 
         static void CheckTrainerStates(Ctx c, KH_TrainerBoard tb, TextMeshProUGUI status, TextMeshProUGUI storeLabel, TextMeshProUGUI giftNote, Button storeButton,

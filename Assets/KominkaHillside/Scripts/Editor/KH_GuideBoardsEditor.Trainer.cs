@@ -76,10 +76,12 @@ namespace KominkaHillside.Editor
         const float TrActionsY = -535f;
         static readonly Vector2 TrActionsSize = new Vector2(1240f, 210f);
         // row 1 (y -25 .. 95)
-        static readonly Vector2 TrStatusPos = new Vector2(-380f, 63f), TrStatusSize = new Vector2(440f, 56f);        // x -600 .. -160
-        static readonly Vector2 TrGiftNotePos = new Vector2(-380f, 7f), TrGiftNoteSize = new Vector2(440f, 48f);
-        static readonly Vector2 TrStorePos = new Vector2(25f, 35f), TrStoreSize = new Vector2(340f, 120f);           // x -145 .. 195 (「料金・購入はこちら」)
-        static readonly Vector2 TrDetailsBtnPos = new Vector2(405f, 35f), TrDetailsBtnSize = new Vector2(390f, 120f); // x 210 .. 600 (「トレーナー特典を見る」)
+        // 2026-10-16 capture: 「料金・購入はこちら」 wrapped mid-word in a 340 mm button. The two buttons' labels are one line (no wrap) and the
+        // buttons wide enough for the ja / en labels at full size; Status / GiftNote give up the room (they wrap and shrink).
+        static readonly Vector2 TrStatusPos = new Vector2(-420f, 63f), TrStatusSize = new Vector2(360f, 56f);        // x -600 .. -240
+        static readonly Vector2 TrGiftNotePos = new Vector2(-420f, 7f), TrGiftNoteSize = new Vector2(360f, 48f);
+        static readonly Vector2 TrStorePos = new Vector2(-20f, 35f), TrStoreSize = new Vector2(420f, 120f);           // x -230 .. 190 (label 400 mm)
+        static readonly Vector2 TrDetailsBtnPos = new Vector2(402.5f, 35f), TrDetailsBtnSize = new Vector2(395f, 120f); // x 205 .. 600 (label 375 mm)
         // row 2 (y -93 .. -37): the caption, then the URL field (its own units: 1 unit = 0.8 mm, the wall poster's URL field)
         static readonly Vector2 TrUrlCaptionPos = new Vector2(-480f, -65f), TrUrlCaptionSize = new Vector2(240f, 56f);
         static readonly Vector2 TrUrlPos = new Vector2(130f, -65f);
@@ -414,8 +416,8 @@ namespace KominkaHillside.Editor
             var status = Txt(actions, "Status", TrStatusPos, TrStatusSize, TrStatusMax, TrStatusMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
             var giftNote = Txt(actions, "GiftNote", TrGiftNotePos, TrGiftNoteSize, TrGiftNoteMax, TrGiftNoteMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
             TextMeshProUGUI storeLabel, detailsLabel, closeLabel;
-            var storeBtn = TrainerButton(actions, StoreButtonName, TrStorePos, TrStoreSize, Vermilion, Washi, TrStoreMax, TrStoreMin, c, keep, out storeLabel);
-            TrainerButton(actions, DetailsButtonName, TrDetailsBtnPos, TrDetailsBtnSize, StripWashi, Sumi, TrButtonMax, TrButtonMin, c, keep, out detailsLabel);
+            var storeBtn = TrainerButton(actions, StoreButtonName, TrStorePos, TrStoreSize, Vermilion, Washi, TrStoreMax, TrStoreMin, false, c, keep, out storeLabel);
+            TrainerButton(actions, DetailsButtonName, TrDetailsBtnPos, TrDetailsBtnSize, StripWashi, Sumi, TrButtonMax, TrButtonMin, false, c, keep, out detailsLabel);
             // the saved scene shows the "checking" state; KH_TrainerBoard re-renders on Start
             status.text = KH_TrainerBoard.JaLoading; storeLabel.text = KH_TrainerBoard.JaJoin; giftNote.text = KH_TrainerBoard.JaGiftNote;
             EditorUtility.SetDirty(status); EditorUtility.SetDirty(storeLabel); EditorUtility.SetDirty(giftNote);
@@ -437,7 +439,7 @@ namespace KominkaHillside.Editor
             dperks.lineSpacing = TrLineSpacing; EditorUtility.SetDirty(dperks);
             var body = Txt(details, "Body", TrBodyPos, TrBodySize, TrBodyMax, TrBodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
             body.lineSpacing = TrLineSpacing; EditorUtility.SetDirty(body);
-            TrainerButton(details, CloseButtonName, TrClosePos, TrCloseSize, HeaderPlateColor, SignInk, TrCloseMax, TrCloseMin, c, keep, out closeLabel);
+            TrainerButton(details, CloseButtonName, TrClosePos, TrCloseSize, HeaderPlateColor, SignInk, TrCloseMax, TrCloseMin, true, c, keep, out closeLabel);
             if (details.gameObject.activeSelf) details.gameObject.SetActive(false);   // KH_TrainerBoard opens it per player
             // the first build's PortalButton (Actions) and URL nodes (Details) are not in keep: RemoveStale takes them out
 
@@ -497,8 +499,9 @@ namespace KominkaHillside.Editor
             if (cv.sortingOrder != order) { cv.sortingOrder = order; EditorUtility.SetDirty(cv); }
         }
 
-        /// <summary>A rounded button (KD_UiRound, Sliced) with a centred label; raycast target on the button face only.</summary>
-        static Button TrainerButton(Transform parent, string name, Vector2 pos, Vector2 size, Color face, Color ink, float max, float min, Ctx c, HashSet<Transform> keep, out TextMeshProUGUI label)
+        /// <summary>A rounded button (KD_UiRound, Sliced) with a centred label; raycast target on the button face only. wrap = false: the label
+        /// stays one line and auto-size shrinks it to the width (ja has no word boundaries to wrap at).</summary>
+        static Button TrainerButton(Transform parent, string name, Vector2 pos, Vector2 size, Color face, Color ink, float max, float min, bool wrap, Ctx c, HashSet<Transform> keep, out TextMeshProUGUI label)
         {
             var img = Img(parent, name, pos, size, face, c.round, keep);
             img.type = Image.Type.Sliced; img.pixelsPerUnitMultiplier = ButtonCornerMultiplier; img.raycastTarget = true;
@@ -508,7 +511,7 @@ namespace KominkaHillside.Editor
             KD_UiSpriteEditor.ApplyButtonFeedback(btn);
             btn.navigation = new Navigation { mode = Navigation.Mode.None };
             EditorUtility.SetDirty(btn);
-            label = Txt(img.transform, "Label", Vector2.zero, size - new Vector2(20f, 10f), max, min, TextAlignmentOptions.Center, ink, true, c, keep);
+            label = Txt(img.transform, "Label", Vector2.zero, size - new Vector2(20f, 10f), max, min, TextAlignmentOptions.Center, ink, wrap, c, keep);
             return btn;
         }
 
