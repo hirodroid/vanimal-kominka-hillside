@@ -714,3 +714,9 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | `Data/UITranslations.json` | 同 6 キー + `guide.*` 5 + `welcome.*` 2 + `activities.hillside.*` 4 + `KD_TreatPouch.WordToyHelp` / `WordWalkUnknown` + `photo.help.body` = 20 キー × 13 言語 = 260 値を照合、236 値を変更、24 値 (`guide.pointer` / `guide.ball.more` の 11 言語 + ja/en の一部) は既存値のまま (ja / en 自作、11 言語 AI 訳・校正なし) | 同上 |
 
 Verify の要求語 (`KD_WelcomeGuideEditor.Hillside.cs` の `HillsideBodyJa` / `HillsideRereadJa` / `HillsideAbsentJa`) は変えていない (ようこその本文は行の題を残した)。**古民家ドッグランへは反映しない** (古民家のおじいさんは 8 話題のまま)。
+
+## 2026-10-16 撫で方ヒントを犬の上へ (BUG-UI-003)
+
+| ファイル | 裏山の変更 | 理由 |
+|---|---|---|
+| `Scripts/KD_HintDirector.cs` | 撫で方ヒント (`hint.pet`) の高さを根元 + 0.12 m 固定から `PetHintHeight(dog)` へ: その犬の `KD_DogPetController.headAnchor` の高さ − 根元の高さ + 0.2 m (`pet[]` を `dogRoot == dog` で引く。見つからなければ 0.6 m)。定数のみ、シーンの値は無い | 板 (0.65 × 0.11 m、中央基準) が 6 匹とも体に埋まっていた (頭アンカーは根元から 0.21〜0.62 m)。ユーザー報告 2026-10-16。**古民家ドッグランへは反映しない** |

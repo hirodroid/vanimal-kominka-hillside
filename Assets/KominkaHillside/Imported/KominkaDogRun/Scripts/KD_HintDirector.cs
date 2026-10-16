@@ -192,7 +192,7 @@ namespace KominkaDogRun
                     float d = (dogs[i].position - lp.GetPosition()).sqrMagnitude;
                     if (d < best) { nearest = dogs[i]; best = d; }
                 }
-                if (nearest != null) { ShowHint(nearest, L("hint.pet"), .12f); return; }
+                if (nearest != null) { ShowHint(nearest, L("hint.pet"), PetHintHeight(nearest)); return; }
             }
             if (_noticeKind != 0)
             { noticeLabel.text = NoticeText(_noticeKind, input); noticeRoot.SetActive(true); return; }
@@ -221,6 +221,20 @@ namespace KominkaDogRun
         private string NoticeText(int kind, int input)
         { return L(kind == 2 ? "hint.sleep" : input == 0 ? "hint.menu.vr" : input == 2 ? "hint.menu.touch" : "hint.menu.desktop"); }
         private float _hintHeight;
+        /// <summary>裏山改変 (2026-10-16 ユーザー指示): 撫で方ヒントの高さ。犬の根元 + 0.12 m では板 (0.65 × 0.11 m、中央基準) が体に埋まる
+        /// (頭アンカーは根元から 0.21〜0.62 m: ポメ〜ラブ)。その犬の KD_DogPetController.headAnchor の高さ + この余白を根元からの高さにして、
+        /// 犬の上に出す。pet[] は dogs[] と並びが違う (Hillside の 11b は FindObjectsOfTypeAll の順) ので dogRoot で引く。見つからなければ既定の高さ。</summary>
+        private const float PetHintAboveHead = .2f, PetHintFallbackHeight = .6f;
+        private float PetHintHeight(Transform dog)
+        {
+            for (int i = 0; pet != null && i < pet.Length; i++)
+            {
+                var p = pet[i];
+                if (p == null || p.dogRoot != dog || p.headAnchor == null) continue;
+                return Mathf.Max(p.headAnchor.position.y - dog.position.y, 0f) + PetHintAboveHead;
+            }
+            return PetHintFallbackHeight;
+        }
         private void ShowHint(Transform target, string text, float height)
         {
             if (hintRoot == null || hintLabel == null) return;

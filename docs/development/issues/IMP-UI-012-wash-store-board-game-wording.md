@@ -54,7 +54,7 @@ updated: 2026-10-16
 | 18 | 洗い台を檜の台かプールに着せ替えます。高さは今までどおり調整できます。 | 檜の台・プール\n洗い場をまるごと着せ替え | Hinoki platform · Pool\nDress up the whole station | 洗い場の説明 |
 | 19 | 泡・水・仕上げ・洗い場の全アイテム。種類ごとに1つずつ同時に出せます。 | 泡・水・仕上げ・洗い場\n4セットまとめて。種類ごとに1つずつ出せる | Foam · Water · Finish · Station\nAll four sets. One tool of each kind at a time | 全部入りの説明 |
 | 40 | 写真を選び、道具を取り出してください | 写真を選んで［出す］ | Pick a photo, then [Take] | 状態 (待機) |
-| 41 | 反映しました | できました | Done | 状態 (成功) |
+| 41 | 反映しました | 完了。 | Done | 状態 (成功)。ja は 2026-10-16 ユーザー指示で「できました」→「完了。」([出す] と [リセット] の両方の成功文。en 以下 12 言語は据え置き) |
 | 42 | 持っている道具は、置いてから戻せます | 持っている道具は置いてから | Put down held tools first | 状態 (拒否 KeptHeld) |
 | 46 | 購入画面をひらく | 購入 | Buy | 購入ボタン |
 | 47 | このインスタンスで利用できます | 使えます | Available | 状態行 (Owned) |
@@ -116,3 +116,4 @@ updated: 2026-10-16
 - 読んだ入り江側の資料: ユーザーが示した docs 5 点に加え、文言の表記を揃えるため `Assets/A_Cove_to_Unwind/Data/UITranslations.json` の `trainer.*` / `gate.open` も読んだ (読むだけ)。入り江は自分のワールド名を各言語に訳しておらず、本文では「海湾 / бухта / la crique / die Bucht」の一般名で呼ぶ。本票の訳では ko / zh-cn / zh-hk / ru / uk に固有名の訳 (휴식의 작은 만 / 小憩的海湾 / 小憩的海灣 / Бухта отдыха / Бухта відпочинку) を作った。VRChat のワールド検索は掲載名 (Latin) なので、Kominka Dog Run と同じく 11 言語とも "A Cove to Unwind" に揃える案もある → ユーザー判断。
 - 2026-10-16 ユーザー決定「Kominka Dog Run と同じく全部 Latin に揃える」: ko / zh-cn / zh-hk / ru / uk の `guide.shop.body` / `guide.kominka.body` の入り江の訳名を "A Cove to Unwind" に差し替え (10 値、統括)。Menu/11 (字形の追加なし) → 保存 → Guide/1 BUILT → Menu/22 PASS failures=0 → 保存。KD_Language の 13 言語の本文に "A Cove to Unwind" (ja は「ひとやすみの入り江」) が入っていることを eval で確認。**注意: この直前の 1 回目の焼き直しはユーザーの Play 中に当たり (isPlaying = True を見落とした)、Menu/11 / Guide/1 は Play のシーンに掛かって何も保存されず (build.json・シーンの更新時刻は不変)、Menu/22 は FAIL 11 (Play 側の古い配列)。Play 終了後に Edit で流し直した結果が上の行。以後、Unity の操作前に isPlaying を見る。**
 - 入り江の宣伝とトレーナー専用の看板 (ユーザー 2026-10-16「一休みの入り江はがっつり宣伝したい。別ボードをポップアップしてもいい」「バニマルトレーナー用の看板を一つつくるか。メインのサブスクリプションなので」) は [IMP-UI-013](IMP-UI-013-trainer-board.md) で扱う。
+- 2026-10-16 ユーザー指示「洗うの RESET の完了文言を『完了。』に」: `words.json` ja 語 41 を「できました」→「完了。」(語 41 は [出す] の成功にも使われるので両方が「完了。」になる。語 6「出しました」は未使用のまま)。WashPremium/54 Wire Store (boards written=4) → 44 Verify Selection PASS 1148 / FAIL 0 → 51 Verify Font Policy PASS 130 / FAIL 0 → 保存。シーンは HEAD + 4 板の 8 文書 (proxy + backing) だけを stage (別セッションのトレーナー看板の未コミット分は作業ツリーに残す)。決定: 2026-10-16
