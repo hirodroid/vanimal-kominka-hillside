@@ -16,13 +16,13 @@ namespace KominkaHillside.Editor
     {
         static readonly string[] TrainerTree =
         {
-            "Canvas/HeaderPlate", "Canvas/Header", "Canvas/Subtitle", "Canvas/Paper", "Canvas/Paper/Cove", "Canvas/Paper/Support", "Canvas/Paper/Price", "Canvas/Photo",
-            "Actions/Plate", "Actions/Status", "Actions/GiftNote", "Actions/StoreButton", "Actions/StoreButton/Label",
+            "Canvas/HeaderPlate", "Canvas/Header", "Canvas/Subtitle", "Canvas/Paper", "Canvas/Paper/Cove", "Canvas/Paper/Support", "Canvas/Paper/Price", "Canvas/Paper/UrlNote", "Canvas/Photo",
+            "Actions/Plate", "Actions/Status", "Actions/StoreButton", "Actions/StoreButton/Label",
             "Actions/UrlCaption", "Actions/UrlField",
         };
 
         /// <summary>Earlier builds' nodes that must be gone (2026-10-16: the portal button, the perks on the face, the details popup and its button).</summary>
-        static readonly string[] TrainerGone = { "Actions/" + StalePortalButtonName, "Actions/" + StaleDetailsButtonName, StaleDetailsName, "Canvas/Paper/Perks" };
+        static readonly string[] TrainerGone = { "Actions/" + StalePortalButtonName, "Actions/" + StaleDetailsButtonName, StaleDetailsName, "Canvas/Paper/Perks", "Actions/GiftNote" };
 
         static void CheckTrainer(Ctx c, Anch a, Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
         {
@@ -49,16 +49,17 @@ namespace KominkaHillside.Editor
 
             // ---- the tree ----
             foreach (var p in TrainerTree) req(t.Find(p) != null, tag + p);
-            foreach (var p in TrainerGone) req(t.Find(p) == null, tag + "no " + p + " (removed 2026-10-16: no portal to the private cove, no details popup, one button; Guide/1 removes it)");
+            foreach (var p in TrainerGone) req(t.Find(p) == null, tag + "no " + p + " (removed 2026-10-16: no portal to the private cove, no details popup, one button, no gift; Guide/1 removes it)");
             var sub = Tmp(t, "Canvas/Subtitle");
             req(sub != null && (sub.fontStyle & FontStyles.Bold) != 0 && !sub.enableWordWrapping, tag + "the catch copy (Canvas/Subtitle) is bold and one line");
             // the face: Support and Price under the photo and the cove lead, full width
-            var ph = t.Find("Canvas/Photo") as RectTransform; var cv2 = Tmp(t, "Canvas/Paper/Cove"); var sp = Tmp(t, "Canvas/Paper/Support"); var pr = Tmp(t, "Canvas/Paper/Price");
-            if (ph != null && cv2 != null && sp != null && pr != null)
+            var ph = t.Find("Canvas/Photo") as RectTransform; var cv2 = Tmp(t, "Canvas/Paper/Cove"); var sp = Tmp(t, "Canvas/Paper/Support"); var pr = Tmp(t, "Canvas/Paper/Price"); var un = Tmp(t, "Canvas/Paper/UrlNote");
+            if (ph != null && cv2 != null && sp != null && pr != null && un != null)
             {
-                Rect rph = FrameRect(t, ph), rcv = FrameRect(t, cv2.rectTransform), rsp = FrameRect(t, sp.rectTransform), rpr = FrameRect(t, pr.rectTransform);
-                req(rcv.xMin >= rph.xMax && Mathf.Min(rph.yMin, rcv.yMin) >= rsp.yMax && rsp.yMin >= rpr.yMax,
-                    tag + "face: Cove beside the photo, Support under both, Price under Support (no overlap)");
+                Rect rph = FrameRect(t, ph), rcv = FrameRect(t, cv2.rectTransform), rsp = FrameRect(t, sp.rectTransform), rpr = FrameRect(t, pr.rectTransform), run = FrameRect(t, un.rectTransform);
+                var rpaper = FrameRect(t, (RectTransform)t.Find("Canvas/Paper"));
+                req(rcv.xMin >= rph.xMax && Mathf.Min(rph.yMin, rcv.yMin) >= rsp.yMax && rsp.yMin >= rpr.yMax && rpr.yMin >= run.yMax && run.yMin >= rpaper.yMin,
+                    tag + "face: Cove beside the photo, then Support, Price and UrlNote under both, in that order, inside the paper (no overlap)");
             }
             var face = t.Find(CanvasName);
             var actions = t.Find(ActionsName) as RectTransform;
@@ -110,19 +111,19 @@ namespace KominkaHillside.Editor
             if (tb == null) return;
             var bk = UdonSharpEditorUtility.GetBackingUdonBehaviour(tb);
             req(bk != null && bk.SyncMethod == VRC.SDKBase.Networking.SyncType.None, tag + "KH_TrainerBoard sync None (local only, no network objects)");
-            var statusT = Tmp(actions, "Status"); var giftT = Tmp(actions, "GiftNote"); var storeL = Tmp(actions, "StoreButton/Label");
+            var statusT = Tmp(actions, "Status"); var storeL = Tmp(actions, "StoreButton/Label");
             var storeB = actions.Find(StoreButtonName) != null ? actions.Find(StoreButtonName).GetComponent<Button>() : null;
             req(tb.pass == c.trainerPass && tb.language == c.language, tag + "KH_TrainerBoard.pass / language (proxy)");
-            req(tb.status == statusT && statusT != null && tb.storeLabel == storeL && storeL != null && tb.giftNote == giftT && giftT != null && tb.storeButton == storeB && storeB != null,
-                tag + "KH_TrainerBoard.status / storeLabel / giftNote / storeButton (proxy)");
+            req(tb.status == statusT && statusT != null && tb.storeLabel == storeL && storeL != null && tb.storeButton == storeB && storeB != null,
+                tag + "KH_TrainerBoard.status / storeLabel / storeButton (proxy)");
             if (bk != null)
             {
                 Func<string, object, bool> same = (name, want) => { object x; return bk.publicVariables.TryGetVariableValue(name, out x) && want != null && ReferenceEquals(x, want); };
                 var passBk = c.trainerPass != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.trainerPass) : null;
                 var langBk = c.language != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.language) : null;
                 req(same("pass", passBk) && same("language", langBk), tag + "KH_TrainerBoard.pass / language (backing = their backing UdonBehaviours)");
-                req(same("status", statusT) && same("storeLabel", storeL) && same("giftNote", giftT) && same("storeButton", storeB),
-                    tag + "KH_TrainerBoard.status / storeLabel / giftNote / storeButton (backing)");
+                req(same("status", statusT) && same("storeLabel", storeL) && same("storeButton", storeB),
+                    tag + "KH_TrainerBoard.status / storeLabel / storeButton (backing)");
             }
             foreach (var w in new[] { new[] { "Actions/" + StoreButtonName, StoreEvent } })
             {
@@ -163,9 +164,9 @@ namespace KominkaHillside.Editor
             }
 
             // ---- the dynamic words (Edit mode through _Render; the scene values come back afterwards) ----
-            if (statusT != null && storeL != null && giftT != null && storeB != null) CheckTrainerStates(c, tb, statusT, storeL, giftT, storeB, req, warn, v);
+            if (statusT != null && storeL != null && storeB != null) CheckTrainerStates(c, tb, statusT, storeL, storeB, req, warn, v);
             // 2026-10-16: the button's label on one line in both states (ja / en FAIL, the others WARN)
-            if (storeL != null) { CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyJoin, req, warn); CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyGift, req, warn); }
+            if (storeL != null) { CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyJoin, req, warn); CheckOneLine(c, storeL, "Actions/StoreButton/Label", KH_TrainerBoard.KeyJoined, req, warn); }
         }
 
         static TextMeshProUGUI Tmp(Transform parent, string path)
@@ -201,7 +202,7 @@ namespace KominkaHillside.Editor
             finally { label.text = t0; label.ForceMeshUpdate(true, true); }
         }
 
-        static void CheckTrainerStates(Ctx c, KH_TrainerBoard tb, TextMeshProUGUI status, TextMeshProUGUI storeLabel, TextMeshProUGUI giftNote, Button storeButton,
+        static void CheckTrainerStates(Ctx c, KH_TrainerBoard tb, TextMeshProUGUI status, TextMeshProUGUI storeLabel, Button storeButton,
             Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
         {
             string tag = "Trainer states: ";
@@ -209,11 +210,14 @@ namespace KominkaHillside.Editor
                 && tb._StateFrom(true, false, false) == KH_TrainerBoard.StateLoading && tb._StateFrom(true, false, true) == KH_TrainerBoard.StateLoading
                 && tb._StateFrom(true, true, false) == KH_TrainerBoard.StateOff && tb._StateFrom(true, true, true) == KH_TrainerBoard.StateOn,
                 tag + "KH_TrainerPass -> state (no product / listing = unconfigured; not loaded = checking; loaded = owned or not)");
-            string s0 = status.text, l0 = storeLabel.text, g0 = giftNote.text; bool a0 = giftNote.gameObject.activeSelf, i0 = storeButton.interactable;
-            req(s0 == KH_TrainerBoard.JaLoading && !a0 && i0, tag + "the saved scene shows the checking state (「" + s0 + "」, gift note hidden, button interactable); Start re-renders");
+            req(!tb._ButtonOn(KH_TrainerBoard.StateUnconfigured) && tb._ButtonOn(KH_TrainerBoard.StateLoading) && tb._ButtonOn(KH_TrainerBoard.StateOff) && !tb._ButtonOn(KH_TrainerBoard.StateOn),
+                tag + "the button opens the purchase page only while checking / not a member (off when unconfigured or already a member; no gift)");
+            string s0 = status.text, l0 = storeLabel.text; bool i0 = storeButton.interactable;
+            req(s0 == KH_TrainerBoard.JaLoading && l0 == KH_TrainerBoard.JaJoin && i0, tag + "the saved scene shows the checking state (「" + s0 + "」 / [" + l0 + "], button interactable); Start re-renders");
             int[] states = { KH_TrainerBoard.StateUnconfigured, KH_TrainerBoard.StateLoading, KH_TrainerBoard.StateOff, KH_TrainerBoard.StateOn };
             string[] statusKeys = { KH_TrainerBoard.KeyUnconfigured, KH_TrainerBoard.KeyLoading, KH_TrainerBoard.KeyOff, KH_TrainerBoard.KeyOn };
             string[] names = { "unconfigured", "checking", "not a member", "member" };
+            bool[] buttonOn = { false, true, true, false };
             var go = new GameObject("TrainerStatesMeasure", typeof(RectTransform)) { hideFlags = HideFlags.HideAndDontSave };
             try
             {
@@ -223,19 +227,16 @@ namespace KominkaHillside.Editor
                         bool on = states[i] == KH_TrainerBoard.StateOn;
                         tb._Render(states[i], code);
                         string ws = KD_LocalizationEditor.Text(c.catalog, code, statusKeys[i]);
-                        string wl = KD_LocalizationEditor.Text(c.catalog, code, on ? KH_TrainerBoard.KeyGift : KH_TrainerBoard.KeyJoin);
-                        string wg = KD_LocalizationEditor.Text(c.catalog, code, KH_TrainerBoard.KeyGiftNote);
-                        bool ok = status.text == ws && storeLabel.text == wl && storeButton.interactable == (states[i] != KH_TrainerBoard.StateUnconfigured)
-                            && giftNote.gameObject.activeSelf == on && (!on || giftNote.text == wg);
-                        req(ok, tag + names[i] + " (" + code + "): 「" + status.text + "」 / [" + storeLabel.text + "]" + (giftNote.gameObject.activeSelf ? " / 「" + giftNote.text + "」" : "") + ", button "
-                            + (storeButton.interactable ? "on" : "off") + (ok ? "" : " (expected 「" + ws + "」 / [" + wl + "]" + (on ? " / 「" + wg + "」" : "") + ")"));
+                        string wl = KD_LocalizationEditor.Text(c.catalog, code, on ? KH_TrainerBoard.KeyJoined : KH_TrainerBoard.KeyJoin);
+                        bool ok = status.text == ws && storeLabel.text == wl && storeButton.interactable == buttonOn[i];
+                        req(ok, tag + names[i] + " (" + code + "): 「" + status.text + "」 / [" + storeLabel.text + "], button " + (storeButton.interactable ? "on" : "off")
+                            + (ok ? "" : " (expected 「" + ws + "」 / [" + wl + "], button " + (buttonOn[i] ? "on" : "off") + ")"));
                     }
                 // fit of every dynamic word in its box (ja / en with the bundled font; the others are a WARN estimate, as CheckFit)
                 var sample = go.AddComponent<TextMeshProUGUI>();
                 var pairs = statusKeys.Select(x => new KeyValuePair<TMP_Text, string>(status, x)).Concat(new[]
                 {
-                    new KeyValuePair<TMP_Text, string>(storeLabel, KH_TrainerBoard.KeyJoin), new KeyValuePair<TMP_Text, string>(storeLabel, KH_TrainerBoard.KeyGift),
-                    new KeyValuePair<TMP_Text, string>(giftNote, KH_TrainerBoard.KeyGiftNote),
+                    new KeyValuePair<TMP_Text, string>(storeLabel, KH_TrainerBoard.KeyJoin), new KeyValuePair<TMP_Text, string>(storeLabel, KH_TrainerBoard.KeyJoined),
                 }).ToList();
                 foreach (var pr in pairs)
                 {
@@ -257,8 +258,7 @@ namespace KominkaHillside.Editor
             finally
             {
                 UnityEngine.Object.DestroyImmediate(go);
-                status.text = s0; storeLabel.text = l0; giftNote.text = g0; storeButton.interactable = i0;
-                if (giftNote.gameObject.activeSelf != a0) giftNote.gameObject.SetActive(a0);
+                status.text = s0; storeLabel.text = l0; storeButton.interactable = i0;
             }
             v.notes.Add(tag + "rendered in Edit mode for ja / en; KH_TrainerPass's live answers (purchases loaded, owned) and the 0.5 / 2 s tick need Play / the device");
         }

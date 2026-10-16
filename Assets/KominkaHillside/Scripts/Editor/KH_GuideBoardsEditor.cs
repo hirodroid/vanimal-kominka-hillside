@@ -167,6 +167,7 @@ namespace KominkaHillside.Editor
             new LabelSpec("Trainer/Canvas/Paper/Cove", "guide.trainer.cove.lead"),
             new LabelSpec("Trainer/Canvas/Paper/Support", "guide.trainer.support"),
             new LabelSpec("Trainer/Canvas/Paper/Price", "guide.trainer.price"),
+            new LabelSpec("Trainer/Canvas/Paper/UrlNote", "guide.trainer.url.note"),
             new LabelSpec("Trainer/Actions/UrlCaption", "guide.trainer.url.caption"),
         };
         const string InteractPath = "Kominka/Interact", InteractKey = "guide.kominka.interact";

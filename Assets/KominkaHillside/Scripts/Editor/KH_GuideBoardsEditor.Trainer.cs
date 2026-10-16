@@ -18,10 +18,10 @@ namespace KominkaHillside.Editor
     ///   Trainer/Canvas  = the read-only face: HeaderPlate (Header + the catch copy Subtitle), Paper (Cove right of the photo, Support and Price
     ///                     under both, full width), Photo (RawImage KH_CoveBeach.png, 14:11) over the paper's top-left;
     ///   Trainer/Actions = an operation canvas (GraphicRaycaster + VRCUiShape + trigger BoxCollider, Default layer) along the bottom, two rows:
-    ///                     row 1 Status / GiftNote, StoreButton (the one button); row 2 UrlCaption + UrlField (KD_MenuFinishEditor.CopyField,
+    ///                     row 1 Status, StoreButton (the one button); row 2 UrlCaption + UrlField (KD_MenuFinishEditor.CopyField,
     ///                     read-only, the cove's URL, 0.8 mm per unit like the wall poster's). KH_TrainerBoard (U#, local) sits on it;
-    /// 2026-10-16 user decisions: the face has the cove lead, the support line and the price line; one button 「トレーナーになる」 (the gift
-    /// label when owned); no details popup (Trainer/Details and Actions/DetailsButton of the earlier builds are stale: Guide/1 removes them).
+    /// 2026-10-16 user decisions: the face has the cove lead, the support line and the price line; one button 「トレーナーになる」 (「加入済み」,
+    /// disabled, for a member: the pass cannot be gifted, so Actions/GiftNote is stale too); no details popup (Trainer/Details and Actions/DetailsButton of the earlier builds are stale: Guide/1 removes them).
     /// Both canvases lie in the tray's front plane (BUG-ENV-005: every drawn graphic inside a hole).
     /// 2026-10-16 user decision: no portal to the cove. It is a Private world and a VRCPortalMarker only opens a public instance, which a
     /// private world cannot have; the URL field replaces it. The cove portal of the first build (scene-root KH_CovePortal and its marker with
@@ -47,12 +47,12 @@ namespace KominkaHillside.Editor
         static readonly string[] TrainerWordKeys =
         {
             KH_TrainerBoard.KeyLoading, KH_TrainerBoard.KeyOff, KH_TrainerBoard.KeyOn, KH_TrainerBoard.KeyUnconfigured,
-            KH_TrainerBoard.KeyJoin, KH_TrainerBoard.KeyGift, KH_TrainerBoard.KeyGiftNote,
+            KH_TrainerBoard.KeyJoin, KH_TrainerBoard.KeyJoined,
         };
         static readonly string[] TrainerJaFallbacks =
         {
             KH_TrainerBoard.JaLoading, KH_TrainerBoard.JaOff, KH_TrainerBoard.JaOn, KH_TrainerBoard.JaUnconfigured,
-            KH_TrainerBoard.JaJoin, KH_TrainerBoard.JaGift, KH_TrainerBoard.JaGiftNote,
+            KH_TrainerBoard.JaJoin, KH_TrainerBoard.JaJoined,
         };
 
         // ---------------------------------------------------------------- face layout (canvas 1300 x 1300 mm, centre origin; paper children in paper-local mm)
@@ -65,19 +65,19 @@ namespace KominkaHillside.Editor
         static readonly Vector2 TrPhotoPos = new Vector2(-315f, 177f), TrPhotoSize = new Vector2(580f, 456f);
         // paper-local (paper 1240 x 830: x -620 .. 620, y -415 .. 415)
         static readonly Vector2 TrCovePos = new Vector2(300f, 172f), TrCoveSize = new Vector2(610f, 456f);      // right of the photo (y -56 .. 400)
-        static readonly Vector2 TrSupportPos = new Vector2(0f, -188f), TrSupportSize = new Vector2(1210f, 224f); // under photo + cove, full width (y -300 .. -76)
-        static readonly Vector2 TrPricePos = new Vector2(0f, -357f), TrPriceSize = new Vector2(1210f, 80f);      // under the support line (y -397 .. -317)
+        static readonly Vector2 TrSupportPos = new Vector2(0f, -148f), TrSupportSize = new Vector2(1210f, 168f); // under photo + cove, full width (y -232 .. -64)
+        static readonly Vector2 TrPricePos = new Vector2(0f, -276f), TrPriceSize = new Vector2(1210f, 72f);      // under the support line (y -312 .. -240)
+        static readonly Vector2 TrUrlNotePos = new Vector2(0f, -362f), TrUrlNoteSize = new Vector2(1210f, 92f);  // why the URL, under the price (y -408 .. -316)
         const float TrHeaderMax = 80f, TrHeaderMin = 52f, TrSubtitleMax = 52f, TrSubtitleMin = 30f;
-        const float TrCoveMax = 36f, TrCoveMin = 22f, TrSupportMax = 34f, TrSupportMin = 22f, TrPriceMax = 30f, TrPriceMin = 18f, TrLineSpacing = 10f;
+        const float TrCoveMax = 36f, TrCoveMin = 22f, TrSupportMax = 34f, TrSupportMin = 22f, TrPriceMax = 30f, TrPriceMin = 18f, TrUrlNoteMax = 26f, TrUrlNoteMin = 18f, TrLineSpacing = 10f;
         const float TrPhotoAspect = 1400f / 1100f;
 
         // ---------------------------------------------------------------- Actions strip (its own canvas, 1240 x 210 mm, centre 535 mm under the face's centre)
         const float TrActionsY = -535f;
         static readonly Vector2 TrActionsSize = new Vector2(1240f, 210f);
         // row 1 (y -25 .. 95)
-        // 2026-10-16: one button, its label one line (no wrap: ja has no word boundaries), centred in the width right of Status / GiftNote
-        static readonly Vector2 TrStatusPos = new Vector2(-420f, 63f), TrStatusSize = new Vector2(360f, 56f);        // x -600 .. -240
-        static readonly Vector2 TrGiftNotePos = new Vector2(-420f, 7f), TrGiftNoteSize = new Vector2(360f, 48f);
+        // 2026-10-16: one button, its label one line (no wrap: ja has no word boundaries), centred in the width right of Status
+        static readonly Vector2 TrStatusPos = new Vector2(-420f, 35f), TrStatusSize = new Vector2(360f, 110f);       // x -600 .. -240, y -20 .. 90
         static readonly Vector2 TrStorePos = new Vector2(185f, 35f), TrStoreSize = new Vector2(520f, 120f);          // x -75 .. 445 (label 500 x 110)
         // row 2 (y -93 .. -37): the caption, then the URL field (its own units: 1 unit = 0.8 mm, the wall poster's URL field)
         static readonly Vector2 TrUrlCaptionPos = new Vector2(-480f, -65f), TrUrlCaptionSize = new Vector2(240f, 56f);
@@ -88,7 +88,7 @@ namespace KominkaHillside.Editor
         const float TrUrlScale = 0.8f;
         /// <summary>The URL's point size (field units): the poster's 28 when the whole URL fits the field's text area, else the largest that fits.</summary>
         static readonly float[] TrUrlPointChoices = { 28f, 26f, 24f, 22f };
-        const float TrStatusMax = 34f, TrStatusMin = 18f, TrGiftNoteMax = 26f, TrGiftNoteMin = 16f;
+        const float TrStatusMax = 34f, TrStatusMin = 18f;
         const float TrStoreMax = 44f, TrStoreMin = 20f, TrUrlCaptionMax = 26f, TrUrlCaptionMin = 14f;
 
         const int TrActionsSorting = 1;
@@ -390,6 +390,7 @@ namespace KominkaHillside.Editor
             var support = Txt(paper.transform, "Support", TrSupportPos, TrSupportSize, TrSupportMax, TrSupportMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
             support.lineSpacing = TrLineSpacing; EditorUtility.SetDirty(support);
             Txt(paper.transform, "Price", TrPricePos, TrPriceSize, TrPriceMax, TrPriceMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+            Txt(paper.transform, "UrlNote", TrUrlNotePos, TrUrlNoteSize, TrUrlNoteMax, TrUrlNoteMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);   // why the URL (2026-10-16)
             // the first build's Paper/Perks is not in keep: RemoveStale takes it out (the perks are in the popup now)
             var photoGo = KD_ShopSetupEditor.EnsureUiChild(canvas, "Photo", TrPhotoPos, TrPhotoSize);
             photoGo.layer = 0;
@@ -406,14 +407,13 @@ namespace KominkaHillside.Editor
             SetSorting(actions, TrActionsSorting);
             Img(actions, "Plate", Vector2.zero, TrActionsSize, HeaderPlateColor, null, keep);
             var status = Txt(actions, "Status", TrStatusPos, TrStatusSize, TrStatusMax, TrStatusMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
-            var giftNote = Txt(actions, "GiftNote", TrGiftNotePos, TrGiftNoteSize, TrGiftNoteMax, TrGiftNoteMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
             TextMeshProUGUI storeLabel;
             var storeBtn = TrainerButton(actions, StoreButtonName, TrStorePos, TrStoreSize, Vermilion, Washi, TrStoreMax, TrStoreMin, false, c, keep, out storeLabel);
             // the earlier builds' Actions/DetailsButton and Actions/PortalButton are not in keep: RemoveStale takes them out
             // the saved scene shows the "checking" state; KH_TrainerBoard re-renders on Start
-            status.text = KH_TrainerBoard.JaLoading; storeLabel.text = KH_TrainerBoard.JaJoin; giftNote.text = KH_TrainerBoard.JaGiftNote;
-            EditorUtility.SetDirty(status); EditorUtility.SetDirty(storeLabel); EditorUtility.SetDirty(giftNote);
-            if (giftNote.gameObject.activeSelf) giftNote.gameObject.SetActive(false);
+            status.text = KH_TrainerBoard.JaLoading; storeLabel.text = KH_TrainerBoard.JaJoin;
+            EditorUtility.SetDirty(status); EditorUtility.SetDirty(storeLabel);
+            // the earlier builds' Actions/GiftNote is not in keep: RemoveStale takes it out (no gift path, 2026-10-16)
             // row 2: the cove's URL (2026-10-16 user decision: a copy field instead of a portal; the wall poster's CopyField, 0.8 mm per unit)
             Txt(actions, UrlCaptionName, TrUrlCaptionPos, TrUrlCaptionSize, TrUrlCaptionMax, TrUrlCaptionMin, TextAlignmentOptions.Left, SignInk, true, c, keep);
             var field = KD_MenuFinishEditor.CopyField(actions, UrlFieldName, TrUrlPos, TrUrlPx, CoveUrl, c.font, false);
@@ -434,7 +434,7 @@ namespace KominkaHillside.Editor
             if (backing == null) throw new InvalidOperationException("KH_TrainerBoard backing missing (compile U# after Guide/0, then Guide/1 again; reopen the scene without saving)");
             if (backing.SyncMethod != VRC.SDKBase.Networking.SyncType.None) { backing.SyncMethod = VRC.SDKBase.Networking.SyncType.None; EditorUtility.SetDirty(backing); }
             tb.pass = c.trainerPass; tb.language = c.language;
-            tb.status = status; tb.storeLabel = storeLabel; tb.giftNote = giftNote; tb.storeButton = storeBtn;
+            tb.status = status; tb.storeLabel = storeLabel; tb.storeButton = storeBtn;
             UdonSharpEditorUtility.CopyProxyToUdon(tb); EditorUtility.SetDirty(tb);
             WireClick(storeBtn, backing, StoreEvent, r.log);
             return new List<RectTransform> { actions };

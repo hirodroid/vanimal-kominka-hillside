@@ -1042,6 +1042,11 @@
     },
     {
       "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Paper/UrlNote",
+      "key": "guide.trainer.url.note"
+    },
+    {
+      "root": "KH_GuideBoards",
       "path": "Trainer/Actions/UrlCaption",
       "key": "guide.trainer.url.caption"
     },

@@ -8,9 +8,10 @@ namespace KominkaHillside
 {
     // IMP-UI-013: the ばにまるトレーナー board in front of the gate (KH_GuideBoards/Trainer, built by Guide/1). The face is read-only;
     // this behaviour sits on its operation strip (Trainer/Actions) and drives the parts that change:
-    //   - the membership line (Status), the store button's label (join / gift) and the gift note, from KH_TrainerPass as the hand menu's
-    //     「あそぶ」 judges it (_Configured / _Loaded / _OwnedBy(LocalPlayer)) and from KD_Language.CurrentLanguage;
-    //   - [join] / [gift] opens the trainer Listing (KH_TrainerPass._OpenStore; a gift is chosen on VRChat's page, as KominkaDogRun IMP-PRG-012);
+    //   - the membership line (Status) and the one button (join, or "joined" and disabled for a member), from KH_TrainerPass as the hand
+    //     menu's 「あそぶ」 judges it (_Configured / _Loaded / _OwnedBy(LocalPlayer)) and from KD_Language.CurrentLanguage;
+    //   - [join] opens the trainer Listing (KH_TrainerPass._OpenStore). 2026-10-16 user decision: the pass cannot be gifted, so a member's
+    //     button only says so (no gift path).
     // The cove's URL is a read-only copy field on the strip (no portal: the cove is a Private world, 2026-10-16 user decision); no code here.
     // Local only: no synced variables, no ownership, no network events (the `_` prefix keeps every public event off the network).
     // One _Tick chain: Start arms it once and every _Tick re-arms it exactly once (never two outstanding, never none). Near the board the
@@ -23,15 +24,14 @@ namespace KominkaHillside
 
         // the dynamic words (UITranslations.json, 13 languages); the ja fallback is used while a key is missing from KD_Language's tables
         public const string KeyLoading = "guide.trainer.state.loading", KeyOff = "guide.trainer.state.off", KeyOn = "guide.trainer.state.on",
-            KeyUnconfigured = "guide.trainer.state.unconfigured", KeyJoin = "guide.trainer.join", KeyGift = "guide.trainer.gift",
-            KeyGiftNote = "guide.trainer.giftNote";
-        public const string JaLoading = "確認中…", JaOff = "未加入", JaOn = "加入中 (ここでも入り江でも使えます)", JaUnconfigured = "準備中",
-            JaJoin = "トレーナーになる", JaGift = "ギフト", JaGiftNote = "購入画面でギフトを選べます";
+            KeyUnconfigured = "guide.trainer.state.unconfigured", KeyJoin = "guide.trainer.join", KeyJoined = "guide.trainer.joined";
+        public const string JaLoading = "確認中…", JaOff = "未加入", JaOn = "ここでも、入り江でも使えます", JaUnconfigured = "準備中",
+            JaJoin = "トレーナーになる", JaJoined = "加入済み";
 
         [Tooltip("KH_Dogs/KH_TrainerPass (the same Product / Listing as the hand menu)")]
         public KH_TrainerPass pass;
         public KominkaDogRun.KD_Language language;
-        public TextMeshProUGUI status, storeLabel, giftNote;
+        public TextMeshProUGUI status, storeLabel;
         public Button storeButton;
 
         const float NearMeters = 12f, NearTickSeconds = 0.5f, FarBodySeconds = 2f;
@@ -91,8 +91,8 @@ namespace KominkaHillside
             return owned ? StateOn : StateOff;
         }
 
-        /// <summary>Writes the membership line, the store button and the gift note for a state in a language (Guide/2 calls it in Edit mode
-        /// for ja / en and restores the scene values afterwards).</summary>
+        /// <summary>Writes the membership line and the button for a state in a language (Guide/2 calls it in Edit mode for ja / en and restores
+        /// the scene values afterwards). The button opens the purchase page only while checking or not a member.</summary>
         public void _Render(int state, string code)
         {
             bool on = state == StateOn;
@@ -100,14 +100,12 @@ namespace KominkaHillside
                 status.text = state == StateUnconfigured ? Tx(KeyUnconfigured, JaUnconfigured, code)
                     : state == StateLoading ? Tx(KeyLoading, JaLoading, code)
                     : on ? Tx(KeyOn, JaOn, code) : Tx(KeyOff, JaOff, code);
-            if (storeLabel != null) storeLabel.text = on ? Tx(KeyGift, JaGift, code) : Tx(KeyJoin, JaJoin, code);
-            if (storeButton != null) storeButton.interactable = state != StateUnconfigured;
-            if (giftNote != null)
-            {
-                if (on) giftNote.text = Tx(KeyGiftNote, JaGiftNote, code);
-                if (giftNote.gameObject.activeSelf != on) giftNote.gameObject.SetActive(on);
-            }
+            if (storeLabel != null) storeLabel.text = on ? Tx(KeyJoined, JaJoined, code) : Tx(KeyJoin, JaJoin, code);
+            if (storeButton != null) storeButton.interactable = _ButtonOn(state);
         }
+
+        /// <summary>The button opens the purchase page: checking or not a member (not unconfigured, not a member already).</summary>
+        public bool _ButtonOn(int state) { return state == StateLoading || state == StateOff; }
 
         string Tx(string key, string ja, string code)
         {
@@ -118,11 +116,12 @@ namespace KominkaHillside
 
         // ---------------------------------------------------------------- the button (Trainer/Actions/StoreButton)
 
-        /// <summary>[join] / [gift]: the trainer Listing. Opening it is never taken as a purchase (the Store events bring ownership back).</summary>
+        /// <summary>[join]: the trainer Listing. Opening it is never taken as a purchase (the Store events bring ownership back). A member's
+        /// button is disabled; the state is re-read here too, so a press that slips through does nothing.</summary>
         public void _OpenStore()
         {
             Poke();
-            if (pass == null || !pass._Configured()) return;
+            if (pass == null || !_ButtonOn(ReadState())) return;
             pass._OpenStore();
         }
     }

@@ -3962,7 +3962,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "加入中 (ここでも入り江でも使えます)"
+          "text": "ここでも、入り江でも使えます"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -3971,14 +3971,6 @@
         {
           "key": "guide.trainer.join",
           "text": "トレーナーになる"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "ギフト"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "購入画面でギフトを選べます"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -3991,6 +3983,14 @@
         {
           "key": "guide.trainer.price",
           "text": "1か月 500 Credits (3か月 1,350 / 6か月 2,550 / 12か月 4,800)。自動更新はありません。"
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "加入済み"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "メンテナンスの都合上、ワールドは非公開 (Private) のまま、URLからご利用いただく形にしています。URLの共有や、Friends+ などお好きな形式でのインスタンス作成は自由です。"
         }
       ]
     },
@@ -7953,7 +7953,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (works here and in the cove)"
+          "text": "Works here and in the cove"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -7962,14 +7962,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Become a Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Gift"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Choose Gift on the store page"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -7982,6 +7974,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits for 1 month (3 months 1,350 / 6 months 2,550 / 12 months 4,800). No auto-renewal."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Joined"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "For maintenance reasons the world stays private (Private): you enter from its URL. Sharing the URL, or opening any instance type you like (Friends+ and so on), is fine."
         }
       ]
     },
@@ -11944,7 +11944,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (действует здесь и в бухте)"
+          "text": "Действует здесь и в бухте"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -11953,14 +11953,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Стать Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Подарить"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "В магазине можно выбрать подарок"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -11973,6 +11965,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits за 1 месяц (3 месяца 1350 / 6 месяцев 2550 / 12 месяцев 4800). Без автопродления."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Оформлено"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Из-за технического обслуживания мир остаётся закрытым (Private): вход по его URL. Можно свободно делиться URL и создавать инстанс любого типа (Friends+ и другие)."
         }
       ]
     },
@@ -15935,7 +15935,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (діє тут і в бухті)"
+          "text": "Діє тут і в бухті"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -15944,14 +15944,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Стати Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Подарувати"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "У магазині можна вибрати подарунок"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -15964,6 +15956,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits за 1 місяць (3 місяці 1350 / 6 місяців 2550 / 12 місяців 4800). Без автоподовження."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Оформлено"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Через технічне обслуговування світ лишається закритим (Private): вхід за його URL. Можна вільно ділитися URL і створювати інстанс будь-якого типу (Friends+ тощо)."
         }
       ]
     },
@@ -19926,7 +19926,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "가입 중 (여기서도 비치에서도 사용 가능)"
+          "text": "여기서도 비치에서도 사용 가능"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -19935,14 +19935,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Trainer 되기"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "선물"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "구매 화면에서 선물을 고를 수 있어요"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -19955,6 +19947,14 @@
         {
           "key": "guide.trainer.price",
           "text": "1개월 500 Credits (3개월 1,350 / 6개월 2,550 / 12개월 4,800). 자동 갱신은 없어요."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "가입 완료"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "유지 보수 때문에 월드는 비공개 (Private) 그대로 두고, URL로 이용하는 방식이에요. URL 공유나 Friends+ 등 원하는 형식으로 인스턴스를 만드는 것은 자유예요."
         }
       ]
     },
@@ -23917,7 +23917,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (gilt hier und in der Bucht)"
+          "text": "Gilt hier und in der Bucht"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -23926,14 +23926,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Trainer werden"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Schenken"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Im Store kannst du es verschenken"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -23946,6 +23938,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits für 1 Monat (3 Monate 1.350 / 6 Monate 2.550 / 12 Monate 4.800). Keine automatische Verlängerung."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Gebucht"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Aus Wartungsgründen bleibt die Welt privat (Private): Du kommst über ihre URL hinein. Teil die URL gern oder öffne eine Instanz der Art, die du magst (Friends+ usw.)."
         }
       ]
     },
@@ -27908,7 +27908,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "已加入 (这里和海湾都能用)"
+          "text": "这里和海湾都能用"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -27917,14 +27917,6 @@
         {
           "key": "guide.trainer.join",
           "text": "成为 Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "赠送"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "可在购买界面选择赠送"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -27937,6 +27929,14 @@
         {
           "key": "guide.trainer.price",
           "text": "1 个月 500 Credits (3 个月 1,350 / 6 个月 2,550 / 12 个月 4,800)。不会自动续订。"
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "已加入"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "出于维护原因，世界保持非公开 (Private)，通过 URL 进入。可以自由分享 URL，也可以用 Friends+ 等任意形式创建实例。"
         }
       ]
     },
@@ -31899,7 +31899,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (vale aquí y en la cala)"
+          "text": "Vale aquí y en la cala"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -31908,14 +31908,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Hazte Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Regalar"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Puedes regalarlo desde la tienda"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -31928,6 +31920,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits por 1 mes (3 meses 1350 / 6 meses 2550 / 12 meses 4800). Sin renovación automática."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Ya te uniste"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Por motivos de mantenimiento, el mundo sigue siendo privado (Private): se entra desde su URL. Puedes compartir la URL o abrir una instancia del tipo que quieras (Friends+, etc.)."
         }
       ]
     },
@@ -35890,7 +35890,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (valable ici et dans la crique)"
+          "text": "Valable ici et dans la crique"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -35899,14 +35899,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Devenir Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Offrir"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Tu peux offrir depuis la boutique"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -35919,6 +35911,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits pour 1 mois (3 mois 1350 / 6 mois 2550 / 12 mois 4800). Sans renouvellement automatique."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Inscrit"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Pour des raisons de maintenance, le monde reste privé (Private) : on y entre par son URL. Tu peux partager l'URL ou ouvrir l'instance de ton choix (Friends+, etc.)."
         }
       ]
     },
@@ -39881,7 +39881,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (vale aqui e na enseada)"
+          "text": "Vale aqui e na enseada"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -39890,14 +39890,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Torne-se Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Presentear"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Você pode presentear pela loja"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -39910,6 +39902,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits por 1 mês (3 meses 1.350 / 6 meses 2.550 / 12 meses 4.800). Sem renovação automática."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Já é Trainer"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Por motivos de manutenção, o mundo continua privado (Private): a entrada é pela URL dele. Você pode compartilhar a URL ou abrir uma instância do tipo que quiser (Friends+ etc.)."
         }
       ]
     },
@@ -43872,7 +43872,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (vale qui e nella baia)"
+          "text": "Vale qui e nella baia"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -43881,14 +43881,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Diventa Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Regala"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Puoi regalarlo dal negozio"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -43901,6 +43893,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits per 1 mese (3 mesi 1.350 / 6 mesi 2.550 / 12 mesi 4.800). Nessun rinnovo automatico."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Iscritto"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Per motivi di manutenzione il mondo resta privato (Private): si entra dal suo URL. Puoi condividere l'URL o aprire un'istanza del tipo che preferisci (Friends+ e così via)."
         }
       ]
     },
@@ -47863,7 +47863,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "Trainer (działa tu i w zatoczce)"
+          "text": "Działa tu i w zatoczce"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -47872,14 +47872,6 @@
         {
           "key": "guide.trainer.join",
           "text": "Zostań Trainerem"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "Podaruj"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "Podarunek wybierzesz w sklepie"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -47892,6 +47884,14 @@
         {
           "key": "guide.trainer.price",
           "text": "500 Credits za 1 miesiąc (3 miesiące 1350 / 6 miesięcy 2550 / 12 miesięcy 4800). Bez automatycznego odnawiania."
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "Dołączono"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "Ze względu na konserwację świat pozostaje prywatny (Private): wchodzi się przez jego URL. Możesz udostępniać URL i tworzyć instancję dowolnego typu (Friends+ itp.)."
         }
       ]
     },
@@ -51858,7 +51858,7 @@
         },
         {
           "key": "guide.trainer.state.on",
-          "text": "已加入 (這裡和海灣都能用)"
+          "text": "這裡和海灣都能用"
         },
         {
           "key": "guide.trainer.state.unconfigured",
@@ -51867,14 +51867,6 @@
         {
           "key": "guide.trainer.join",
           "text": "成為 Trainer"
-        },
-        {
-          "key": "guide.trainer.gift",
-          "text": "贈送"
-        },
-        {
-          "key": "guide.trainer.giftNote",
-          "text": "可在購買介面選擇贈送"
         },
         {
           "key": "guide.trainer.url.caption",
@@ -51887,6 +51879,14 @@
         {
           "key": "guide.trainer.price",
           "text": "1 個月 500 Credits (3 個月 1,350 / 6 個月 2,550 / 12 個月 4,800)。不會自動續訂。"
+        },
+        {
+          "key": "guide.trainer.joined",
+          "text": "已加入"
+        },
+        {
+          "key": "guide.trainer.url.note",
+          "text": "由於維護的關係，世界維持非公開 (Private)，透過 URL 進入。可以自由分享 URL，也可以用 Friends+ 等任何形式建立實例。"
         }
       ]
     }

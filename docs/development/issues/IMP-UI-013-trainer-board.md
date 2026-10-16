@@ -144,3 +144,9 @@ SDK の仕様 (2026-10-16 に確認): [VRC Portal Marker](https://creators.vrcha
 
 [トレーナー特典を見る] と詳細ポップアップ (特典 3 行・入り江の注意) を外し、操作帯は 状態行 + [トレーナーになる] (加入中は [ギフト]) + URL 欄 だけにする。特典の一覧はインフォメーション「ばにまるトレーナーについて」(§9 の後の更新で 3 ワールド分を記載) と看板 A 4 枚目が持つ。キー perks / cove.body / details.open / details.close を削除 (13 キー)、bindings は 6 件。札の改行は §9 の後の対策 (折り返し禁止 + 自動縮小 + Guide/2 の 1 行検査) で防ぐ。
 - 2026-10-16 §10 の実装 (A: Details と DetailsButton を削除、StoreButton 520 幅・札 44 → 20 pt 折り返し禁止、StaticLabels 6、Verify 更新。B: join 「トレーナーになる」× 13、キー 4 つ削除 (13 キー)、bindings 6)。検証: C# / U# 0 → 保存 → Guide/1 BUILT (Details・DetailsButton を削除、位置保持、字形の追加なし) → Verify 新規 FAIL 0 / WARN 0 (Details/Body の WARN も消えた。札は ja 352 / 500 mm、en 379 / 500 mm、ギフトも 1 行) → Menu/11 → 22 PASS → Course/80 → 81 (FAIL 13 は別セッションの UI フォント、他 0) → 保存 → Guide/3 撮影 (統括が目視)。
+
+## 11. 決定: ギフトなし・加入済み表示、URL から入る理由を看板に (2026-10-16 ユーザー「トレーナーはギフト出来ないので、購入済みなら加入済み。URLから入る理由をちゃんと書いておいて」)
+
+- トレーナーのサブスクはギフトできない → 加入中は [加入済み] (押せない) + 状態行「ここでも、入り江でも使えます」。キー gift / giftNote を削除し joined を追加 (§3.4 の「加入中は [ギフト] 1 回押し」を撤回)。GiftNote ノードは Guide/1 が削除。
+- 価格の下に `url.note`: 「メンテナンスの都合上、ワールドは非公開 (Private) のまま、URLからご利用いただく形にしています。URLの共有や、Friends+ などお好きな形式でのインスタンス作成は自由です。」(告知文の原文どおり、13 言語)。
+- 2026-10-16 §11 の実装 (A: joined 状態 = [加入済み] で押せない + `_OpenStore` は押せる状態の時だけ、GiftNote 削除、`Paper/UrlNote` 追加 (Support / Price を上へ詰めて 92 mm 確保)、Verify を 4 状態 × ja/en と joined の 1 行検査へ。B: gift / giftNote 削除、joined・url.note 追加、state.on 書き換え (13 キー × 13 言語)、bindings 7)。検証: C# / U# 0 → Guide/1 BUILT (GiftNote を削除、位置保持、字形 1 追加 → フォントアセットを含める) → Verify 新規 FAIL 0 / WARN 0 (札: トレーナーになる 352 / 加入済み 176 / 500 mm、url.note ja / en 2 行) → Menu/11 → 22 PASS → 保存 → url.note を 13 言語で実測 (全部 26 pt 2 行、溢れ 0) → Guide/3 撮影。
