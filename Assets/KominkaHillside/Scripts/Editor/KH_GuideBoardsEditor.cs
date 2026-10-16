@@ -164,12 +164,13 @@ namespace KominkaHillside.Editor
             // IMP-UI-013: the trainer board (the dynamic Status / StoreButton / GiftNote are KH_TrainerBoard's, not bound)
             new LabelSpec("Trainer/Canvas/Header", "guide.trainer.title"),
             new LabelSpec("Trainer/Canvas/Subtitle", "guide.trainer.subtitle"),
-            new LabelSpec("Trainer/Canvas/Paper/Perks", "guide.trainer.perks"),
             new LabelSpec("Trainer/Canvas/Paper/Cove", "guide.trainer.cove.lead"),
-            new LabelSpec("Trainer/Actions/PortalButton/Label", "guide.trainer.portal"),
+            new LabelSpec("Trainer/Canvas/Paper/Support", "guide.trainer.support"),
+            new LabelSpec("Trainer/Canvas/Paper/Price", "guide.trainer.price"),
             new LabelSpec("Trainer/Actions/DetailsButton/Label", "guide.trainer.details.open"),
+            new LabelSpec("Trainer/Actions/UrlCaption", "guide.trainer.url.caption"),
+            new LabelSpec("Trainer/Details/Perks", "guide.trainer.perks"),
             new LabelSpec("Trainer/Details/Body", "guide.trainer.cove.body"),
-            new LabelSpec("Trainer/Details/UrlCaption", "guide.trainer.url.caption"),
             new LabelSpec("Trainer/Details/CloseButton/Label", "guide.trainer.details.close"),
         };
         const string InteractPath = "Kominka/Interact", InteractKey = "guide.kominka.interact";
@@ -186,10 +187,11 @@ namespace KominkaHillside.Editor
             public Transform root;                 // null before the first build
             public List<Transform> washStations = new List<Transform>();
             public VRC.SDK3.Components.VRCPortalMarker portal; public string portalRoomId;   // IMP-WLD-006: the portal to 古民家ドッグラン (every marker whose roomId is not the cove's)
-            // IMP-UI-013: the cove's marker (roomId CoveRoomId; null before the first Guide/1), its scene-root anchor, the trainer pass, the photo
-            public VRC.SDK3.Components.VRCPortalMarker covePortal; public Transform coveAnchor;
+            // IMP-UI-013: the trainer pass, the photo; the first build's cove portal (markers with CoveRoomId, KH_CovePortal objects), stale since
+            // 2026-10-16 (a portal cannot open a private world): Guide/1 removes them, Guide/2 fails while any is left
             public KH_TrainerPass trainerPass; public Texture2D covePhoto;
-            public GameObject portalPrefab;   // the SDK portal prefab the cove marker is an instance of (Codex review 2026-10-16 中2)
+            public List<VRC.SDK3.Components.VRCPortalMarker> staleCoveMarkers = new List<VRC.SDK3.Components.VRCPortalMarker>();
+            public List<GameObject> staleCoveAnchors = new List<GameObject>();
             // IMP-UI-002 wave 2: Guide/13's cut atlas + manifest (board A's frisbee / ball papers), the rounded backing sprite
             public KH_PlayGuideCaptureEditor.Manifest cuts; public Texture2D cutAtlas; public Sprite round;
             public List<LabelSpec> labels = new List<LabelSpec>();   // StaticLabels + the cut captions / callouts
@@ -271,7 +273,7 @@ namespace KominkaHillside.Editor
                     if (n > 1) throw new InvalidOperationException(n + " children named " + b.name + " under " + RootName + " (keep one); nothing changed");
                 }
             // ---- IMP-WLD-006: the existing world portal is taken over, never created or retyped ----
-            // IMP-UI-013: the markers are told apart by roomId: the cove's (CoveRoomId, created by Guide/1, at most one) and the Kominka one (all others: exactly one)
+            // IMP-UI-013: the markers are told apart by roomId: the Kominka one (exactly one) and the first build's cove portal (CoveRoomId: stale, removed by Guide/1)
             var markers = UnityEngine.Object.FindObjectsOfType<VRC.SDK3.Components.VRCPortalMarker>(true);
             Func<VRC.SDK3.Components.VRCPortalMarker, string> roomOf = m => { var p = new SerializedObject(m).FindProperty("roomId"); return p != null ? p.stringValue : null; };
             var coveMarkers = markers.Where(m => roomOf(m) == CoveRoomId).ToList();

@@ -1027,18 +1027,18 @@
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Trainer/Canvas/Paper/Perks",
-      "key": "guide.trainer.perks"
-    },
-    {
-      "root": "KH_GuideBoards",
       "path": "Trainer/Canvas/Paper/Cove",
       "key": "guide.trainer.cove.lead"
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Trainer/Actions/PortalButton/Label",
-      "key": "guide.trainer.portal"
+      "path": "Trainer/Canvas/Paper/Support",
+      "key": "guide.trainer.support"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Paper/Price",
+      "key": "guide.trainer.price"
     },
     {
       "root": "KH_GuideBoards",
@@ -1047,13 +1047,18 @@
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Trainer/Details/Body",
-      "key": "guide.trainer.cove.body"
+      "path": "Trainer/Actions/UrlCaption",
+      "key": "guide.trainer.url.caption"
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Trainer/Details/UrlCaption",
-      "key": "guide.trainer.url.caption"
+      "path": "Trainer/Details/Perks",
+      "key": "guide.trainer.perks"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Details/Body",
+      "key": "guide.trainer.cove.body"
     },
     {
       "root": "KH_GuideBoards",

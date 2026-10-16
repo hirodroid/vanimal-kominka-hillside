@@ -16,11 +16,14 @@ namespace KominkaHillside.Editor
     {
         static readonly string[] TrainerTree =
         {
-            "Canvas/HeaderPlate", "Canvas/Header", "Canvas/Subtitle", "Canvas/Paper", "Canvas/Paper/Perks", "Canvas/Paper/Cove", "Canvas/Photo",
-            "Actions/Plate", "Actions/Status", "Actions/GiftNote", "Actions/StoreButton", "Actions/StoreButton/Label", "Actions/PortalButton", "Actions/PortalButton/Label",
-            "Actions/DetailsButton", "Actions/DetailsButton/Label",
-            "Details/Paper", "Details/Body", "Details/UrlCaption", "Details/UrlField", "Details/CloseButton", "Details/CloseButton/Label",
+            "Canvas/HeaderPlate", "Canvas/Header", "Canvas/Subtitle", "Canvas/Paper", "Canvas/Paper/Cove", "Canvas/Paper/Support", "Canvas/Paper/Price", "Canvas/Photo",
+            "Actions/Plate", "Actions/Status", "Actions/GiftNote", "Actions/StoreButton", "Actions/StoreButton/Label",
+            "Actions/DetailsButton", "Actions/DetailsButton/Label", "Actions/UrlCaption", "Actions/UrlField",
+            "Details/Paper", "Details/Perks", "Details/Body", "Details/CloseButton", "Details/CloseButton/Label",
         };
+
+        /// <summary>Nodes of the first build that must be gone (2026-10-16: the portal button, the URL in the popup, the perks on the face).</summary>
+        static readonly string[] TrainerGone = { "Actions/" + StalePortalButtonName, "Details/" + UrlCaptionName, "Details/" + UrlFieldName, "Canvas/Paper/Perks" };
 
         static void CheckTrainer(Ctx c, Anch a, Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
         {
@@ -35,7 +38,7 @@ namespace KominkaHillside.Editor
                 List<string> broken;
                 try { broken = TrainerRules(c, a, t.position, t.eulerAngles.y, k.position, k.eulerAngles.y, t, true); }
                 catch (Exception e) { broken = new List<string> { "could not be measured: " + e.Message }; }
-                req(broken.Count == 0, tag + "placement rules (beside the Kominka board, both portals clear, gate line, spawn, fixtures, other boards / posters and their readers, physics, ground)"
+                req(broken.Count == 0, tag + "placement rules (beside the Kominka board, clear of its portal, gate line, spawn, fixtures, other boards / posters and their readers, physics, ground)"
                     + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
                 req(Mathf.Abs(Mathf.DeltaAngle(t.eulerAngles.y, k.eulerAngles.y)) < 1f, tag + "faces like the Kominka board (yaw " + t.eulerAngles.y.ToString("F1") + " / " + k.eulerAngles.y.ToString("F1") + ")");
                 var d = Flat3(t.position - k.position);
@@ -47,6 +50,24 @@ namespace KominkaHillside.Editor
 
             // ---- the tree ----
             foreach (var p in TrainerTree) req(t.Find(p) != null, tag + p);
+            foreach (var p in TrainerGone) req(t.Find(p) == null, tag + "no " + p + " (removed 2026-10-16: no portal to the private cove, the URL is on the strip, the perks are in the popup; Guide/1 removes it)");
+            var sub = Tmp(t, "Canvas/Subtitle");
+            req(sub != null && (sub.fontStyle & FontStyles.Bold) != 0 && !sub.enableWordWrapping, tag + "the catch copy (Canvas/Subtitle) is bold and one line");
+            // the popup: the perks above the cove's text, both inside the paper, above the close button
+            var dpk = Tmp(t, "Details/Perks"); var dbd = Tmp(t, "Details/Body"); var dcl = t.Find("Details/" + CloseButtonName) as RectTransform;
+            if (dpk != null && dbd != null && dcl != null)
+            {
+                Rect rp = FrameRect(t, dpk.rectTransform), rb = FrameRect(t, dbd.rectTransform), rc = FrameRect(t, dcl);
+                req(rp.yMin >= rb.yMax && rb.yMin >= rc.yMax, tag + "Details: Perks above Body above CloseButton, no overlap");
+            }
+            // the face: Support and Price under the photo and the cove lead, full width
+            var ph = t.Find("Canvas/Photo") as RectTransform; var cv2 = Tmp(t, "Canvas/Paper/Cove"); var sp = Tmp(t, "Canvas/Paper/Support"); var pr = Tmp(t, "Canvas/Paper/Price");
+            if (ph != null && cv2 != null && sp != null && pr != null)
+            {
+                Rect rph = FrameRect(t, ph), rcv = FrameRect(t, cv2.rectTransform), rsp = FrameRect(t, sp.rectTransform), rpr = FrameRect(t, pr.rectTransform);
+                req(rcv.xMin >= rph.xMax && Mathf.Min(rph.yMin, rcv.yMin) >= rsp.yMax && rsp.yMin >= rpr.yMax,
+                    tag + "face: Cove beside the photo, Support under both, Price under Support (no overlap)");
+            }
             var face = t.Find(CanvasName);
             var actions = t.Find(ActionsName) as RectTransform;
             var details = t.Find(DetailsName) as RectTransform;
@@ -99,8 +120,10 @@ namespace KominkaHillside.Editor
                 }
             }
 
-            // ---- the cove portal (before the runtime checks, so a missing KH_TrainerBoard does not hide it) ----
-            CheckCovePortal(c, a, t, k, req, warn, v);
+            // ---- no cove portal (2026-10-16: a VRCPortalMarker only opens a public instance; the cove is a Private world) ----
+            int anchorsLeft; KD_SceneObjects.Find(CovePortalName, out anchorsLeft);
+            req(anchorsLeft == 0, "no " + CovePortalName + " in the scene (" + anchorsLeft + "; the first build's cove portal, Guide/1 removes it)");
+            req(c.staleCoveMarkers.Count == 0, "no VRCPortalMarker with the cove's world id " + CoveRoomId + " (" + string.Join(", ", c.staleCoveMarkers.Select(m => KD_SceneObjects.PathOf(m.gameObject))) + ")");
 
             // ---- KH_TrainerBoard and its wiring ----
             var tb = actions != null ? actions.GetComponent<KH_TrainerBoard>() : null;
@@ -110,23 +133,20 @@ namespace KominkaHillside.Editor
             req(bk != null && bk.SyncMethod == VRC.SDKBase.Networking.SyncType.None, tag + "KH_TrainerBoard sync None (local only, no network objects)");
             var statusT = Tmp(actions, "Status"); var giftT = Tmp(actions, "GiftNote"); var storeL = Tmp(actions, "StoreButton/Label");
             var storeB = actions.Find(StoreButtonName) != null ? actions.Find(StoreButtonName).GetComponent<Button>() : null;
-            var anchorGo = c.coveAnchor != null ? c.coveAnchor.gameObject : null;
             var detailsGo = details != null ? details.gameObject : null;
-            req(tb.pass == c.trainerPass && tb.language == c.language && tb.portal == anchorGo && anchorGo != null && tb.details == detailsGo && detailsGo != null,
-                tag + "KH_TrainerBoard.pass / language / portal (" + CovePortalName + ") / details (proxy)");
+            req(tb.pass == c.trainerPass && tb.language == c.language && tb.details == detailsGo && detailsGo != null, tag + "KH_TrainerBoard.pass / language / details (proxy)");
             req(tb.status == statusT && statusT != null && tb.storeLabel == storeL && storeL != null && tb.giftNote == giftT && giftT != null && tb.storeButton == storeB && storeB != null,
                 tag + "KH_TrainerBoard.status / storeLabel / giftNote / storeButton (proxy)");
-            req(Mathf.Approximately(tb.showSeconds, PortalShowSeconds), tag + "showSeconds " + tb.showSeconds + " (= the Kominka portal's " + PortalShowSeconds + ")");
             if (bk != null)
             {
                 Func<string, object, bool> same = (name, want) => { object x; return bk.publicVariables.TryGetVariableValue(name, out x) && want != null && ReferenceEquals(x, want); };
                 var passBk = c.trainerPass != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.trainerPass) : null;
                 var langBk = c.language != null ? (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c.language) : null;
                 req(same("pass", passBk) && same("language", langBk), tag + "KH_TrainerBoard.pass / language (backing = their backing UdonBehaviours)");
-                req(same("portal", anchorGo) && same("details", detailsGo) && same("status", statusT) && same("storeLabel", storeL) && same("giftNote", giftT) && same("storeButton", storeB),
-                    tag + "KH_TrainerBoard.portal / details / status / storeLabel / giftNote / storeButton (backing)");
+                req(same("details", detailsGo) && same("status", statusT) && same("storeLabel", storeL) && same("giftNote", giftT) && same("storeButton", storeB),
+                    tag + "KH_TrainerBoard.details / status / storeLabel / giftNote / storeButton (backing)");
             }
-            foreach (var w in new[] { new[] { "Actions/" + StoreButtonName, StoreEvent }, new[] { "Actions/" + PortalButtonName, PortalEvent },
+            foreach (var w in new[] { new[] { "Actions/" + StoreButtonName, StoreEvent },
                 new[] { "Actions/" + DetailsButtonName, DetailsOpenEvent }, new[] { "Details/" + CloseButtonName, DetailsCloseEvent } })
             {
                 var bt = t.Find(w[0]);
@@ -144,11 +164,14 @@ namespace KominkaHillside.Editor
             req(graphicsOff.Count == 0, tag + "only the buttons and the URL field take the pointer" + (graphicsOff.Count > 0 ? " (" + string.Join(", ", graphicsOff.Take(5)) + ")" : ""));
 
             // ---- the URL field ----
-            var uf = details != null ? details.Find("UrlField") : null;
+            var uf = actions != null ? actions.Find(UrlFieldName) : null;
             var field = uf != null ? uf.GetComponent<TMP_InputField>() : null;
             req(field != null && field.text == CoveUrl && field.readOnly && field.onFocusSelectAll && !field.richText && field.lineType == TMP_InputField.LineType.SingleLine
                 && field.textViewport != null && field.textViewport.GetComponent<RectMask2D>() != null && field.textComponent != null && field.textComponent.font == c.font,
-                tag + "Details/UrlField = " + CoveUrl + " (read-only copy field, select-all on focus, single line, masked, the menu font)");
+                tag + "Actions/UrlField = " + CoveUrl + " (read-only copy field, select-all on focus, single line, masked, the menu font, inside the raycaster canvas)");
+            if (uf != null)
+                req(Mathf.Abs(uf.localScale.x - TrUrlScale) < 1e-5f && Mathf.Abs(uf.localScale.y - TrUrlScale) < 1e-5f && ((RectTransform)uf).sizeDelta == TrUrlPx && uf.gameObject.activeInHierarchy,
+                    tag + "Actions/UrlField at the wall poster's 0.8 mm per unit, " + TrUrlPx.x + " x " + TrUrlPx.y + " (" + (TrUrlPx.x * TrUrlScale).ToString("F0") + " x " + (TrUrlPx.y * TrUrlScale).ToString("F0") + " mm), shown");
             if (field != null && field.textComponent != null && field.textViewport != null)
             {
                 var go = new GameObject("TrainerUrlMeasure", typeof(RectTransform)) { hideFlags = HideFlags.HideAndDontSave };
@@ -157,7 +180,7 @@ namespace KominkaHillside.Editor
                     var sample = go.AddComponent<TextMeshProUGUI>();
                     sample.isOrthographic = true; sample.enableAutoSizing = false; sample.font = c.font; sample.fontSize = field.pointSize; sample.enableWordWrapping = false; sample.richText = false;
                     float w = sample.GetPreferredValues(CoveUrl, Mathf.Infinity, Mathf.Infinity).x, room = field.textViewport.rect.width;
-                    warn(w <= room, tag + "the whole URL shows in its field (" + w.ToString("F0") + " / " + room.ToString("F0") + " mm at " + field.pointSize + " mm)");
+                    req(w <= room, tag + "the whole URL fits its field on one line (" + w.ToString("F0") + " / " + room.ToString("F0") + " units at " + field.pointSize + " pt = " + (field.pointSize * TrUrlScale).ToString("F1") + " mm)");
                 }
                 finally { UnityEngine.Object.DestroyImmediate(go); }
             }
@@ -170,57 +193,6 @@ namespace KominkaHillside.Editor
         {
             var x = parent != null ? parent.Find(path) : null;
             return x != null ? x.GetComponent<TextMeshProUGUI>() : null;
-        }
-
-        static void CheckCovePortal(Ctx c, Anch a, Transform t, Transform k, Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
-        {
-            string tag = "cove portal: ";
-            var m = c.covePortal; var anchor = c.coveAnchor;
-            req(m != null, tag + "one VRCPortalMarker with roomId " + CoveRoomId + " (Guide/1 creates it)");
-            req(anchor != null && anchor.parent == null, tag + CovePortalName + " at the scene root");
-            if (m == null || anchor == null) return;
-            req(!anchor.gameObject.activeSelf && m.gameObject.activeSelf, tag + CovePortalName + " inactive in the saved scene (hidden for everyone at load, late joiners too), the marker itself active");
-            req(m.transform.parent == anchor && m.transform.localPosition == Vector3.zero && m.transform.localRotation == Quaternion.identity && m.transform.localScale == Vector3.one,
-                tag + "the marker " + KD_SceneObjects.PathOf(m.gameObject) + " sits at the anchor (local pose zero)");
-            req(c.portal != null && c.portal != m && c.portalRoomId == ExpectedRoomId, tag + "the Kominka portal is a different marker with its own world id (" + (c.portalRoomId ?? "none") + ")");
-            if (c.portal != null)
-            {
-                // Codex review 2026-10-16 中2: always checked (no skip): the cove marker is an instance of the portal prefab (SdkPortalPrefabPath)
-                req(c.portalPrefab != null && PrefabUtility.IsOutermostPrefabInstanceRoot(m.gameObject) && PrefabUtility.GetCorrespondingObjectFromSource(m.gameObject) == c.portalPrefab,
-                    tag + "an instance of the portal prefab " + (c.portalPrefab != null ? AssetDatabase.GetAssetPath(c.portalPrefab) : SdkPortalPrefabPath + " (not found)"));
-                var diffs = PortalFieldDiffs(c.portal, m);
-                req(diffs.Count == 0, tag + "the same presentation as the Kominka portal (every VRCPortalMarker field but roomId)" + (diffs.Count > 0 ? ": differs in " + string.Join(", ", diffs) : ""));
-            }
-            var cols = anchor.GetComponentsInChildren<Collider>(true);
-            req(cols.All(x => x.isTrigger), tag + "only trigger colliders (players walk into it)");
-            if (t == null || k == null) return;
-            float side = TrainerPortalSide(t.position, t.eulerAngles.y, k.position);
-            var spot = t.TransformPoint(new Vector3(side * PortalSideX, 0f, BackZ));
-            float g = Ground(spot);
-            req(Flat(anchor.position - spot) <= 0.01f && Mathf.Abs(anchor.position.y - g) <= 0.05f, tag + "beside the Trainer board on the side away from the Kominka board, on the terrain ("
-                + Flat(anchor.position - spot).ToString("F3") + " m off, " + (anchor.position.y - g).ToString("+0.00;-0.00") + " m; Guide/1 places it)");
-            req(Mathf.Abs(Mathf.DeltaAngle(anchor.eulerAngles.y, t.eulerAngles.y + PortalYaw)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(anchor.eulerAngles.x, 0f)) < 0.01f && Mathf.Abs(Mathf.DeltaAngle(anchor.eulerAngles.z, 0f)) < 0.01f,
-                tag + "faces the readers like the Kominka portal (yaw " + anchor.eulerAngles.y.ToString("F1") + ")");
-            var kp = k.Find(PortalAnchorName);
-            v.notes.Add(tag + "at " + V(anchor.position) + (kp != null ? ", " + Flat(anchor.position - kp.position).ToString("F2") + " m from the Kominka portal" : "")
-                + (a.spawn != null ? ", " + Flat(anchor.position - a.spawn.position).ToString("F1") + " m from the spawn" : "") + ". Whether a portal to a private (URL-only) world lets other players through is not judged here (device)");
-        }
-
-        /// <summary>Every visible serialized field of two VRCPortalMarkers that differs, roomId excepted.</summary>
-        static List<string> PortalFieldDiffs(VRC.SDK3.Components.VRCPortalMarker x, VRC.SDK3.Components.VRCPortalMarker y)
-        {
-            var diffs = new List<string>();
-            var sx = new SerializedObject(x); var sy = new SerializedObject(y);
-            var it = sx.GetIterator();
-            bool enter = true;
-            while (it.NextVisible(enter))
-            {
-                enter = false;
-                if (it.name == "roomId" || it.name == "m_Script") continue;
-                var other = sy.FindProperty(it.propertyPath);
-                if (other == null || !SerializedProperty.DataEquals(it, other)) diffs.Add(it.propertyPath);
-            }
-            return diffs;
         }
 
         static void CheckTrainerStates(Ctx c, KH_TrainerBoard tb, TextMeshProUGUI status, TextMeshProUGUI storeLabel, TextMeshProUGUI giftNote, Button storeButton,

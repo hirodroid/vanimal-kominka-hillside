@@ -3946,19 +3946,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "3つのワールドで使える、期間制の会員証"
+          "text": "犬との時間を、もっと。"
         },
         {
           "key": "guide.trainer.perks",
-          "text": "古民家の裏山: 集合写真、フリスビーの取り方\n古民家ドッグラン: 集合写真、みんなで遊ぶ (かけっこなど) の開催\nひとやすみの入り江: トレーナーがいると扉が開く"
+          "text": "古民家の裏山: 犬たちを並ばせて集合写真。フリスビーの取り方を変える\n古民家ドッグラン: 集合写真。みんなで遊ぶ (かけっこなど) を開ける\nひとやすみの入り江: トレーナーがいる間は扉が開き、お友達も一緒に入れる"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "「ひとやすみの入り江」は、自分の犬とゆっくり過ごせる、夜のプライベートビーチです。トレーナーがインスタンスにいると扉が開き、会員でないお友達も一緒に入れます。追加購入は不要です。"
+          "text": "自分の犬と、夜のプライベートビーチへ。焚き火のそばでくつろいだり、浜辺で遊んだり。「ひとやすみの入り江」は、トレーナーがいる間は扉が開き、会員でないお友達も一緒に入れます。"
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "焚き火のそばで休んだり、浜辺でボール遊びをしたり、テントで寝転んで星を眺めたり。犬を洗える場所もあります。\n定員は6名です。ワールドは非公開 (Private) のまま、URLから入る形にしています。URLの共有や、Friends+ などお好きな形式でのインスタンス作成は自由です。"
+          "text": "「ひとやすみの入り江」は定員6名です。ワールドは非公開 (Private) のまま、URLから入ります。URLの共有や、Friends+ などお好きな形式でのインスタンス作成は自由です。"
         },
         {
           "key": "guide.trainer.state.loading",
@@ -3978,7 +3978,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "加入する"
+          "text": "料金・購入はこちら"
         },
         {
           "key": "guide.trainer.gift",
@@ -3989,12 +3989,8 @@
           "text": "購入画面でギフトを選べます"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "入り江のポータル"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "入り江について"
+          "text": "トレーナー特典を見る"
         },
         {
           "key": "guide.trainer.details.close",
@@ -4003,6 +3999,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "入り江の URL (コピーできます)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "ここでの時間を気に入ってもらえたら、ばにまるトレーナーになっていただけるとうれしいです。犬たちとの遊びや、過ごせる場所を増やしていく励みになります。"
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "1か月 500 Credits (3か月 1,350 / 6か月 2,550 / 12か月 4,800)。自動更新はありません。"
         }
       ]
     },
@@ -7949,19 +7953,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "One pass for three worlds (time-limited)"
+          "text": "More time with your dog."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: group photos, Frisbee catch styles\nKominka Dog Run: group photos, hosting group play (races and more)\nA Cove to Unwind: a Trainer opens the gate"
+          "text": "Kominka Hillside: line the dogs up for group photos, switch Frisbee catch styles\nKominka Dog Run: group photos, host group play (races and more)\nA Cove to Unwind: while a Trainer is there the gate is open and friends can come in"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind is a private night beach where you unwind with your own dog. While a Trainer is in the instance the gate stays open, so friends without a pass can come in too. No extra purchase."
+          "text": "Take your own dog to a private beach at night. Relax by the bonfire, play on the shore. At A Cove to Unwind the gate is open while a Trainer is there, so friends without a pass can come in too."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Rest by the bonfire, play ball on the beach, lie down in the tent and watch the stars. There is a place to wash your dog too.\nUp to 6 people. The world stays private: you enter from its URL. Share the URL or open any instance type you like (Friends+ and so on)."
+          "text": "A Cove to Unwind holds up to 6 people. The world stays private: you enter from its URL. Share the URL or open any instance type you like (Friends+ and so on)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -7981,7 +7985,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Join"
+          "text": "Price & purchase"
         },
         {
           "key": "guide.trainer.gift",
@@ -7992,12 +7996,8 @@
           "text": "Choose Gift on the store page"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Cove portal"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "About the cove"
+          "text": "See Trainer perks"
         },
         {
           "key": "guide.trainer.details.close",
@@ -8006,6 +8006,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "Cove URL (copy it)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "If you enjoy your time here, we would be glad to have you as a VAnimal Trainer. It helps us add more play, and more places to spend time with the dogs."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits for 1 month (3 months 1,350 / 6 months 2,550 / 12 months 4,800). No auto-renewal."
         }
       ]
     },
@@ -11952,19 +11960,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Один пропуск на три мира (на срок)"
+          "text": "Больше времени со своей собакой."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: общее фото, стили ловли фрисби\nKominka Dog Run: общее фото, запуск совместных игр (забеги и не только)\nA Cove to Unwind: Trainer открывает ворота"
+          "text": "Kominka Hillside: выстрой собак для общего фото, меняй стиль ловли фрисби\nKominka Dog Run: общее фото, запуск совместных игр (забеги и не только)\nA Cove to Unwind: пока там есть Trainer, ворота открыты и друзья могут войти"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind — это приватный ночной пляж, где можно спокойно провести время со своей собакой. Пока в инстансе есть Trainer, ворота открыты, и друзья без пропуска тоже могут войти. Дополнительная покупка не нужна."
+          "text": "Возьми свою собаку на приватный ночной пляж. Отдохни у костра, поиграй на берегу. В A Cove to Unwind, пока там есть Trainer, ворота открыты, так что друзья без пропуска тоже могут войти."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Отдохни у костра, поиграй в мяч на пляже, полежи в палатке и полюбуйся звёздами. Есть и место, где можно помыть собаку.\nДо 6 человек. Мир остаётся закрытым (Private): вход по его URL. Можно свободно делиться URL и создавать инстанс любого типа (Friends+ и другие)."
+          "text": "A Cove to Unwind вмещает до 6 человек. Мир остаётся закрытым (Private): вход по его URL. Можно свободно делиться URL и создавать инстанс любого типа (Friends+ и другие)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -11984,7 +11992,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Оформить"
+          "text": "Цены и покупка"
         },
         {
           "key": "guide.trainer.gift",
@@ -11995,12 +12003,8 @@
           "text": "В магазине можно выбрать подарок"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Портал в бухту"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "О бухте"
+          "text": "Бонусы Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -12009,6 +12013,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL бухты (можно скопировать)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Если тебе нравится проводить здесь время, мы будем рады видеть тебя среди VAnimal Trainer. Это помогает нам добавлять новые игры и места, где можно побыть с собаками."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits за 1 месяц (3 месяца 1350 / 6 месяцев 2550 / 12 месяцев 4800). Без автопродления."
         }
       ]
     },
@@ -15955,19 +15967,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Одна перепустка на три світи (на строк)"
+          "text": "Більше часу зі своїм собакою."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: спільне фото, стилі ловлі фризбі\nKominka Dog Run: спільне фото, запуск спільних ігор (перегони та інше)\nA Cove to Unwind: Trainer відчиняє ворота"
+          "text": "Kominka Hillside: вишикуй собак для спільного фото, змінюй стиль ловлі фризбі\nKominka Dog Run: спільне фото, запуск спільних ігор (перегони та інше)\nA Cove to Unwind: поки там є Trainer, ворота відчинені й друзі можуть увійти"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind — це приватний нічний пляж, де можна неквапливо провести час зі своїм собакою. Поки в інстансі є Trainer, ворота відчинені, і друзі без перепустки теж можуть увійти. Додаткова покупка не потрібна."
+          "text": "Візьми свого собаку на приватний нічний пляж. Відпочинь біля вогнища, пограйся на березі. У A Cove to Unwind, поки там є Trainer, ворота відчинені, тож друзі без перепустки теж можуть увійти."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Відпочинь біля вогнища, пограй у м'яч на пляжі, поляж у наметі й помилуйся зорями. Є й місце, де можна помити собаку.\nДо 6 осіб. Світ лишається закритим (Private): вхід за його URL. Можна вільно ділитися URL і створювати інстанс будь-якого типу (Friends+ тощо)."
+          "text": "A Cove to Unwind вміщує до 6 осіб. Світ лишається закритим (Private): вхід за його URL. Можна вільно ділитися URL і створювати інстанс будь-якого типу (Friends+ тощо)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -15987,7 +15999,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Оформити"
+          "text": "Ціни й купівля"
         },
         {
           "key": "guide.trainer.gift",
@@ -15998,12 +16010,8 @@
           "text": "У магазині можна вибрати подарунок"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Портал у бухту"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Про бухту"
+          "text": "Бонуси Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -16012,6 +16020,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL бухти (можна скопіювати)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Якщо тобі подобається проводити тут час, ми будемо раді бачити тебе серед VAnimal Trainer. Це допомагає нам додавати нові ігри й місця, де можна побути з собаками."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits за 1 місяць (3 місяці 1350 / 6 місяців 2550 / 12 місяців 4800). Без автоподовження."
         }
       ]
     },
@@ -19958,19 +19974,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "세 월드에서 쓰는 회원증 (기간제)"
+          "text": "강아지와의 시간을, 더."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: 단체 사진, 프리스비 받는 방식\nKominka Dog Run: 단체 사진, 다 같이 놀기 (달리기 등) 열기\nA Cove to Unwind: Trainer가 있으면 문이 열림"
+          "text": "Kominka Hillside: 강아지들을 줄 세워 단체 사진, 프리스비 받는 방식 바꾸기\nKominka Dog Run: 단체 사진, 다 같이 놀기 (달리기 등) 열기\nA Cove to Unwind: Trainer가 있는 동안 문이 열리고 친구도 함께 들어갈 수 있음"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind는 내 강아지와 느긋하게 지낼 수 있는 밤의 프라이빗 비치예요. 인스턴스에 Trainer가 있으면 문이 열리고, 회원이 아닌 친구도 함께 들어갈 수 있어요. 추가 구매는 필요 없어요."
+          "text": "내 강아지와 함께, 밤의 프라이빗 비치로. 모닥불 옆에서 쉬거나, 해변에서 놀거나. A Cove to Unwind는 Trainer가 있는 동안 문이 열려 있어서, 회원이 아닌 친구도 함께 들어갈 수 있어요."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "모닥불 옆에서 쉬거나, 해변에서 공놀이를 하거나, 텐트에 누워 별을 바라보세요. 강아지를 씻길 수 있는 곳도 있어요.\n정원은 6명이에요. 월드는 비공개 (Private) 그대로이고, URL로 들어오는 방식이에요. URL 공유나 Friends+ 등 원하는 형식으로 인스턴스를 만드는 것은 자유예요."
+          "text": "A Cove to Unwind의 정원은 6명이에요. 월드는 비공개 (Private) 그대로이고, URL로 들어와요. URL 공유나 Friends+ 등 원하는 형식으로 인스턴스를 만드는 것은 자유예요."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -19990,7 +20006,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "가입하기"
+          "text": "요금·구매"
         },
         {
           "key": "guide.trainer.gift",
@@ -20001,12 +20017,8 @@
           "text": "구매 화면에서 선물을 고를 수 있어요"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "비치 포털"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "비치 소개"
+          "text": "Trainer 혜택 보기"
         },
         {
           "key": "guide.trainer.details.close",
@@ -20015,6 +20027,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "비치 URL (복사할 수 있어요)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "여기서 보내는 시간이 마음에 드셨다면, VAnimal Trainer가 되어 주시면 기쁘겠어요. 강아지들과의 놀이와 함께 지낼 수 있는 곳을 늘려 가는 힘이 돼요."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "1개월 500 Credits (3개월 1,350 / 6개월 2,550 / 12개월 4,800). 자동 갱신은 없어요."
         }
       ]
     },
@@ -23961,19 +23981,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Ein Pass für drei Welten (auf Zeit)"
+          "text": "Mehr Zeit mit deinem Hund."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: Gruppenfotos, Frisbee-Fangstile\nKominka Dog Run: Gruppenfotos, gemeinsame Spiele starten (Wettrennen u. a.)\nA Cove to Unwind: Ein Trainer öffnet das Tor"
+          "text": "Kominka Hillside: Hunde zum Gruppenfoto aufstellen, Frisbee-Fangstil wechseln\nKominka Dog Run: Gruppenfotos, gemeinsame Spiele starten (Wettrennen u. a.)\nA Cove to Unwind: Solange ein Trainer da ist, ist das Tor offen und Freunde können mit hinein"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind ist ein privater Strand bei Nacht, an dem du mit deinem eigenen Hund zur Ruhe kommst. Solange ein Trainer in der Instanz ist, bleibt das Tor offen, und auch Freunde ohne Pass können mit hinein. Kein Zusatzkauf nötig."
+          "text": "Nimm deinen eigenen Hund mit an einen privaten Strand bei Nacht. Entspann dich am Lagerfeuer, spiel am Ufer. In A Cove to Unwind ist das Tor offen, solange ein Trainer da ist, also können auch Freunde ohne Pass mit hinein."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Ruh dich am Lagerfeuer aus, spiel am Strand Ball oder leg dich ins Zelt und schau in die Sterne. Es gibt auch einen Platz, um deinen Hund zu waschen.\nBis zu 6 Personen. Die Welt bleibt privat (Private): Du kommst über ihre URL hinein. Teil die URL gern oder öffne eine Instanz der Art, die du magst (Friends+ usw.)."
+          "text": "A Cove to Unwind bietet Platz für bis zu 6 Personen. Die Welt bleibt privat (Private): Du kommst über ihre URL hinein. Teil die URL gern oder öffne eine Instanz der Art, die du magst (Friends+ usw.)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -23993,7 +24013,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Buchen"
+          "text": "Preise & Kauf"
         },
         {
           "key": "guide.trainer.gift",
@@ -24004,12 +24024,8 @@
           "text": "Im Store kannst du es verschenken"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portal zur Bucht"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Über die Bucht"
+          "text": "Trainer-Vorteile"
         },
         {
           "key": "guide.trainer.details.close",
@@ -24018,6 +24034,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL der Bucht (kopierbar)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Wenn dir die Zeit hier gefällt, freuen wir uns, wenn du VAnimal Trainer wirst. Das hilft uns, mehr Spiele und mehr Orte für die Zeit mit den Hunden zu schaffen."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits für 1 Monat (3 Monate 1.350 / 6 Monate 2.550 / 12 Monate 4.800). Keine automatische Verlängerung."
         }
       ]
     },
@@ -27964,19 +27988,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "三个世界通用的会员证 (有期限)"
+          "text": "和狗狗的时光，再多一点。"
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: 合照、更换接飞盘的方式\nKominka Dog Run: 合照、举办大家一起玩 (赛跑等)\nA Cove to Unwind: 有 Trainer 在，门就会打开"
+          "text": "Kominka Hillside: 让狗狗们排好队拍合照，更换接飞盘的方式\nKominka Dog Run: 合照，举办大家一起玩 (赛跑等)\nA Cove to Unwind: 有 Trainer 在的期间门会打开，朋友也能一起进来"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind 是能和自己的狗狗悠闲度过的夜晚私人海滩。只要实例里有 Trainer，门就会打开，不是会员的朋友也能一起进来。无需额外购买。"
+          "text": "带上自己的狗狗，去夜晚的私人海滩。在篝火旁放松，在海边玩耍。A Cove to Unwind 只要有 Trainer 在，门就会开着，不是会员的朋友也能一起进来。"
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "在篝火旁歇一歇，在沙滩上玩球，躺在帐篷里看星星。还有能给狗狗洗澡的地方。\n最多 6 人。世界保持非公开 (Private)，通过 URL 进入。可以自由分享 URL，也可以用 Friends+ 等任意形式创建实例。"
+          "text": "A Cove to Unwind 最多可容纳 6 人。世界保持非公开 (Private)，通过 URL 进入。可以自由分享 URL，也可以用 Friends+ 等任意形式创建实例。"
         },
         {
           "key": "guide.trainer.state.loading",
@@ -27996,7 +28020,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "加入"
+          "text": "价格・购买"
         },
         {
           "key": "guide.trainer.gift",
@@ -28007,12 +28031,8 @@
           "text": "可在购买界面选择赠送"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "海湾传送门"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "关于海湾"
+          "text": "查看 Trainer 福利"
         },
         {
           "key": "guide.trainer.details.close",
@@ -28021,6 +28041,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "海湾的 URL (可以复制)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "如果你喜欢在这里度过的时光，欢迎成为 VAnimal Trainer。这会鼓励我们增加更多和狗狗一起玩的内容，以及可以待着的地方。"
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "1 个月 500 Credits (3 个月 1,350 / 6 个月 2,550 / 12 个月 4,800)。不会自动续订。"
         }
       ]
     },
@@ -31967,19 +31995,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Un pase para tres mundos (por tiempo limitado)"
+          "text": "Más tiempo con tu perro."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: fotos de grupo, estilos para atrapar el frisbee\nKominka Dog Run: fotos de grupo, organizar juegos en grupo (carreras y más)\nA Cove to Unwind: un Trainer abre la puerta"
+          "text": "Kominka Hillside: pon a los perros en fila para fotos de grupo, cambia cómo atrapan el frisbee\nKominka Dog Run: fotos de grupo, organiza juegos en grupo (carreras y más)\nA Cove to Unwind: mientras haya un Trainer, la puerta está abierta y tus amigos pueden entrar"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind es una playa privada de noche donde puedes relajarte con tu propio perro. Mientras haya un Trainer en la instancia, la puerta sigue abierta, así que tus amigos sin pase también pueden entrar. Sin compra adicional."
+          "text": "Lleva a tu propio perro a una playa privada de noche. Relájate junto a la fogata, juega en la orilla. En A Cove to Unwind, mientras haya un Trainer, la puerta está abierta, así que tus amigos sin pase también pueden entrar."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Descansa junto a la fogata, juega a la pelota en la playa o túmbate en la tienda a mirar las estrellas. También hay un sitio para bañar a tu perro.\nHasta 6 personas. El mundo sigue siendo privado (Private): se entra desde su URL. Puedes compartir la URL o abrir una instancia del tipo que quieras (Friends+, etc.)."
+          "text": "A Cove to Unwind admite hasta 6 personas. El mundo sigue siendo privado (Private): se entra desde su URL. Puedes compartir la URL o abrir una instancia del tipo que quieras (Friends+, etc.)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -31999,7 +32027,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Unirse"
+          "text": "Precio y compra"
         },
         {
           "key": "guide.trainer.gift",
@@ -32010,12 +32038,8 @@
           "text": "Puedes regalarlo desde la tienda"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portal a la cala"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Sobre la cala"
+          "text": "Ventajas Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -32023,7 +32047,15 @@
         },
         {
           "key": "guide.trainer.url.caption",
-          "text": "URL de la cala (puedes copiarla)"
+          "text": "URL de la cala (cópiala)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Si disfrutas tu tiempo aquí, nos encantaría que te hicieras VAnimal Trainer. Nos ayuda a añadir más juegos y más lugares para pasar el rato con los perros."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits por 1 mes (3 meses 1350 / 6 meses 2550 / 12 meses 4800). Sin renovación automática."
         }
       ]
     },
@@ -35970,19 +36002,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Un pass pour trois mondes (durée limitée)"
+          "text": "Plus de temps avec ton chien."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside : photos de groupe, styles d'attrape du frisbee\nKominka Dog Run : photos de groupe, lancer des jeux à plusieurs (courses, etc.)\nA Cove to Unwind : un Trainer ouvre la porte"
+          "text": "Kominka Hillside : aligne les chiens pour des photos de groupe, change leur façon d'attraper le frisbee\nKominka Dog Run : photos de groupe, lance des jeux à plusieurs (courses, etc.)\nA Cove to Unwind : tant qu'un Trainer est là, la porte est ouverte et tes amis peuvent entrer"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind est une plage privée de nuit où tu peux te détendre avec ton propre chien. Tant qu'un Trainer est dans l'instance, la porte reste ouverte : tes amis sans pass peuvent entrer aussi. Aucun achat supplémentaire."
+          "text": "Emmène ton propre chien sur une plage privée, la nuit. Détends-toi près du feu de camp, joue sur le rivage. Dans A Cove to Unwind, tant qu'un Trainer est là, la porte est ouverte : tes amis sans pass peuvent entrer aussi."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Repose-toi près du feu de camp, joue à la balle sur la plage, allonge-toi sous la tente pour regarder les étoiles. Il y a aussi un coin pour laver ton chien.\nJusqu'à 6 personnes. Le monde reste privé (Private) : on y entre par son URL. Tu peux partager l'URL ou ouvrir l'instance de ton choix (Friends+, etc.)."
+          "text": "A Cove to Unwind accueille jusqu'à 6 personnes. Le monde reste privé (Private) : on y entre par son URL. Tu peux partager l'URL ou ouvrir l'instance de ton choix (Friends+, etc.)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -36002,7 +36034,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "S'inscrire"
+          "text": "Prix et achat"
         },
         {
           "key": "guide.trainer.gift",
@@ -36013,12 +36045,8 @@
           "text": "Tu peux offrir depuis la boutique"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portail (crique)"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Infos crique"
+          "text": "Avantages Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -36027,6 +36055,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL de la crique (à copier)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Si tu aimes passer du temps ici, nous serions heureux que tu deviennes VAnimal Trainer. Cela nous aide à ajouter plus de jeux et plus d'endroits où passer du temps avec les chiens."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits pour 1 mois (3 mois 1350 / 6 mois 2550 / 12 mois 4800). Sans renouvellement automatique."
         }
       ]
     },
@@ -39973,19 +40009,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Um passe para três mundos (por tempo limitado)"
+          "text": "Mais tempo com o seu cachorro."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: fotos em grupo, jeitos de pegar o frisbee\nKominka Dog Run: fotos em grupo, organizar brincadeiras em grupo (corridas e mais)\nA Cove to Unwind: um Trainer abre o portão"
+          "text": "Kominka Hillside: alinhe os cachorros para fotos em grupo, mude o jeito de pegar o frisbee\nKominka Dog Run: fotos em grupo, organize brincadeiras em grupo (corridas e mais)\nA Cove to Unwind: enquanto houver um Trainer, o portão fica aberto e os amigos podem entrar"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind é uma praia particular à noite, onde você relaxa com o seu próprio cachorro. Enquanto houver um Trainer na instância, o portão fica aberto, e amigos sem passe também podem entrar. Sem compra extra."
+          "text": "Leve o seu próprio cachorro para uma praia particular à noite. Relaxe perto da fogueira, brinque na beira do mar. Em A Cove to Unwind, enquanto houver um Trainer, o portão fica aberto, então amigos sem passe também podem entrar."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Descanse perto da fogueira, jogue bola na praia, deite na barraca e veja as estrelas. Também tem um lugar para dar banho no seu cachorro.\nAté 6 pessoas. O mundo continua privado (Private): a entrada é pela URL dele. Você pode compartilhar a URL ou abrir uma instância do tipo que quiser (Friends+ etc.)."
+          "text": "A Cove to Unwind comporta até 6 pessoas. O mundo continua privado (Private): a entrada é pela URL dele. Você pode compartilhar a URL ou abrir uma instância do tipo que quiser (Friends+ etc.)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -40005,7 +40041,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Assinar"
+          "text": "Preço e compra"
         },
         {
           "key": "guide.trainer.gift",
@@ -40016,12 +40052,8 @@
           "text": "Você pode presentear pela loja"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portal (enseada)"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Sobre a enseada"
+          "text": "Vantagens Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -40029,7 +40061,15 @@
         },
         {
           "key": "guide.trainer.url.caption",
-          "text": "URL da enseada (dá para copiar)"
+          "text": "URL da enseada (copiável)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Se você gosta do seu tempo aqui, vamos adorar ter você como VAnimal Trainer. Isso nos ajuda a criar mais brincadeiras e mais lugares para passar o tempo com os cachorros."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits por 1 mês (3 meses 1.350 / 6 meses 2.550 / 12 meses 4.800). Sem renovação automática."
         }
       ]
     },
@@ -43976,19 +44016,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Un pass per tre mondi (a tempo)"
+          "text": "Più tempo con il tuo cane."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: foto di gruppo, stili di presa del frisbee\nKominka Dog Run: foto di gruppo, avviare giochi di gruppo (corse e altro)\nA Cove to Unwind: un Trainer apre il cancello"
+          "text": "Kominka Hillside: metti in fila i cani per foto di gruppo, cambia lo stile di presa del frisbee\nKominka Dog Run: foto di gruppo, avvia giochi di gruppo (corse e altro)\nA Cove to Unwind: finché c'è un Trainer, il cancello è aperto e gli amici possono entrare"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind è una spiaggia privata di notte dove rilassarti con il tuo cane. Finché nell'istanza c'è un Trainer, il cancello resta aperto e anche gli amici senza pass possono entrare. Nessun acquisto extra."
+          "text": "Porta il tuo cane in una spiaggia privata di notte. Rilassati accanto al falò, gioca sulla riva. In A Cove to Unwind, finché c'è un Trainer, il cancello è aperto, quindi anche gli amici senza pass possono entrare."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Riposa accanto al falò, gioca a palla sulla spiaggia, sdraiati nella tenda a guardare le stelle. C'è anche un posto per lavare il tuo cane.\nFino a 6 persone. Il mondo resta privato (Private): si entra dal suo URL. Puoi condividere l'URL o aprire un'istanza del tipo che preferisci (Friends+ e così via)."
+          "text": "A Cove to Unwind ospita fino a 6 persone. Il mondo resta privato (Private): si entra dal suo URL. Puoi condividere l'URL o aprire un'istanza del tipo che preferisci (Friends+ e così via)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -44008,7 +44048,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Iscriviti"
+          "text": "Prezzi e acquisto"
         },
         {
           "key": "guide.trainer.gift",
@@ -44019,12 +44059,8 @@
           "text": "Puoi regalarlo dal negozio"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portale (baia)"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "Info sulla baia"
+          "text": "Vantaggi Trainer"
         },
         {
           "key": "guide.trainer.details.close",
@@ -44033,6 +44069,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL della baia (copiabile)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Se ti piace il tempo che passi qui, saremmo felici di averti come VAnimal Trainer. Ci aiuta ad aggiungere altri giochi e altri posti dove stare con i cani."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits per 1 mese (3 mesi 1.350 / 6 mesi 2.550 / 12 mesi 4.800). Nessun rinnovo automatico."
         }
       ]
     },
@@ -47979,19 +48023,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "Jedna przepustka na trzy światy (czasowa)"
+          "text": "Więcej czasu ze swoim psem."
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: wspólne zdjęcia, style łapania frisbee\nKominka Dog Run: wspólne zdjęcia, organizowanie wspólnych zabaw (wyścigi i nie tylko)\nA Cove to Unwind: Trainer otwiera bramę"
+          "text": "Kominka Hillside: ustaw psy do wspólnych zdjęć, zmieniaj styl łapania frisbee\nKominka Dog Run: wspólne zdjęcia, organizuj wspólne zabawy (wyścigi i nie tylko)\nA Cove to Unwind: dopóki jest tam Trainer, brama jest otwarta i znajomi mogą wejść"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind to prywatna nocna plaża, na której spokojnie odpoczniesz ze swoim psem. Dopóki w instancji jest Trainer, brama pozostaje otwarta, więc znajomi bez przepustki też mogą wejść. Bez dodatkowego zakupu."
+          "text": "Zabierz swojego psa na prywatną plażę nocą. Odpocznij przy ognisku, pobaw się na brzegu. W A Cove to Unwind, dopóki jest tam Trainer, brama jest otwarta, więc znajomi bez przepustki też mogą wejść."
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "Odpocznij przy ognisku, pograj w piłkę na plaży, połóż się w namiocie i patrz w gwiazdy. Jest też miejsce, gdzie umyjesz psa.\nMaksymalnie 6 osób. Świat pozostaje prywatny (Private): wchodzi się przez jego URL. Możesz udostępniać URL i tworzyć instancję dowolnego typu (Friends+ itp.)."
+          "text": "A Cove to Unwind mieści do 6 osób. Świat pozostaje prywatny (Private): wchodzi się przez jego URL. Możesz udostępniać URL i tworzyć instancję dowolnego typu (Friends+ itp.)."
         },
         {
           "key": "guide.trainer.state.loading",
@@ -48011,7 +48055,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "Dołącz"
+          "text": "Cena i zakup"
         },
         {
           "key": "guide.trainer.gift",
@@ -48022,12 +48066,8 @@
           "text": "Podarunek wybierzesz w sklepie"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "Portal zatoczki"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "O zatoczce"
+          "text": "Korzyści Trainera"
         },
         {
           "key": "guide.trainer.details.close",
@@ -48036,6 +48076,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "URL zatoczki (do skopiowania)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "Jeśli lubisz tu spędzać czas, będzie nam miło, jeśli zostaniesz VAnimal Trainerem. To pomaga nam dodawać więcej zabaw i miejsc do spędzania czasu z psami."
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "500 Credits za 1 miesiąc (3 miesiące 1350 / 6 miesięcy 2550 / 12 miesięcy 4800). Bez automatycznego odnawiania."
         }
       ]
     },
@@ -51986,19 +52034,19 @@
         },
         {
           "key": "guide.trainer.subtitle",
-          "text": "三個世界通用的會員證 (有期限)"
+          "text": "和狗狗的時光，再多一點。"
         },
         {
           "key": "guide.trainer.perks",
-          "text": "Kominka Hillside: 合照、更換接飛盤的方式\nKominka Dog Run: 合照、舉辦大家一起玩 (賽跑等)\nA Cove to Unwind: 有 Trainer 在，門就會打開"
+          "text": "Kominka Hillside: 讓狗狗們排好隊拍合照，更換接飛盤的方式\nKominka Dog Run: 合照，舉辦大家一起玩 (賽跑等)\nA Cove to Unwind: 有 Trainer 在的期間門會打開，朋友也能一起進來"
         },
         {
           "key": "guide.trainer.cove.lead",
-          "text": "A Cove to Unwind 是能和自己的狗狗悠閒度過的夜晚私人海灘。只要實例裡有 Trainer，門就會打開，不是會員的朋友也能一起進來。無需額外購買。"
+          "text": "帶上自己的狗狗，去夜晚的私人海灘。在營火旁放鬆，在海邊玩耍。A Cove to Unwind 只要有 Trainer 在，門就會開著，不是會員的朋友也能一起進來。"
         },
         {
           "key": "guide.trainer.cove.body",
-          "text": "在營火旁歇一歇，在沙灘上玩球，躺在帳篷裡看星星。還有能幫狗狗洗澡的地方。\n最多 6 人。世界維持非公開 (Private)，透過 URL 進入。可以自由分享 URL，也可以用 Friends+ 等任何形式建立實例。"
+          "text": "A Cove to Unwind 最多可容納 6 人。世界維持非公開 (Private)，透過 URL 進入。可以自由分享 URL，也可以用 Friends+ 等任何形式建立實例。"
         },
         {
           "key": "guide.trainer.state.loading",
@@ -52018,7 +52066,7 @@
         },
         {
           "key": "guide.trainer.join",
-          "text": "加入"
+          "text": "價格・購買"
         },
         {
           "key": "guide.trainer.gift",
@@ -52029,12 +52077,8 @@
           "text": "可在購買介面選擇贈送"
         },
         {
-          "key": "guide.trainer.portal",
-          "text": "海灣傳送門"
-        },
-        {
           "key": "guide.trainer.details.open",
-          "text": "關於海灣"
+          "text": "查看 Trainer 福利"
         },
         {
           "key": "guide.trainer.details.close",
@@ -52043,6 +52087,14 @@
         {
           "key": "guide.trainer.url.caption",
           "text": "海灣的 URL (可以複製)"
+        },
+        {
+          "key": "guide.trainer.support",
+          "text": "如果你喜歡在這裡度過的時光，歡迎成為 VAnimal Trainer。這會鼓勵我們增加更多和狗狗一起玩的內容，以及可以待著的地方。"
+        },
+        {
+          "key": "guide.trainer.price",
+          "text": "1 個月 500 Credits (3 個月 1,350 / 6 個月 2,550 / 12 個月 4,800)。不會自動續訂。"
         }
       ]
     }

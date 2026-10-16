@@ -11,9 +11,8 @@ namespace KominkaHillside
     //   - the membership line (Status), the store button's label (join / gift) and the gift note, from KH_TrainerPass as the hand menu's
     //     「あそぶ」 judges it (_Configured / _Loaded / _OwnedBy(LocalPlayer)) and from KD_Language.CurrentLanguage;
     //   - [join] / [gift] opens the trainer Listing (KH_TrainerPass._OpenStore; a gift is chosen on VRChat's page, as KominkaDogRun IMP-PRG-012);
-    //   - the cove portal (scene root KH_CovePortal, inactive in the saved scene) shown for this player only, as KH_PortalBoard does
-    //     (press again or showSeconds later hides it; an older pending timeout finds a newer show time and does nothing);
-    //   - the details popup (Trainer/Details: the cove's text and its URL field), opened and closed by its buttons.
+    //   - the details popup (Trainer/Details: the cove's text), opened and closed by its buttons.
+    // The cove's URL is a read-only copy field on the strip (no portal: the cove is a Private world, 2026-10-16 user decision); no code here.
     // Local only: no synced variables, no ownership, no network events (the `_` prefix keeps every public event off the network).
     // One _Tick chain: Start arms it once and every _Tick re-arms it exactly once (never two outstanding, never none). Near the board the
     // body runs every NearTickSeconds; farther than NearMeters it runs about every FarBodySeconds. A press re-reads at once (Poke).
@@ -28,30 +27,24 @@ namespace KominkaHillside
             KeyUnconfigured = "guide.trainer.state.unconfigured", KeyJoin = "guide.trainer.join", KeyGift = "guide.trainer.gift",
             KeyGiftNote = "guide.trainer.giftNote";
         public const string JaLoading = "確認中…", JaOff = "未加入", JaOn = "加入中 (ここでも入り江でも使えます)", JaUnconfigured = "準備中",
-            JaJoin = "加入する", JaGift = "ギフト", JaGiftNote = "購入画面でギフトを選べます";
+            JaJoin = "料金・購入はこちら", JaGift = "ギフト", JaGiftNote = "購入画面でギフトを選べます";
 
         [Tooltip("KH_Dogs/KH_TrainerPass (the same Product / Listing as the hand menu)")]
         public KH_TrainerPass pass;
         public KominkaDogRun.KD_Language language;
-        [Tooltip("KH_CovePortal at the scene root (the cove's VRCPortalMarker is its child). Inactive in the saved scene.")]
-        public GameObject portal;
         [Tooltip("KH_GuideBoards/Trainer/Details (the popup). Inactive in the saved scene.")]
         public GameObject details;
         public TextMeshProUGUI status, storeLabel, giftNote;
         public Button storeButton;
-        [Tooltip("Seconds until the shown cove portal hides itself (0 = stays until the next press).")]
-        public float showSeconds = 60f;
 
         const float NearMeters = 12f, NearTickSeconds = 0.5f, FarBodySeconds = 2f;
-        private float _shownAt = -1f;
         private float _farUntil;
         private int _shownState = -1;
         private string _shownLanguage = "?";
 
         private void Start()
         {
-            // the saved scene already has both hidden; this keeps late joiners and a mis-saved scene hidden too
-            if (portal != null && portal.activeSelf) portal.SetActive(false);
+            // the saved scene already has it hidden; this keeps a mis-saved scene hidden too
             if (details != null && details.activeSelf) details.SetActive(false);
             Poll();
             SendCustomEventDelayedSeconds(nameof(_Tick), NearTickSeconds);
@@ -136,25 +129,6 @@ namespace KominkaHillside
             Poke();
             if (pass == null || !pass._Configured()) return;
             pass._OpenStore();
-        }
-
-        /// <summary>The cove portal beside the board, for this player only (KH_PortalBoard.Interact).</summary>
-        public void _TogglePortal()
-        {
-            Poke();
-            if (portal == null) return;
-            if (portal.activeSelf) { portal.SetActive(false); _shownAt = -1f; return; }
-            portal.SetActive(true);
-            _shownAt = Time.time;
-            if (showSeconds > 0f) SendCustomEventDelayedSeconds(nameof(_HideAfterTimeout), showSeconds);
-        }
-
-        public void _HideAfterTimeout()
-        {
-            if (portal == null || !portal.activeSelf || _shownAt < 0f) return;
-            if (Time.time - _shownAt < showSeconds - 0.05f) return;   // shown again after this event was queued
-            portal.SetActive(false);
-            _shownAt = -1f;
         }
 
         public void _OpenDetails()
