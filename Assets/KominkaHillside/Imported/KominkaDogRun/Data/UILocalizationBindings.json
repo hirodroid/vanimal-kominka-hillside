@@ -1016,6 +1016,51 @@
       "key": "guide.kominka.body"
     },
     {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Header",
+      "key": "guide.trainer.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Subtitle",
+      "key": "guide.trainer.subtitle"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Paper/Perks",
+      "key": "guide.trainer.perks"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Canvas/Paper/Cove",
+      "key": "guide.trainer.cove.lead"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Actions/PortalButton/Label",
+      "key": "guide.trainer.portal"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Actions/DetailsButton/Label",
+      "key": "guide.trainer.details.open"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Details/Body",
+      "key": "guide.trainer.cove.body"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Details/UrlCaption",
+      "key": "guide.trainer.url.caption"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Trainer/Details/CloseButton/Label",
+      "key": "guide.trainer.details.close"
+    },
+    {
       "root": "KH_LeashRack",
       "path": "WalkGuide/Canvas/Vr/Step1",
       "key": "walk.guide.vr.step1"

@@ -127,22 +127,28 @@ namespace KominkaHillside.Editor
             var portalT = c.portal != null ? c.portal.transform : null;
             var cols = c.root.GetComponentsInChildren<Collider>(true);
             var solid = cols.Where(x => !x.isTrigger).ToArray();
-            var stray = cols.Where(x => x.transform != interactT && (portalT == null || !x.transform.IsChildOf(portalT))).ToArray();
+            // IMP-UI-013: plus the Trainer's operation canvases (Actions / Details: the VRCUiShape's trigger) and its KH_TrainerBoard
+            var ops = TrainerOperationCanvases(c);
+            var actionsT = c.root.Find(Trainer.name + "/" + ActionsName);
+            var stray = cols.Where(x => x.transform != interactT && !ops.Contains(x.transform) && (portalT == null || !x.transform.IsChildOf(portalT))).ToArray();
             req(solid.Length == 0, "no solid Collider under " + RootName + (solid.Length > 0 ? " (" + names(solid) + ")" : " (players, dogs, discs pass)"));
-            req(stray.Length == 0, "colliders only on " + InteractPath + " and the portal marker" + (stray.Length > 0 ? " (" + names(stray) + ")" : ""));
+            req(stray.Length == 0, "colliders only on " + InteractPath + ", the Trainer's operation canvases and the portal marker" + (stray.Length > 0 ? " (" + names(stray) + ")" : ""));
             var udons = c.root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true);
-            req(udons.Length == 1 && interactT != null && udons[0].transform == interactT, "one UdonBehaviour under " + RootName + ", on " + InteractPath + " (" + names(udons) + ")");
+            req(udons.Length == 2 && interactT != null && actionsT != null && udons.Any(u => u.transform == interactT) && udons.Any(u => u.transform == actionsT),
+                "two UdonBehaviours under " + RootName + ": " + InteractPath + " (KH_PortalBoard) and " + Trainer.name + "/" + ActionsName + " (KH_TrainerBoard) (" + names(udons) + ")");
             var bodies = c.root.GetComponentsInChildren<Rigidbody>(true);
             req(bodies.Length == 0, "no Rigidbody under " + RootName);
             var rays = c.root.GetComponentsInChildren<GraphicRaycaster>(true);
             var shapes = c.root.GetComponentsInChildren<VRC.SDK3.Components.VRCUiShape>(true);
-            req(rays.Length == 0 && shapes.Length == 0, "read-only canvases: no GraphicRaycaster / VRCUiShape (vrc-world-ui §2)");
+            req(rays.All(x => ops.Contains(x.transform)) && shapes.All(x => ops.Contains(x.transform)), "read-only canvases: no GraphicRaycaster / VRCUiShape except the Trainer's Actions / Details (vrc-world-ui §2)"
+                + (rays.Length + shapes.Length > 0 ? " (" + names(rays.Cast<Component>().Concat(shapes).ToArray()) + ")" : ""));
             var occluders = c.root.GetComponentsInChildren<Transform>(true).Where(t => (GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.OccluderStatic) != 0).ToArray();
             req(occluders.Length == 0, "nothing Occluder Static (Course/37: only the terrain occludes)");
 
             var a = FindAnchors(c);
             foreach (var b in Boards) CheckBoard(b, c, a, req, warn, v);
             CheckPortal(c, a, req, warn, v);
+            CheckTrainer(c, a, req, warn, v);   // IMP-UI-013 (.TrainerVerify.cs)
             var kt = c.root.Find(Kominka.name);
             if (kt != null)
             {
@@ -210,11 +216,13 @@ namespace KominkaHillside.Editor
             {
                 Vector3 tc, ts; BoardTrayBox(b, out tc, out ts);
                 string why = "no canvas";
-                bool trayOk = cv != null && TrayMatches(t, new[] { cv }, null, TrayFront, tc, ts, true, BoardTrayAsset(RootName + "_" + b.name), out why);
+                bool trayOk = cv != null && TrayMatches(t, BoardCanvases(t, b), null, TrayFront, tc, ts, true, BoardTrayAsset(RootName + "_" + b.name), out why);
                 req(trayOk, b.name + "/Back is the tray with the papers' holes (BUG-ENV-005; run Guide/1): " + why);
             }
 
             // ---- placement ----
+            // IMP-UI-013: the Trainer board has its own rules (TrainerRules, shared with Guide/1), judged in CheckTrainer
+            if (b == Trainer) return;
             try { Placement(b, t, a, c, req, warn, v); }
             catch (Exception ex) { req(false, b.name + " placement could not be measured: " + ex.Message); }
         }
@@ -425,7 +433,7 @@ namespace KominkaHillside.Editor
         {
             var board = c.root.Find(Kominka.name);
             if (board == null) return;   // CheckBoard already failed
-            req(c.portal != null && c.portalRoomId == ExpectedRoomId, "exactly one VRCPortalMarker, world id unchanged (" + (c.portalRoomId ?? "none") + ")");
+            req(c.portal != null && c.portalRoomId == ExpectedRoomId, "exactly one VRCPortalMarker to 古民家ドッグラン (besides the cove's), world id unchanged (" + (c.portalRoomId ?? "none") + ")");
             if (c.portal == null) return;
             var anchor = board.Find(PortalAnchorName);
             req(anchor != null && c.portal.transform.parent == anchor, "the portal marker is managed: " + KD_SceneObjects.PathOf(c.portal.gameObject) + " under " + Kominka.name + "/" + PortalAnchorName);
@@ -532,6 +540,7 @@ namespace KominkaHillside.Editor
             foreach (var l in c.labels)
             {
                 if (l.key.StartsWith("guide.kominka.")) continue;   // names the other world, not a menu
+                if (l.key.StartsWith("guide.trainer.")) continue;   // IMP-UI-013: names the cove (another world) and this board's own buttons
                 if (IsCalloutPath(l.path)) continue;                // the menu's own words (checked against the menu's keys in CheckCuts)
                 string text = Visible(KD_LocalizationEditor.Text(c.catalog, ja, l.key));
                 foreach (Match m in Regex.Matches(text, "「([^」]+)」"))

@@ -71,7 +71,11 @@ namespace KominkaHillside.Editor
         /// out. Readers face the gate; the portal appears beside the board (PortalSide). Guide/1 searches the actual pose (FindKominkaPose);
         /// this design pose is only used when the board does not exist yet.</summary>
         static readonly Board Kominka = new Board { name = "Kominka", createXZ = new Vector2(48.30f, 38.74f), createYaw = 154f, canvasMm = new Vector2(1300f, 1100f), canvasBottom = 0.80f };
-        static readonly Board[] Boards = { Asob, MapBoard, Kominka };
+        /// <summary>IMP-UI-013: the ばにまるトレーナー board beside the Kominka board, same build (canvas 1300 x 1300: photo + 3 perks + the cove).
+        /// Guide/1 searches its pose from the Kominka board's (FindTrainerPose, .Trainer.cs); this design pose is only a seed. Defined here, before
+        /// Boards, so the static initialisers run in order.</summary>
+        static readonly Board Trainer = new Board { name = "Trainer", createXZ = new Vector2(44.52f, 37.12f), createYaw = 154f, canvasMm = new Vector2(1300f, 1300f), canvasBottom = 0.80f };
+        static readonly Board[] Boards = { Asob, MapBoard, Kominka, Trainer };
 
         const float Mm = 0.001f;
         const float PostSize = 0.10f, BackDepth = 0.04f, BackZ = 0.03f, PostSink = 0.25f;
@@ -157,6 +161,16 @@ namespace KominkaHillside.Editor
             new LabelSpec("Map/Canvas/Paper/North", "guide.map.north"),
             new LabelSpec("Kominka/Canvas/Header", "guide.kominka.title"),
             new LabelSpec("Kominka/Canvas/Paper/Body", "guide.kominka.body"),
+            // IMP-UI-013: the trainer board (the dynamic Status / StoreButton / GiftNote are KH_TrainerBoard's, not bound)
+            new LabelSpec("Trainer/Canvas/Header", "guide.trainer.title"),
+            new LabelSpec("Trainer/Canvas/Subtitle", "guide.trainer.subtitle"),
+            new LabelSpec("Trainer/Canvas/Paper/Perks", "guide.trainer.perks"),
+            new LabelSpec("Trainer/Canvas/Paper/Cove", "guide.trainer.cove.lead"),
+            new LabelSpec("Trainer/Actions/PortalButton/Label", "guide.trainer.portal"),
+            new LabelSpec("Trainer/Actions/DetailsButton/Label", "guide.trainer.details.open"),
+            new LabelSpec("Trainer/Details/Body", "guide.trainer.cove.body"),
+            new LabelSpec("Trainer/Details/UrlCaption", "guide.trainer.url.caption"),
+            new LabelSpec("Trainer/Details/CloseButton/Label", "guide.trainer.details.close"),
         };
         const string InteractPath = "Kominka/Interact", InteractKey = "guide.kominka.interact";
 
@@ -171,7 +185,11 @@ namespace KominkaHillside.Editor
             public KH_LeashManager manager;
             public Transform root;                 // null before the first build
             public List<Transform> washStations = new List<Transform>();
-            public VRC.SDK3.Components.VRCPortalMarker portal; public string portalRoomId;   // IMP-WLD-006: the one world portal of the scene
+            public VRC.SDK3.Components.VRCPortalMarker portal; public string portalRoomId;   // IMP-WLD-006: the portal to 古民家ドッグラン (every marker whose roomId is not the cove's)
+            // IMP-UI-013: the cove's marker (roomId CoveRoomId; null before the first Guide/1), its scene-root anchor, the trainer pass, the photo
+            public VRC.SDK3.Components.VRCPortalMarker covePortal; public Transform coveAnchor;
+            public KH_TrainerPass trainerPass; public Texture2D covePhoto;
+            public GameObject portalPrefab;   // the SDK portal prefab the cove marker is an instance of (Codex review 2026-10-16 中2)
             // IMP-UI-002 wave 2: Guide/13's cut atlas + manifest (board A's frisbee / ball papers), the rounded backing sprite
             public KH_PlayGuideCaptureEditor.Manifest cuts; public Texture2D cutAtlas; public Sprite round;
             public List<LabelSpec> labels = new List<LabelSpec>();   // StaticLabels + the cut captions / callouts
@@ -253,11 +271,14 @@ namespace KominkaHillside.Editor
                     if (n > 1) throw new InvalidOperationException(n + " children named " + b.name + " under " + RootName + " (keep one); nothing changed");
                 }
             // ---- IMP-WLD-006: the existing world portal is taken over, never created or retyped ----
+            // IMP-UI-013: the markers are told apart by roomId: the cove's (CoveRoomId, created by Guide/1, at most one) and the Kominka one (all others: exactly one)
             var markers = UnityEngine.Object.FindObjectsOfType<VRC.SDK3.Components.VRCPortalMarker>(true);
-            if (markers.Length != 1) throw new InvalidOperationException(markers.Length + " VRCPortalMarker in the scene (expected exactly the one portal to Kominka Dog Run); nothing changed");
-            c.portal = markers[0];
-            var roomProp = new SerializedObject(c.portal).FindProperty("roomId");
-            c.portalRoomId = roomProp != null ? roomProp.stringValue : null;
+            Func<VRC.SDK3.Components.VRCPortalMarker, string> roomOf = m => { var p = new SerializedObject(m).FindProperty("roomId"); return p != null ? p.stringValue : null; };
+            var coveMarkers = markers.Where(m => roomOf(m) == CoveRoomId).ToList();
+            var komMarkers = markers.Where(m => roomOf(m) != CoveRoomId).ToArray();
+            if (komMarkers.Length != 1) throw new InvalidOperationException(komMarkers.Length + " VRCPortalMarker besides the cove's (" + CoveRoomId + ") in the scene (expected exactly the one portal to Kominka Dog Run); nothing changed");
+            c.portal = komMarkers[0];
+            c.portalRoomId = roomOf(c.portal);
             if (string.IsNullOrEmpty(c.portalRoomId) || !c.portalRoomId.StartsWith("wrld_"))
                 throw new InvalidOperationException("the portal " + KD_SceneObjects.PathOf(c.portal.gameObject) + " has no world id (roomId '" + c.portalRoomId + "'); nothing changed");
             var pgo = c.portal.gameObject;
@@ -265,7 +286,8 @@ namespace KominkaHillside.Editor
                 throw new InvalidOperationException("the portal marker is inside another prefab instance (" + KD_SceneObjects.PathOf(pgo) + "): it cannot be re-parented; nothing changed");
             if (forBuild && AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(PortalProgramPath + ".asset") == null)
                 throw new InvalidOperationException(PortalProgramPath + ".asset missing: run Guide/0, compile U# (unity-compile.sh --udon), then Guide/1; nothing changed");
-            var main = c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStation");
+            ResolveTrainer(c, forBuild, coveMarkers);   // IMP-UI-013 (.Trainer.cs)
+            var main =c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStation");
             if (main != null) c.washStations.Add(main.transform);
             var course = c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStations");
             if (course != null) foreach (Transform t in course.transform) c.washStations.Add(t);
@@ -278,7 +300,7 @@ namespace KominkaHillside.Editor
         {
             public string utc, scene, status, backup;
             public List<string> boards = new List<string>();
-            public string kominkaPlacement;
+            public string kominkaPlacement, trainerPlacement;
             public List<string> log = new List<string>();
         }
 
@@ -290,10 +312,13 @@ namespace KominkaHillside.Editor
             var r = new BuildReport { utc = DateTime.UtcNow.ToString("o"), scene = KH_CourseGroundEditor.ScenePath };
             // IMP-WLD-006: the Kominka board's clear pose is searched with physics before anything changes (throws = nothing changed)
             var kominkaPose = FindKominkaPose(c, out r.kominkaPlacement);
+            // IMP-UI-013: the Trainer board beside where the Kominka board will stand (throws = nothing changed)
+            var trainerPose = FindTrainerPose(c, kominkaPose, out r.trainerPlacement);
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-guide-boards-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, false);
             MeshTxBegin();   // BUG-ENV-005: the trays written by this run are undone if it fails before the save
+            CovePhotoImport photoBefore = null;   // IMP-UI-013: the photo's import before this run changed it (restored if the run fails)
             try
             {
                 var root = c.root;
@@ -314,28 +339,33 @@ namespace KominkaHillside.Editor
                 foreach (var b in Boards)
                 {
                     var bt = EnsureBoard(root, b, r);
-                    if (b == Kominka && kominkaPose.HasValue)
+                    var pose = b == Kominka ? kominkaPose : b == Trainer ? trainerPose : null;
+                    if (pose.HasValue)
                     {
-                        bt.position = new Vector3(kominkaPose.Value.x, 0f, kominkaPose.Value.z);
-                        bt.rotation = Quaternion.Euler(0f, kominkaPose.Value.y, 0f);
+                        bt.position = new Vector3(pose.Value.x, 0f, pose.Value.z);
+                        bt.rotation = Quaternion.Euler(0f, pose.Value.y, 0f);
                         float gy = float.NegativeInfinity;
                         foreach (var sp in SeatSamples(b)) gy = Mathf.Max(gy, Ground(bt.TransformPoint(sp)));
                         bt.position = new Vector3(bt.position.x, gy, bt.position.z);
-                        r.log.Add(b.name + " re-placed: " + r.kominkaPlacement);
+                        r.log.Add(b.name + " re-placed: " + (b == Kominka ? r.kominkaPlacement : r.trainerPlacement));
                     }
                     var canvas = EnsureCanvas(bt, b, keep);
+                    var canvases = new List<RectTransform> { canvas };
                     if (b == Asob) BuildAsobikataCanvas(canvas, c, keep);
                     else if (b == MapBoard) BuildMapCanvas(canvas, bt, c, keep);
+                    else if (b == Trainer) canvases.AddRange(BuildTrainer(bt, canvas, c, keep, r));   // IMP-UI-013 (.Trainer.cs)
                     else { BuildKominkaCanvas(canvas, c, keep); BuildPortal(bt, b, c, keep, r); }
                     // BUG-ENV-005: the frame after the canvas (its Back has a hole under every paper / plate)
                     var notes = new List<string>();
-                    var holes = CanvasHoles(bt, TrayFront, new[] { canvas }, null, keep, notes);
+                    var holes = CanvasHoles(bt, TrayFront, canvases, null, keep, notes);
                     BuildStructure(bt, b, c, keep, holes, RootName + "_" + b.name, r.log);
                     foreach (var n in notes) r.log.Add("NOTE " + b.name + " " + n);
                     RemoveStale(bt, keep, r);
                     r.boards.Add(b.name + " at " + V(bt.position) + " yaw " + bt.eulerAngles.y.ToString("F1"));
                 }
 
+                // IMP-UI-013: the trainer board's photo import (asset only, when it differs), after every board is built (Codex review 2026-10-16 中1)
+                photoBefore = EnsureCovePhotoImporter(r.log);
                 var log = new StringBuilder();
                 KD_ShopSetupEditor.AddGlyphs(GlyphText(c), log);
                 // the language tables (keys / texts of every language) first, then the label bindings: the same pair as Menu Finish (RebindIfPresent)
@@ -352,6 +382,7 @@ namespace KominkaHillside.Editor
             catch
             {
                 MeshTxRollback(r.log);
+                if (photoBefore != null) RestoreCovePhotoImporter(photoBefore, r.log);
                 Debug.LogError("[KH Guide Boards] Build failed; the scene before this run is at " + r.backup + ". Reopen the scene without saving to discard partial changes (the tray meshes this run wrote were rolled back).");
                 r.status = "FAIL (exception, not saved)";
                 WriteJson(BuildReportPath, r);
@@ -369,14 +400,14 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Guide Boards] BUILT and GUIDE_BOARDS_OK (" + v.lines.Count + " checks, " + v.warned + " WARN) -> " + BuildReportPath + " / " + VerifyReportPath);
         }
 
-        /// <summary>Every guide-board U# program that is missing (KH_PortalBoard: IMP-WLD-006; KH_GroupPoster: IMP-UI-008 Guide/20). Existing ones are left
+        /// <summary>Every guide-board U# program that is missing (KH_PortalBoard: IMP-WLD-006; KH_GroupPoster: IMP-UI-008 Guide/20; KH_TrainerBoard: IMP-UI-013). Existing ones are left
         /// as they are; one compile for all. The item guide board (Guide/22) has no Udon of its own (its cards call KD_TreatPouch).</summary>
         [MenuItem(Menu + "0 - Create Board Programs")]
         public static void CreateProgram()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("[KH Guide Boards] Edit mode only (not compiling)");
             var created = new List<string>();
-            foreach (var path in new[] { PortalProgramPath, GroupPosterProgramPath })
+            foreach (var path in new[] { PortalProgramPath, GroupPosterProgramPath, TrainerProgramPath })   // IMP-UI-013: KH_TrainerBoard
             {
                 if (AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(path + ".asset") != null) { Debug.Log("[KH Guide Boards] " + path + ".asset exists; left as is"); continue; }
                 var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path + ".cs");
@@ -406,6 +437,7 @@ namespace KominkaHillside.Editor
                 if (!KD_LocalizationEditor.Bundled(lang)) continue;
                 foreach (var l in c.labels) s.Append(Visible(KD_LocalizationEditor.Text(c.catalog, lang.code, l.key)));
             }
+            TrainerGlyphs(c, s);   // IMP-UI-013: the trainer board's dynamic words and the cove URL
             return s.ToString();
         }
 
@@ -1073,9 +1105,12 @@ namespace KominkaHillside.Editor
         /// Other children of the board are the user's: kept, logged.</summary>
         static void RemoveStale(Transform board, HashSet<Transform> keep, BuildReport r)
         {
+            // IMP-UI-013: the Trainer board's operation canvases are the builder's too (their stale children are removed like the face's)
+            bool trainer = board.name == Trainer.name;
             foreach (Transform t in board)
-                if (t.name != StructureName && t.name != CanvasName && !(board.name == Kominka.name && (t.name == InteractName || t.name == PortalAnchorName))) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
-            foreach (var name in new[] { StructureName, CanvasName })
+                if (t.name != StructureName && t.name != CanvasName && !(board.name == Kominka.name && (t.name == InteractName || t.name == PortalAnchorName))
+                    && !(trainer && (t.name == ActionsName || t.name == DetailsName))) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
+            foreach (var name in trainer ? new[] { StructureName, CanvasName, ActionsName, DetailsName } : new[] { StructureName, CanvasName })
             {
                 var top = board.Find(name);
                 if (top == null) continue;
